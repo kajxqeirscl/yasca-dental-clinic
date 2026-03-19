@@ -8,7 +8,8 @@
   },
   "scripts": {
     "frontend": "npm run dev --prefix frontend",
-    "install:all": "npm install --prefix frontend"
+    "backend": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver",
+    "install:all": "npm install --prefix frontend && pip install -r backend/requirements.txt"
   },
   "keywords": [],
   "author": "",
