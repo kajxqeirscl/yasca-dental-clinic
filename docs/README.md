@@ -1,0 +1,1 @@
+Proje dokümanlarımız (İster Analizi, Raporlar, ERD, Matrisler) Google Drive üzerinde tutulmaktadır. Linkler ana dizindeki README.md dosyasında mevcuttur.
