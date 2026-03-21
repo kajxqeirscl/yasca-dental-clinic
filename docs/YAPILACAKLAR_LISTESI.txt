@@ -1,0 +1,97 @@
+================================================================================
+YAŞCA BACKEND - YAPILACAKLAR LİSTESİ (Sıralı)
+================================================================================
+Her maddenin yanında sorumlu kişi belirtilmiştir.
+
+================================================================================
+FAZ 1: TEMEL ALTYAPI
+================================================================================
+
+1.  Sanal ortam oluşturma ve bağımlılıkları yükleme (venv, pip install)          [Şükrü]
+2.  CustomUser modeli oluşturma (AbstractUser, role alanı)                       [Yaman]
+3.  settings.py'da AUTH_USER_MODEL = 'api.CustomUser' ayarlama                  [Yaman]
+4.  INSTALLED_APPS'da api'yi admin'den önce sıralama                            [Yaman]
+5.  python manage.py makemigrations ve migrate çalıştırma                       [Yaman]
+6.  djangorestframework-simplejwt kurulumu (requirements.txt'ta var)             [Ali]
+7.  JWT token endpoint'leri (auth/token, auth/token/refresh) ekleme              [Ali]
+8.  REST_FRAMEWORK ayarları (JWT auth, permission)                              [Ali]
+9.  POST /api/auth/token/ ile giriş testi                                       [Ali]
+
+================================================================================
+FAZ 2: VERİ MODELLERİ
+================================================================================
+
+10. Patient (Hasta) modeli oluşturma                                            [Yaman]
+11. Anamnesis (Anamnez) modeli oluşturma                                        [Yaman]
+12. Appointment (Randevu) modeli oluşturma                                      [Yaman/Ali]
+13. TreatmentType (Tedavi Türü) modeli oluşturma                                [Yaman]
+14. Treatment (Tedavi) modeli oluşturma                                         [Yaman]
+15. ClinicSettings (Klinik Ayarları) modeli oluşturma                           [Şükrü]
+16. Payment (Ödeme) modeli oluşturma                                            [Cihan]
+17. Tüm modeller için makemigrations ve migrate                                 [Yaman]
+
+================================================================================
+FAZ 3: API UÇ NOKTALARI
+================================================================================
+
+18. api/urls.py oluşturma ve core/urls.py'da include                           [Ali]
+19. PatientSerializer ve PatientViewSet                                         [Ali]
+20. GET /api/patients/ ve POST /api/patients/ endpoint'leri                     [Ali]
+21. GET /api/patients/{id}/ ve PUT /api/patients/{id}/                          [Ali]
+22. Patient arama (search parametresi, F-004)                                   [Ali]
+23. AppointmentSerializer ve AppointmentViewSet                                 [Ali]
+24. GET /api/appointments/ ve POST /api/appointments/                           [Ali]
+25. Randevu çakışma kontrolü (F-008, validate)                                  [Yaman/Ali]
+26. Randevu durumu güncelleme (İptal, Tamamlandı, Gelmedi)                      [Ali]
+27. TreatmentTypeSerializer ve ViewSet (Admin için)                             [Yaman]
+28. TreatmentSerializer ve TreatmentViewSet                                     [Yaman]
+29. GET /api/treatments/?patient= hastaya göre filtreleme                       [Yaman]
+30. ClinicSettings API (GET, PUT)                                               [Şükrü]
+31. Dashboard API - bugünün randevuları (GET /api/dashboard/today/)             [Cihan]
+32. PaymentSerializer ve PaymentViewSet                                         [Cihan]
+33. İzin kontrolleri (IsAuthenticated, rol bazlı)                               [Ali/Yaman]
+
+================================================================================
+FAZ 4: FRONTEND ENTEGRASYONU
+================================================================================
+
+34. Frontend'de api servis katmanı (axios/fetch, baseURL, JWT header)           [Ali]
+35. LoginPage - gerçek API ile giriş (POST /api/auth/token/)                    [Ali]
+36. Token saklama (localStorage) ve App.tsx'da auth durumu                      [Ali]
+37. PatientSearch - mock yerine GET /api/patients/?search=                      [Cihan]
+38. PatientDialog - mock yerine POST /api/patients/                             [Cihan]
+39. AppointmentCalendar - mock yerine GET /api/appointments/?date=              [Cihan]
+40. AppointmentDialog - mock yerine POST /api/appointments/                     [Cihan]
+41. PatientProfile - mock yerine GET /api/patients/{id}/                        [Cihan]
+42. Dashboard - mock yerine GET /api/dashboard/today/                           [Cihan]
+43. 401 hatasında login sayfasına yönlendirme                                   [Ali]
+
+================================================================================
+FAZ 5: EK ÖZELLİKLER VE GÜVENLİK
+================================================================================
+
+44. Admin paneli - tüm modelleri kaydetme                                       [Şükrü]
+45. İlk superuser oluşturma (createsuperuser)                                   [Şükrü]
+46. Document (Doküman) modeli ve dosya yükleme (F-016)                          [Cihan]
+47. MEDIA_ROOT, MEDIA_URL ayarları                                              [Cihan]
+48. KVKK - hassas veri şifreleme (opsiyonel, ileriki aşama)                     [Yaman]
+49. CORS ve ALLOWED_HOSTS production ayarları                                   [Şükrü]
+50. docker-compose.yml (Django + PostgreSQL)                                    [Şükrü]
+51. .env dosyası ile ortam değişkenleri                                         [Şükrü]
+
+================================================================================
+TEST VE DOKÜMANTASYON
+================================================================================
+
+52. API unit testleri yazma                                                     [Tüm ekip]
+53. README güncelleme - backend kurulum talimatları                             [Şükrü/Ali]
+
+================================================================================
+ÖZET - KİŞİ BAZLI GÖREV SAYILARI
+================================================================================
+Ali      : Faz 1 (JWT), Faz 3 (Patient, Appointment API), Faz 4 (entegrasyon)
+Yaman    : CustomUser, tüm modeller, Treatment API, validasyonlar
+Cihan    : Payment, Dashboard, Document, Frontend API bağlantıları
+Şükrü    : ClinicSettings, Admin, Docker, ortam, dağıtım
+
+================================================================================
