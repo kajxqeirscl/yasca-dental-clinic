@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -13,29 +13,47 @@ import {
   TableRow,
 } from './ui/table';
 import PatientDialog from './PatientDialog';
-
-// Mock data
-const mockPatients = [
-  { id: 1, name: 'Ahmet Yılmaz', phone: '0532 123 4567', lastVisit: '2025-12-10', tckn: '12345678901' },
-  { id: 2, name: 'Ayşe Demir', phone: '0533 234 5678', lastVisit: '2025-12-08', tckn: '23456789012' },
-  { id: 3, name: 'Mehmet Kaya', phone: '0534 345 6789', lastVisit: '2025-12-05', tckn: '34567890123' },
-  { id: 4, name: 'Fatma Şahin', phone: '0535 456 7890', lastVisit: '2025-12-12', tckn: '45678901234' },
-  { id: 5, name: 'Ali Öz', phone: '0536 567 8901', lastVisit: '2025-12-11', tckn: '56789012345' },
-  { id: 6, name: 'Zeynep Aydın', phone: '0537 678 9012', lastVisit: '2025-12-09', tckn: '67890123456' },
-  { id: 7, name: 'Hasan Çelik', phone: '0538 789 0123', lastVisit: '2025-12-07', tckn: '78901234567' },
-  { id: 8, name: 'Elif Kara', phone: '0539 890 1234', lastVisit: '2025-12-13', tckn: '89012345678' },
-];
+import { fetchPatients } from '../services/api';
 
 export default function PatientSearch() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [patients, setPatients] = useState<
+    Array<{
+      id: number;
+      full_name: string;
+      phone: string;
+      tckn: string;
+      last_visit: string | null;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const filteredPatients = mockPatients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone.includes(searchQuery)
-  );
+  const loadPatients = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await fetchPatients(searchQuery);
+      setPatients(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Hastalar yüklenemedi');
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(loadPatients, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handlePatientCreated = () => {
+    setIsDialogOpen(false);
+    loadPatients();
+  };
 
   return (
     <div className="space-y-6">
@@ -61,6 +79,11 @@ export default function PatientSearch() {
           </div>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
@@ -72,43 +95,53 @@ export default function PatientSearch() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPatients.map((patient) => (
-                <TableRow key={patient.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <button
-                      onClick={() => navigate(`/hasta/${patient.id}`)}
-                      className="hover:text-blue-600 hover:underline"
-                    >
-                      {patient.name}
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      {patient.phone}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-gray-600">{patient.tckn}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(patient.lastVisit).toLocaleDateString('tr-TR')}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/hasta/${patient.id}`)}
-                    >
-                      Detay
-                    </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    Yükleniyor...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                patients.map((patient) => (
+                  <TableRow key={patient.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <button
+                        onClick={() => navigate(`/hasta/${patient.id}`)}
+                        className="hover:text-blue-600 hover:underline"
+                      >
+                        {patient.full_name}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        {patient.phone}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-600">{patient.tckn}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        {patient.last_visit
+                          ? new Date(patient.last_visit).toLocaleDateString('tr-TR')
+                          : '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/hasta/${patient.id}`)}
+                      >
+                        Detay
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
-          {filteredPatients.length === 0 && (
+          {!loading && patients.length === 0 && !error && (
             <div className="text-center py-8 text-gray-500">
               Hasta bulunamadı
             </div>
@@ -119,6 +152,7 @@ export default function PatientSearch() {
       <PatientDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
+        onSuccess={handlePatientCreated}
       />
     </div>
   );

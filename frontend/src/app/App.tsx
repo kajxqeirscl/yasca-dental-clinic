@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useAuth, getUserRoleDisplay } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import AppointmentCalendar from './components/AppointmentCalendar';
@@ -8,25 +8,25 @@ import PatientProfile from './components/PatientProfile';
 import Layout from './components/Layout';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<'hekim' | 'asistan' | 'admin'>('asistan');
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-  const handleLogin = (role: 'hekim' | 'asistan' | 'admin') => {
-    setUserRole(role);
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500">Yükleniyor...</div>
+      </div>
+    );
   }
+
+  if (!isAuthenticated || !user) {
+    return <LoginPage />;
+  }
+
+  const userRole = getUserRoleDisplay(user.role);
 
   return (
     <BrowserRouter>
-      <Layout userRole={userRole} onLogout={handleLogout}>
+      <Layout userRole={userRole} onLogout={logout}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/randevular" element={<AppointmentCalendar />} />
