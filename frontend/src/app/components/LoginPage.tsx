@@ -19,7 +19,12 @@ export default function LoginPage() {
     try {
       await login(username, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Giriş başarısız');
+      const msg = err instanceof Error ? err.message : 'Giriş başarısız';
+      if (msg.includes('No active account found') || msg.includes('Giriş başarısız')) {
+        setError('Giriş başarısız. Lütfen kullanıcı adı ve şifrenizi kontrol ediniz.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsLoading(false);
     }

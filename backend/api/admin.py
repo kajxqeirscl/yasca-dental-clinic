@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     CustomUser,
@@ -9,18 +10,24 @@ from .models import (
     TreatmentType,
     ClinicSettings,
     Payment,
+    Clinic,
 )
+
+@admin.register(Clinic)
+class ClinicAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone', 'created_at')
+    search_fields = ('name', 'phone')
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff')
-    list_filter = ('role', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'clinic', 'role', 'is_staff')
+    list_filter = ('clinic', 'role', 'is_staff', 'is_active')
     fieldsets = UserAdmin.fieldsets + (
-        ('Rol', {'fields': ('role',)}),
+        ('Klinik & Rol', {'fields': ('clinic', 'role')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Rol', {'fields': ('role',)}),
+        ('Klinik & Rol', {'fields': ('clinic', 'role')}),
     )
 
 
@@ -55,10 +62,31 @@ class TreatmentTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'default_price', 'is_active')
 
 
+class ClinicSettingsForm(forms.ModelForm):
+    DAYS_CHOICES = [
+        ('1', 'Pazartesi'),
+        ('2', 'Salı'),
+        ('3', 'Çarşamba'),
+        ('4', 'Perşembe'),
+        ('5', 'Cuma'),
+        ('6', 'Cumartesi'),
+        ('0', 'Pazar'),
+    ]
+    work_days = forms.MultipleChoiceField(
+        choices=DAYS_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Çalışılabilecek Günler"
+    )
+
+    class Meta:
+        model = ClinicSettings
+        fields = '__all__'
+
 @admin.register(ClinicSettings)
 class ClinicSettingsAdmin(admin.ModelAdmin):
-    def has_add_permission(self, request):
-        return not ClinicSettings.objects.exists()
+    form = ClinicSettingsForm
+    list_display = ('clinic', 'work_start_time', 'work_end_time')
 
 
 @admin.register(Payment)

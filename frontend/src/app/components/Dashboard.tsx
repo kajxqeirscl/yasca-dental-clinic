@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Calendar, Users, Clock, CheckCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { fetchDashboardToday } from '../services/api';
+import AppointmentDetailDialog from './AppointmentDetailDialog';
 
 interface TodayAppointment {
   id: number;
+  date: string;
   time: string;
+  duration: number;
   patient_name: string;
   patient_phone: string;
+  patient: number;
+  doctor: number;
   treatment_type: string;
   status: string;
+  notes?: string;
 }
 
 interface DashboardData {
@@ -20,12 +27,25 @@ interface DashboardData {
   total_patients: number;
 }
 
+type FilterStatus = 'all' | 'completed' | 'scheduled';
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedAppointment, setSelectedAppointment] = useState<TodayAppointment | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [filter, setFilter] = useState<FilterStatus>(() => {
+    return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
+  });
 
-  useEffect(() => {
+  const handleFilterChange = (newFilter: FilterStatus) => {
+    setFilter(newFilter);
+    localStorage.setItem('dashboardAppointmentFilter', newFilter);
+  };
+
+  const loadData = () => {
+    setLoading(true);
     fetchDashboardToday()
       .then(setData)
       .catch((err) => {
@@ -33,6 +53,10 @@ export default function Dashboard() {
         setData(null);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   if (loading) {
@@ -55,15 +79,46 @@ export default function Dashboard() {
 
   const appointments = data?.today_appointments ?? [];
   const completedToday = data?.today_completed ?? 0;
-  const waitingToday = appointments.filter((a) => a.status !== 'completed').length;
+  // Included gelmedi (no_show) and scheduled in waiting list according to user logic 
+  const waitingToday = appointments.filter((a) => a.status === 'scheduled' || a.status === 'no_show').length;
   const totalPatients = data?.total_patients ?? 0;
 
-  const getStatusLabel = (status: string) => {
-    if (status === 'completed') return 'Tamamlandı';
-    return 'Bekliyor';
+  // Filter logic
+  const filteredAppointments = appointments.filter(apt => {
+    if (filter === 'all') return true;
+    return apt.status === filter;
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return <Badge className="bg-blue-100 text-blue-800 border-none">Planlandı</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 border-none">Tamamlandı</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 border-none">İptal</Badge>;
+      case 'no_show':
+        return <Badge className="bg-orange-100 text-orange-800 border-none">Gelmedi</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
-  const formatTime = (t: string) => (t ? t.slice(0, 5) : ''); // "09:00:00" -> "09:00"
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-50 hover:bg-green-100 border-l-green-400';
+      case 'cancelled': return 'bg-red-50 hover:bg-red-100 border-l-red-400';
+      case 'no_show': return 'bg-orange-50 hover:bg-orange-100 border-l-orange-400';
+      default: return 'bg-blue-50 hover:bg-blue-100 border-l-blue-400';
+    }
+  };
+
+  const formatTime = (t: string) => (t ? t.slice(0, 5) : '');
+
+  const handleAppointmentClick = (apt: TodayAppointment) => {
+    setSelectedAppointment(apt);
+    setDetailOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +143,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-gray-900">{waitingToday}</div>
-            <p className="text-xs text-gray-500 mt-1">Bugün için</p>
+            <p className="text-xs text-gray-500 mt-1">Bugün için (Planlanan + Gelmedi)</p>
           </CardContent>
         </Card>
 
@@ -105,54 +160,81 @@ export default function Dashboard() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Bugünün Randevuları</CardTitle>
+        <CardHeader className="border-b">
+          <div className="flex items-center justify-between">
+            <CardTitle>Bugünün Randevuları</CardTitle>
+            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+              <Button 
+                variant={filter === 'all' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => handleFilterChange('all')}
+                className="text-xs px-3 h-8"
+              >
+                Tümü
+              </Button>
+              <Button 
+                variant={filter === 'completed' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => handleFilterChange('completed')}
+                className="text-xs px-3 h-8"
+              >
+                Tamamlanan
+              </Button>
+              <Button 
+                variant={filter === 'scheduled' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => handleFilterChange('scheduled')}
+                className="text-xs px-3 h-8"
+              >
+                Planlanan
+              </Button>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {appointments.length === 0 ? (
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            {filteredAppointments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Bugün için randevu bulunmuyor.
+                Filtreye uygun randevu bulunmuyor.
               </div>
             ) : (
-              appointments.map((appointment) => (
+              filteredAppointments.map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`flex items-center justify-between p-4 rounded-lg border-l-4 cursor-pointer transition-colors ${getStatusBg(appointment.status)}`}
+                  onClick={() => handleAppointmentClick(appointment)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg">
-                      <Clock className="w-6 h-6 text-blue-600" />
+                    <div className="flex items-center justify-center w-12 h-12 bg-white rounded-lg shadow-sm">
+                      <Clock className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-blue-600">{formatTime(appointment.time)}</span>
+                        <span className="font-semibold text-gray-900">{formatTime(appointment.time)}</span>
                         <span className="text-gray-400">•</span>
                         <span className="text-gray-900">{appointment.patient_name}</span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {appointment.treatment_type || 'Kontrol'}
-                      </p>
+                      {(appointment.treatment_type || appointment.notes) && (
+                        <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
+                          {appointment.treatment_type || appointment.notes}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <Badge
-                    variant={
-                      appointment.status === 'completed' ? 'default' : 'secondary'
-                    }
-                    className={
-                      appointment.status === 'completed'
-                        ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                        : 'bg-orange-100 text-orange-700 hover:bg-orange-100'
-                    }
-                  >
-                    {getStatusLabel(appointment.status)}
-                  </Badge>
+                  {getStatusBadge(appointment.status)}
                 </div>
               ))
             )}
           </div>
         </CardContent>
       </Card>
+
+      <AppointmentDetailDialog
+        isOpen={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        appointment={selectedAppointment}
+        onUpdated={loadData}
+      />
     </div>
   );
 }

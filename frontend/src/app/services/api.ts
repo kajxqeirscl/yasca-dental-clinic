@@ -105,7 +105,8 @@ export async function fetchPatients(search = '') {
   const params = search ? `?search=${encodeURIComponent(search)}` : '';
   const res = await fetchWithAuth(`${API_BASE}/patients/${params}`);
   if (!res.ok) throw new Error('Hastalar yüklenemedi');
-  return res.json();
+  const data = await res.json();
+  return data.results ? data.results : data;
 }
 
 export async function fetchPatient(id: string) {
@@ -160,7 +161,15 @@ export async function fetchAppointments(date?: string) {
   const params = date ? `?date=${date}` : '';
   const res = await fetchWithAuth(`${API_BASE}/appointments/${params}`);
   if (!res.ok) throw new Error('Randevular yüklenemedi');
-  return res.json();
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+export async function fetchPatientAppointments(patientId: string) {
+  const res = await fetchWithAuth(`${API_BASE}/appointments/?patient=${patientId}`);
+  if (!res.ok) throw new Error('Hastanın randevuları yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
 }
 
 export async function createAppointment(data: {
@@ -168,7 +177,6 @@ export async function createAppointment(data: {
   doctor: number;
   date: string;
   time: string;
-  duration?: number;
   notes?: string;
   treatment_type?: string;
   status?: string;
@@ -177,7 +185,6 @@ export async function createAppointment(data: {
     method: 'POST',
     body: JSON.stringify({
       ...data,
-      duration: data.duration ?? 60,
       status: data.status ?? 'scheduled',
     }),
   });
@@ -190,7 +197,7 @@ export async function createAppointment(data: {
 
 export async function updateAppointment(
   id: number,
-  data: Partial<{ status: string; notes: string; treatment_type: string }>
+  data: Partial<{ status: string; notes: string; treatment_type: string; date: string; time: string }>
 ) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
     method: 'PATCH',
@@ -198,6 +205,13 @@ export async function updateAppointment(
   });
   if (!res.ok) throw new Error('Randevu güncellenemedi');
   return res.json();
+}
+
+export async function deleteAppointment(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Randevu silinemedi');
 }
 
 // --- Dashboard ---
@@ -219,12 +233,21 @@ export async function fetchTreatments(patientId?: string) {
   const params = patientId ? `?patient=${patientId}` : '';
   const res = await fetchWithAuth(`${API_BASE}/treatments/${params}`);
   if (!res.ok) throw new Error('Tedaviler yüklenemedi');
-  return res.json();
+  const data = await res.json();
+  return data.results ? data.results : data;
 }
 
 // --- Treatment Types ---
 export async function fetchTreatmentTypes() {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/`);
   if (!res.ok) throw new Error('Tedavi türleri yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+// --- Clinic Settings ---
+export async function fetchClinicSettings() {
+  const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`);
+  if (!res.ok) throw new Error('Klinik ayarları yüklenemedi');
   return res.json();
 }

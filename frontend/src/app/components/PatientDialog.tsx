@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,18 +10,30 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { createPatient } from '../services/api';
+import { createPatient, updatePatient } from '../services/api';
 
 interface PatientDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  patientId?: number;
+  initialData?: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    tckn?: string;
+    birth_date?: string | null;
+    address?: string;
+    notes?: string;
+  };
 }
 
 export default function PatientDialog({
   isOpen,
   onClose,
   onSuccess,
+  patientId,
+  initialData,
 }: PatientDialogProps) {
   const [formData, setFormData] = useState({
     first_name: '',
@@ -34,6 +46,26 @@ export default function PatientDialog({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          first_name: initialData.first_name || '',
+          last_name: initialData.last_name || '',
+          phone: initialData.phone || '',
+          tckn: initialData.tckn || '',
+          birth_date: initialData.birth_date || '',
+          address: initialData.address || '',
+          notes: initialData.notes || '',
+        });
+      } else {
+        setFormData({
+          first_name: '', last_name: '', phone: '', tckn: '', birth_date: '', address: '', notes: ''
+        });
+      }
+      setError('');
+    }
+  }, [isOpen, initialData]);
 
   const handleSave = async () => {
     if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.phone.trim()) {
@@ -43,7 +75,7 @@ export default function PatientDialog({
     setLoading(true);
     setError('');
     try {
-      await createPatient({
+      const payload = {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         phone: formData.phone.trim(),
@@ -51,16 +83,13 @@ export default function PatientDialog({
         birth_date: formData.birth_date || undefined,
         address: formData.address || undefined,
         notes: formData.notes || undefined,
-      });
-      setFormData({
-        first_name: '',
-        last_name: '',
-        phone: '',
-        tckn: '',
-        birth_date: '',
-        address: '',
-        notes: '',
-      });
+      };
+
+      if (patientId) {
+        await updatePatient(patientId.toString(), payload as any);
+      } else {
+        await createPatient(payload);
+      }
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -90,7 +119,7 @@ export default function PatientDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Yeni Hasta Ekle</DialogTitle>
+          <DialogTitle>{patientId ? 'Hastayı Düzenle' : 'Yeni Hasta Ekle'}</DialogTitle>
           <DialogDescription>
             Hasta bilgilerini girin ve kaydedin.
           </DialogDescription>

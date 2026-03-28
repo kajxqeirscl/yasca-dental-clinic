@@ -7,11 +7,11 @@ Her maddenin yanında sorumlu kişi belirtilmiştir.
 FAZ 1: TEMEL ALTYAPI
 ================================================================================
 
-1.  Sanal ortam oluşturma ve bağımlılıkları yükleme (venv, pip install)          [Şükrü]
-2.  CustomUser modeli oluşturma (AbstractUser, role alanı)                       [Yaman]
-3.  settings.py'da AUTH_USER_MODEL = 'api.CustomUser' ayarlama                  [Yaman]
-4.  INSTALLED_APPS'da api'yi admin'den önce sıralama                            [Yaman]
-5.  python manage.py makemigrations ve migrate çalıştırma                       [Yaman]
+1.  Sanal ortam oluşturma ve bağımlılıkları yükleme (venv, pip install)          [Şükrü]    [TAMAMLANDI]
+2.  CustomUser modeli oluşturma (AbstractUser, role alanı)                       [Yaman]    [TAMAMLANDI]
+3.  settings.py'da AUTH_USER_MODEL = 'api.CustomUser' ayarlama                  [Yaman]    [TAMAMLANDI]
+4.  INSTALLED_APPS'da api'yi admin'den önce sıralama                            [Yaman]    [TAMAMLANDI]
+5.  python manage.py makemigrations ve migrate çalıştırma                       [Yaman]    [TAMAMLANDI]
 6.  djangorestframework-simplejwt kurulumu (requirements.txt'ta var)             [Ali]      [TAMAMLANDI]
 7.  JWT token endpoint'leri (auth/token, auth/token/refresh) ekleme              [Ali]      [TAMAMLANDI]
 8.  REST_FRAMEWORK ayarları (JWT auth, permission)                              [Ali]      [TAMAMLANDI]
@@ -90,8 +90,8 @@ FAZ 5: RANDEVU OLUŞTURMA İYİLEŞTİRMELERİ
 FAZ 6: EK ÖZELLİKLER VE GÜVENLİK
 ================================================================================
 
-44. Admin paneli - tüm modelleri kaydetme                                       [Şükrü]
-45. İlk superuser oluşturma (createsuperuser)                                   [Şükrü]
+44. Admin paneli - tüm modelleri kaydetme                                       [Şükrü]    [TAMAMLANDI]
+45. İlk superuser oluşturma (createsuperuser)                                   [Şükrü]    [TAMAMLANDI]
 46. Document (Doküman) modeli ve dosya yükleme (F-016)                          [Cihan]
 47. MEDIA_ROOT, MEDIA_URL ayarları                                              [Cihan]
 48. KVKK - hassas veri şifreleme (opsiyonel, ileriki aşama)                     [Yaman]
@@ -104,7 +104,21 @@ TEST VE DOKÜMANTASYON
 ================================================================================
 
 52. API unit testleri yazma                                                     [Tüm ekip]
-53. README güncelleme - backend kurulum talimatları                             [Şükrü/Ali]
+53. README güncelleme - backend kurulum talimatları (start-dev script)             [Şükrü/Ali][TAMAMLANDI]
+
+================================================================================
+FAZ 7: MİMARİ, GÜVENLİK VE UX İYİLEŞTİRMELERİ (YENİ)
+================================================================================
+
+62. Çoklu Klinik (Multi-Tenancy) altyapısı ve Data Migration                      [Ekip]     [TAMAMLANDI]
+63. Sinyaller (signals.py) ile Otomatik Yetki Grubu (Group) Atamaları             [Ekip]     [TAMAMLANDI]
+64. Rol bazlı API güvenliği (IsAdminUser, ReadOnlyAsistan DRF Permissions)        [Ekip]     [TAMAMLANDI]
+65. API sayfalandırma (Pagination) entegrasyonu (Backend & Frontend API)          [Ekip]     [TAMAMLANDI]
+66. Frontend & Backend genelinde Türkçe dil, timezone ve hata mesajı adaptasyonu  [Ekip]     [TAMAMLANDI]
+67. Hasta profili düzenleme yeteneği (PatientDialog Edit Mode)                   [Ekip]     [TAMAMLANDI]
+68. Randevu takviminde oklarla gün/hafta bazlı dinamik dolaşım düzeltmesi         [Ekip]     [TAMAMLANDI]
+69. Randevu saati oluşturmada spesifik dakika seçimi (type="time")                [Ekip]     [TAMAMLANDI]
+70. Takvimde randevuya tıklandığında Randevu Detayı Pop-up ekranı                 [Ekip]     [TAMAMLANDI]
 
 ================================================================================
 ÖZET - KİŞİ BAZLI GÖREV SAYILARI
@@ -116,5 +130,5 @@ Cihan    : Payment, Dashboard, Document, Frontend API bağlantıları
 Şükrü    : ClinicSettings, Admin, Docker, ortam, dağıtım
 
 ================================================================================
-SON GÜNCELLEME: 2026-03-27
+SON GÜNCELLEME: 2026-03-28 (Çoklu Klinik, Güvenlik ve Frontend Patch)
 ================================================================================

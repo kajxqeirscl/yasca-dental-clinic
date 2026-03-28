@@ -4,7 +4,6 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
 
 from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser
 from .serializers import (
@@ -18,6 +17,7 @@ from .serializers import (
     PaymentSerializer,
     DoctorMinimalSerializer,
 )
+from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
 
 class CurrentUserView(APIView):
@@ -38,7 +38,6 @@ class CurrentUserView(APIView):
 
 class PatientViewSet(viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
-    queryset = Patient.objects.all()
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
@@ -47,7 +46,7 @@ class PatientViewSet(viewsets.ModelViewSet):
         return PatientSerializer
 
     def get_queryset(self):
-        qs = Patient.objects.all()
+        qs = Patient.objects.filter(clinic=self.request.user.clinic)
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -58,10 +57,12 @@ class PatientViewSet(viewsets.ModelViewSet):
             )
         return qs.order_by("last_name", "first_name")
 
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
+
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     """Randevu CRUD. F-006, F-007, F-008, F-009."""
-    queryset = Appointment.objects.all()
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
@@ -70,44 +71,69 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return AppointmentSerializer
 
     def get_queryset(self):
-        qs = Appointment.objects.select_related("patient", "doctor")
+        qs = Appointment.objects.filter(clinic=self.request.user.clinic).select_related("patient", "doctor")
         date = self.request.query_params.get("date")
+        patient_id = self.request.query_params.get("patient")
         if date:
             qs = qs.filter(date=date)
+        if patient_id:
+            qs = qs.filter(patient_id=patient_id)
         return qs.order_by("date", "time")
+
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
 
 
 class TreatmentViewSet(viewsets.ModelViewSet):
     """Tedavi CRUD. F-010, F-011."""
-    queryset = Treatment.objects.all()
     serializer_class = TreatmentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = Treatment.objects.select_related("patient", "doctor", "treatment_type")
+        qs = Treatment.objects.filter(clinic=self.request.user.clinic).select_related("patient", "doctor", "treatment_type")
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
         return qs.order_by("-date")
 
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
+
 
 class TreatmentTypeViewSet(viewsets.ModelViewSet):
-    """Tedavi türleri. F-020. Admin için."""
-    queryset = TreatmentType.objects.filter(is_active=True).order_by("name")
+    """Tedavi türleri. F-020. Hekim ve Yönetici düzenleyebilir."""
     serializer_class = TreatmentTypeSerializer
-    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return [IsAuthenticated(), IsAdminOrDoctorUser()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        return TreatmentType.objects.filter(clinic=self.request.user.clinic, is_active=True).order_by("name")
+
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
 
 
 class ClinicSettingsView(APIView):
-    """Klinik ayarları. F-022. Tek kayıt (Singleton)."""
-    permission_classes = [IsAuthenticated]
+    """Klinik ayarları. F-022."""
+    
+    def get_permissions(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
 
     def get(self, request):
-        obj = ClinicSettings.get_settings()
+        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        if not obj:
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
         return Response(ClinicSettingsSerializer(obj).data)
 
     def put(self, request):
-        obj = ClinicSettings.get_settings()
+        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        if not obj:
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
         serializer = ClinicSettingsSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -116,16 +142,18 @@ class ClinicSettingsView(APIView):
 
 class PaymentViewSet(viewsets.ModelViewSet):
     """Ödeme kayıtları. F-014, F-015."""
-    queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = Payment.objects.select_related("patient")
+        qs = Payment.objects.filter(clinic=self.request.user.clinic).select_related("patient")
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
         return qs.order_by("-payment_date")
+
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
 
 
 class DoctorListView(APIView):
@@ -133,7 +161,7 @@ class DoctorListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        doctors = CustomUser.objects.filter(role=CustomUser.Role.DOCTOR)
+        doctors = CustomUser.objects.filter(clinic=request.user.clinic, role=CustomUser.Role.DOCTOR)
         return Response(DoctorMinimalSerializer(doctors, many=True).data)
 
 
@@ -144,13 +172,12 @@ class DashboardView(APIView):
     def get(self, request):
         today = timezone.localdate()
         appointments = Appointment.objects.filter(
+            clinic=request.user.clinic,
             date=today
-        ).exclude(status=Appointment.Status.CANCELLED).exclude(
-            status=Appointment.Status.NO_SHOW
-        ).select_related("patient", "doctor").order_by("time")
+        ).exclude(status=Appointment.Status.CANCELLED).select_related("patient", "doctor").order_by("time")
 
         completed = appointments.filter(status=Appointment.Status.COMPLETED).count()
-        total_patients = Patient.objects.count()
+        total_patients = Patient.objects.filter(clinic=request.user.clinic).count()
 
         serializer = AppointmentSerializer(appointments, many=True)
         return Response({

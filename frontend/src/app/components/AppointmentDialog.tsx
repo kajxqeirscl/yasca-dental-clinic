@@ -79,6 +79,7 @@ export default function AppointmentDialog({
   const [selectedTreatment, setSelectedTreatment] = useState('');
 
   // --- Other ---
+  const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -109,6 +110,12 @@ export default function AppointmentDialog({
       .then((list: TreatmentTypeOption[]) => setTreatmentTypes(list))
       .catch(() => setTreatmentTypes([]));
   }, [isOpen, user?.role, user?.id]);
+
+  useEffect(() => {
+    if (selectedSlot) {
+      setTime(selectedSlot.time);
+    }
+  }, [selectedSlot]);
 
   // Search patients with debounce
   useEffect(() => {
@@ -159,6 +166,7 @@ export default function AppointmentDialog({
     setPatientResults([]);
     setPatientDropdownOpen(false);
     setSelectedTreatment('');
+    setTime(selectedSlot?.time || '');
     setNotes('');
     setError('');
   };
@@ -175,8 +183,7 @@ export default function AppointmentDialog({
         patient: selectedPatient.id,
         doctor: selectedDoctorId as number,
         date: selectedSlot.date,
-        time: selectedSlot.time,
-        duration: 60,
+        time: time,
         notes: notes || undefined,
         treatment_type: selectedTreatment || undefined,
         status: 'scheduled',
@@ -221,7 +228,12 @@ export default function AppointmentDialog({
             </div>
             <div className="space-y-2">
               <Label>Saat</Label>
-              <Input value={selectedSlot?.time || ''} readOnly className="bg-gray-50" />
+              <Input 
+                type="time" 
+                value={time} 
+                onChange={(e) => setTime(e.target.value)} 
+                required 
+              />
             </div>
           </div>
 
@@ -297,6 +309,11 @@ export default function AppointmentDialog({
                 </option>
               ))}
             </select>
+            {doctors.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">
+                Henüz hekim tanımlanmamış. Admin panelinden ekleyebilirsiniz.
+              </p>
+            )}
           </div>
 
           {/* Treatment Type Dropdown */}
