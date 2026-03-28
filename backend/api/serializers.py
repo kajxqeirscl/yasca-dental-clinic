@@ -114,7 +114,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "doctor_name",
             "date",
             "time",
-            "duration",
             "status",
             "notes",
             "treatment_type",
@@ -155,7 +154,6 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             "doctor",
             "date",
             "time",
-            "duration",
             "status",
             "notes",
             "treatment_type",
@@ -215,7 +213,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
 class ClinicSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClinicSettings
-        fields = ["id", "work_start_time", "work_end_time", "appointment_interval_minutes"]
+        fields = ["id", "work_start_time", "work_end_time", "work_days"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):

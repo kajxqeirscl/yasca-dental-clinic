@@ -9,12 +9,16 @@ import {
   IdCard,
   MapPin,
   Calendar,
+  Clock,
   FileText,
   AlertCircle,
+  Stethoscope,
 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import DentalChart from './DentalChart';
-import { fetchPatient, fetchTreatments } from '../services/api';
+import PatientDialog from './PatientDialog';
+import AppointmentDetailDialog from './AppointmentDetailDialog';
+import { fetchPatient, fetchTreatments, fetchPatientAppointments } from '../services/api';
 
 interface Anamnesis {
   medical_history: string;
@@ -37,6 +41,20 @@ interface Treatment {
   tooth_number: string;
   doctor_name: string;
   notes: string;
+}
+
+interface Appointment {
+  id: number;
+  date: string;
+  time: string;
+  duration: number;
+  patient_name: string;
+  patient_phone: string;
+  patient: number;
+  doctor: number;
+  status: string;
+  notes?: string;
+  treatment_type?: string;
 }
 
 interface PatientData {
@@ -68,27 +86,48 @@ const defaultAnamnesis: Anamnesis = {
 export default function PatientProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('bilgiler');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('patientProfileActiveTab') || 'bilgiler';
+  });
   const [patient, setPatient] = useState<PatientData | null>(null);
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    localStorage.setItem('patientProfileActiveTab', val);
+  };
   const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
     if (!id) return;
     setLoading(true);
     setError('');
-    Promise.all([fetchPatient(id), fetchTreatments(id)])
-      .then(([p, t]) => {
+    Promise.all([
+      fetchPatient(id), 
+      fetchTreatments(id),
+      fetchPatientAppointments(id)
+    ])
+      .then(([p, t, a]) => {
         setPatient(p);
         setTreatments(t);
+        setAppointments(a);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Hasta bilgisi yüklenemedi');
         setPatient(null);
         setTreatments([]);
+        setAppointments([]);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, [id]);
 
   if (loading) {
@@ -113,22 +152,46 @@ export default function PatientProfile() {
   const anam = patient.anamnesis ?? defaultAnamnesis;
   const treatmentName = (t: Treatment) => t.treatment_type_name || t.treatment_name || '-';
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return <Badge className="bg-blue-100 text-blue-800 border-none">Planlandı</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 border-none">Tamamlandı</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 border-none">İptal</Badge>;
+      case 'no_show':
+        return <Badge className="bg-orange-100 text-orange-800 border-none">Gelmedi</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const handleAppointmentClick = (apt: Appointment) => {
+    setSelectedAppointment(apt);
+    setIsDetailOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate('/hastalar')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl text-gray-900">{patient.full_name}</h2>
           <p className="text-gray-500">Hasta ID: #{id}</p>
         </div>
+        <Button onClick={() => setIsEditPatientOpen(true)}>
+          Profili Düzenle
+        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="bilgiler">Profil Bilgileri</TabsTrigger>
           <TabsTrigger value="anamnez">Anamnez</TabsTrigger>
+          <TabsTrigger value="randevular">Randevular</TabsTrigger>
           <TabsTrigger value="gecmis">Tedavi Geçmişi</TabsTrigger>
           <TabsTrigger value="odontogram">Diş Şeması</TabsTrigger>
         </TabsList>
@@ -274,11 +337,55 @@ export default function PatientProfile() {
                   </div>
                 </div>
               </div>
-              <div className="pt-4 border-t">
-                <Button variant="outline" className="w-full" disabled>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Anamnezi Düzenle (Yakında)
-                </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="randevular" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tüm Randevular</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {appointments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Henüz randevu kaydı bulunmuyor.
+                  </div>
+                ) : (
+                  appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => handleAppointmentClick(appointment)}
+                    >
+                      <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
+                        <Clock className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-gray-900 font-semibold">
+                                {new Date(appointment.date).toLocaleDateString('tr-TR')}
+                              </h4>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-blue-600 text-sm font-medium">
+                                {appointment.time.substring(0, 5)}
+                              </span>
+                            </div>
+                            {(appointment.treatment_type || appointment.notes) && (
+                              <p className="text-sm text-gray-500 mt-1 truncate max-w-sm">
+                                {appointment.treatment_type || appointment.notes}
+                              </p>
+                            )}
+                          </div>
+                          {getStatusBadge(appointment.status)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -302,7 +409,7 @@ export default function PatientProfile() {
                       className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
-                        <Calendar className="w-6 h-6 text-blue-600" />
+                        <Stethoscope className="w-6 h-6 text-blue-600" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
@@ -343,6 +450,21 @@ export default function PatientProfile() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <PatientDialog
+        isOpen={isEditPatientOpen}
+        onClose={() => setIsEditPatientOpen(false)}
+        onSuccess={loadData}
+        patientId={patient.id}
+        initialData={patient}
+      />
+
+      <AppointmentDetailDialog
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        appointment={selectedAppointment}
+        onUpdated={loadData}
+      />
     </div>
   );
 }

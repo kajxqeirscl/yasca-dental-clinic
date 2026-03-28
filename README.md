@@ -55,13 +55,16 @@ npm run frontend
 
 ### 3. Tam Sistem Çalıştırma
 
-Her iki servisi de aynı anda çalıştırmak için **iki ayrı terminal** açın:
+Geliştirme sunucularını hızlıca ve aynı anda başlatmak için proje ana dizininde bulunan **`start-dev.ps1`** dosyasını çalıştırabilirsiniz:
 
-| Terminal 1 (Backend)        | Terminal 2 (Frontend) |
-|-----------------------------|------------------------|
-| `cd backend`                | `npm run frontend`     |
-| `.\venv\Scripts\Activate.ps1` |                        |
-| `python manage.py runserver` |                        |
+```powershell
+.\start-dev.ps1
+```
+
+Bu komut, backend ve frontend servislerini kendi ayrı terminal pencerelerinde çalıştıracaktır.
+
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:8000
 
 ---
 

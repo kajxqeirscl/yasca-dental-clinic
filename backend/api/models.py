@@ -3,6 +3,22 @@ from django.contrib.auth.models import AbstractUser
 from datetime import time
 
 
+class Clinic(models.Model):
+    """Klinik tanımı süper ana tablo. Multi-Tenancy."""
+
+    name = models.CharField("Klinik Adı", max_length=150)
+    address = models.TextField("Adres", blank=True)
+    phone = models.CharField("Telefon", max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Klinik"
+        verbose_name_plural = "Klinikler"
+
+    def __str__(self):
+        return self.name
+
+
 class CustomUser(AbstractUser):
     """Klinik personeli: Admin, Hekim veya Asistan."""
 
@@ -15,6 +31,14 @@ class CustomUser(AbstractUser):
         max_length=20,
         choices=Role.choices,
         default=Role.ASSISTANT,
+    )
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        verbose_name="Klinik",
     )
 
     class Meta:
@@ -42,6 +66,14 @@ class CustomUser(AbstractUser):
 
 class Patient(models.Model):
     """Hasta kaydı. F-003: Ad, Soyad, Telefon zorunlu; TC ve Doğum Tarihi opsiyonel."""
+    
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="patients",
+    )
 
     first_name = models.CharField("Ad", max_length=100)
     last_name = models.CharField("Soyad", max_length=100)
@@ -93,6 +125,14 @@ class Anamnesis(models.Model):
 
 class TreatmentType(models.Model):
     """Tedavi türleri ve varsayılan fiyatları. F-020."""
+    
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="treatment_types",
+    )
 
     name = models.CharField("Tedavi Türü", max_length=100)
     default_price = models.DecimalField(
@@ -117,6 +157,14 @@ class Appointment(models.Model):
         COMPLETED = "completed", "Tamamlandı"
         CANCELLED = "cancelled", "İptal"
         NO_SHOW = "no_show", "Gelmedi"
+        
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="appointments",
+    )
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="appointments"
@@ -126,7 +174,6 @@ class Appointment(models.Model):
     )
     date = models.DateField("Tarih")
     time = models.TimeField("Saat")
-    duration = models.PositiveIntegerField("Süre (dk)", default=60)
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.SCHEDULED
     )
@@ -150,6 +197,14 @@ class Treatment(models.Model):
     class Status(models.TextChoices):
         PLANNED = "planned", "Yapılacak"
         COMPLETED = "completed", "Tamamlanmış"
+        
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="sc_treatments",
+    )
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="treatments"
@@ -184,12 +239,22 @@ class Treatment(models.Model):
 
 
 class ClinicSettings(models.Model):
-    """Klinik ayarları. F-022. Tek kayıt (Singleton)."""
+    """Klinik ayarları. F-022."""
 
+    clinic = models.OneToOneField(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="settings",
+    )
     work_start_time = models.TimeField("Çalışma Başlangıç", default=time(9, 0))
     work_end_time = models.TimeField("Çalışma Bitiş", default=time(18, 0))
-    appointment_interval_minutes = models.PositiveIntegerField(
-        "Randevu Aralığı (dk)", default=15
+    work_days = models.JSONField(
+        "Çalışılabilecek Günler", 
+        default=list,
+        blank=True,
+        help_text="Örn: 1,2,3,4,5,6 (1=Pzt, 0=Paz)"
     )
 
     class Meta:
@@ -200,13 +265,24 @@ class ClinicSettings(models.Model):
         return "Klinik Ayarları"
 
     @classmethod
-    def get_settings(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
+    def get_settings(cls, clinic=None):
+        if clinic is None:
+            obj, _ = cls.objects.get_or_create(pk=1) # Fallback for now
+            return obj
+        obj, _ = cls.objects.get_or_create(clinic=clinic)
         return obj
 
 
 class Payment(models.Model):
     """Ödeme kaydı. F-014, F-015."""
+    
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="payments",
+    )
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="payments"
