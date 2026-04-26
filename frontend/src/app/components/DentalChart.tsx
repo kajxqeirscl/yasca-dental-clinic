@@ -62,7 +62,11 @@ const statusLabels: Record<ToothStatus, string> = {
   detartraj: 'Detartraj',
 };
 
-export default function DentalChart() {
+interface DentalChartProps {
+  onToothSelect?: (toothNumber: number) => void;
+}
+
+export default function DentalChart({ onToothSelect }: DentalChartProps) {
   const [teethData, setTeethData] = useState<Record<number, ToothData>>({});
   const [activeTab, setActiveTab] = useState<'adult' | 'primary'>('adult');
 
@@ -103,6 +107,10 @@ export default function DentalChart() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
           <DropdownMenuLabel>Diş {number} - İşlem Seç</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onToothSelect?.(number)} className="font-medium text-blue-600 focus:text-blue-700 cursor-pointer">
+            + Yeni Tedavi Ekle
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => handleToothClick(number, 'healthy')}>
             Sağlıklı

@@ -1,36 +1,86 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AppointmentDialog from './AppointmentDialog';
-
-// Mock appointments data
-const mockAppointments = [
-  { id: 1, date: '2025-12-14', time: '09:00', duration: 60, patient: 'Ahmet Yılmaz', phone: '0532 123 4567' },
-  { id: 2, date: '2025-12-14', time: '10:30', duration: 60, patient: 'Ayşe Demir', phone: '0533 234 5678' },
-  { id: 3, date: '2025-12-14', time: '14:00', duration: 90, patient: 'Mehmet Kaya', phone: '0534 345 6789' },
-  { id: 4, date: '2025-12-15', time: '09:00', duration: 60, patient: 'Fatma Şahin', phone: '0535 456 7890' },
-  { id: 5, date: '2025-12-15', time: '11:00', duration: 60, patient: 'Ali Öz', phone: '0536 567 8901' },
-  { id: 6, date: '2025-12-16', time: '10:00', duration: 60, patient: 'Zeynep Aydın', phone: '0537 678 9012' },
-];
+import AppointmentDetailDialog from './AppointmentDetailDialog';
+import { fetchAppointments, fetchClinicSettings } from '../services/api';
 
 type ViewMode = 'daily' | 'weekly';
 
+interface Appointment {
+  id: number;
+  date: string;
+  time: string;
+  patient_name: string;
+  patient_phone: string;
+  patient: number;
+  doctor: number;
+  status: string;
+  notes?: string;
+  treatment_type?: string;
+}
+
+interface ClinicSettings {
+  work_start_time: string;
+  work_end_time: string;
+  work_days: string[];
+}
+
 export default function AppointmentCalendar() {
-  const [viewMode, setViewMode] = useState<ViewMode>('weekly');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    return (localStorage.getItem('calendarViewMode') as ViewMode) || 'weekly';
+  });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const hours = Array.from({ length: 10 }, (_, i) => i + 9); // 09:00 - 18:00
-  
+  // Clinic settings driven hours
+  const [startHour, setStartHour] = useState(9);
+  const [endHour, setEndHour] = useState(18);
+  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5, 6]);
+
+  // Load clinic settings once
+  useEffect(() => {
+    fetchClinicSettings()
+      .then((settings: ClinicSettings) => {
+        if (settings.work_start_time) {
+          setStartHour(parseInt(settings.work_start_time.split(':')[0], 10));
+        }
+        if (settings.work_end_time) {
+          setEndHour(parseInt(settings.work_end_time.split(':')[0], 10));
+        }
+        if (settings.work_days && settings.work_days.length > 0) {
+          setWorkDays(settings.work_days.map(Number));
+        }
+      })
+      .catch(() => {
+        // Fallback defaults already set
+      });
+  }, []);
+
+  const hours = Array.from({ length: endHour - startHour }, (_, i) => i + startHour);
+
   const getWeekDays = () => {
-    const days = [];
+    const days: Date[] = [];
     const current = new Date(selectedDate);
-    current.setDate(current.getDate() - current.getDay() + 1); // Monday
-    
-    for (let i = 0; i < 5; i++) {
-      days.push(new Date(current));
+    // Go to Monday of this week
+    const dayOfWeek = current.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    current.setDate(current.getDate() + diff);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(current);
+      // JS getDay: 0=Sun, 1=Mon... our workDays: 1=Mon,...6=Sat, 0=Sun
+      const jsDay = d.getDay();
+      const mapped = jsDay === 0 ? 0 : jsDay; // 0=Sun, 1=Mon match
+      if (workDays.includes(mapped)) {
+        days.push(d);
+      }
       current.setDate(current.getDate() + 1);
     }
     return days;
@@ -38,39 +88,94 @@ export default function AppointmentCalendar() {
 
   const weekDays = getWeekDays();
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  const formatTime = (hour: number) => `${hour.toString().padStart(2, '0')}:00`;
 
   const formatDisplayDate = (date: Date) => {
-    return new Intl.DateTimeFormat('tr-TR', { 
+    return new Intl.DateTimeFormat('tr-TR', {
       day: 'numeric',
       month: 'short',
-      weekday: 'short' 
+      weekday: 'short',
     }).format(date);
   };
 
+  const loadAppointments = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const daysToFetch = viewMode === 'weekly' ? weekDays : [selectedDate];
+      const all: Appointment[] = [];
+      for (const day of daysToFetch) {
+        const data = await fetchAppointments(formatDate(day));
+        all.push(...data);
+      }
+      setAppointments(all);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Randevular yüklenemedi');
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, [selectedDate, viewMode, startHour, endHour]);
+
+  // Group appointments by the hour they fall under
   const getAppointmentsForSlot = (date: Date, hour: number) => {
     const dateStr = formatDate(date);
-    const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-    return mockAppointments.filter(
-      apt => apt.date === dateStr && apt.time === timeStr
-    );
+    return appointments.filter((apt) => {
+      if (apt.date !== dateStr) return false;
+      const aptHour = parseInt(apt.time.split(':')[0], 10);
+      return aptHour === hour;
+    });
   };
 
   const handleSlotClick = (date: Date, hour: number) => {
     setSelectedSlot({
       date: formatDate(date),
-      time: `${hour.toString().padStart(2, '0')}:00`
+      time: formatTime(hour),
     });
     setIsDialogOpen(true);
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
+  const handleAppointmentClick = (apt: Appointment) => {
+    setSelectedAppointment(apt);
+    setDetailDialogOpen(true);
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+    const amount = viewMode === 'daily' ? 1 : 7;
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? amount : -amount));
     setSelectedDate(newDate);
   };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 border-green-300 text-green-900';
+      case 'cancelled': return 'bg-red-100 border-red-300 text-red-900';
+      case 'no_show': return 'bg-orange-100 border-orange-300 text-orange-900';
+      default: return 'bg-blue-100 border-blue-300 text-blue-900';
+    }
+  };
+
+  const renderAppointmentCard = (apt: Appointment, compact: boolean = false) => (
+    <div
+      key={apt.id}
+      className={`${getStatusColor(apt.status)} border rounded p-1.5 mb-1 text-xs hover:opacity-80 transition-opacity cursor-pointer`}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleAppointmentClick(apt);
+      }}
+    >
+      <div className="font-medium truncate">{apt.patient_name}</div>
+      {!compact && (
+        <div className="text-[11px] opacity-75">{apt.time.substring(0, 5)}</div>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -81,14 +186,14 @@ export default function AppointmentCalendar() {
             <Button
               variant={viewMode === 'daily' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setViewMode('daily')}
+              onClick={() => { setViewMode('daily'); localStorage.setItem('calendarViewMode', 'daily'); }}
             >
               Günlük
             </Button>
             <Button
               variant={viewMode === 'weekly' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setViewMode('weekly')}
+              onClick={() => { setViewMode('weekly'); localStorage.setItem('calendarViewMode', 'weekly'); }}
             >
               Haftalık
             </Button>
@@ -99,24 +204,35 @@ export default function AppointmentCalendar() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>
-            {viewMode === 'weekly' 
-              ? `${formatDisplayDate(weekDays[0])} - ${formatDisplayDate(weekDays[4])}`
-              : formatDisplayDate(selectedDate)
-            }
+            {viewMode === 'weekly' && weekDays.length >= 2
+              ? `${formatDisplayDate(weekDays[0])} - ${formatDisplayDate(weekDays[weekDays.length - 1])}`
+              : formatDisplayDate(selectedDate)}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => navigateWeek('prev')}>
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedDate(new Date())}
+            >
               Bugün
             </Button>
-            <Button variant="outline" size="icon" onClick={() => navigateWeek('next')}>
-              <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" size="icon" onClick={() => navigateDate('next')}>
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+          {loading && (
+            <div className="text-center py-4 text-gray-500 text-sm">Yükleniyor...</div>
+          )}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
           {viewMode === 'weekly' ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -131,69 +247,80 @@ export default function AppointmentCalendar() {
                   </tr>
                 </thead>
                 <tbody>
-                  {hours.map((hour) => (
-                    <tr key={hour}>
-                      <td className="border p-2 bg-gray-50 text-center text-sm sticky left-0 z-10">
-                        {hour.toString().padStart(2, '0')}:00
-                      </td>
-                      {weekDays.map((day, idx) => {
-                        const appointments = getAppointmentsForSlot(day, hour);
-                        return (
-                          <td
-                            key={idx}
-                            className="border p-1 h-20 align-top cursor-pointer hover:bg-gray-50 transition-colors"
-                            onClick={() => handleSlotClick(day, hour)}
-                          >
-                            {appointments.map((apt) => (
-                              <div
-                                key={apt.id}
-                                className="bg-blue-100 border border-blue-300 rounded p-2 mb-1 text-sm hover:bg-blue-200 transition-colors"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="text-blue-900">{apt.patient}</div>
-                                <div className="text-xs text-blue-700">{apt.phone}</div>
-                              </div>
-                            ))}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                  {hours.map((hour) => {
+                    // Find max appointments in any cell this row for dynamic height
+                    const maxInRow = Math.max(
+                      1,
+                      ...weekDays.map((day) => getAppointmentsForSlot(day, hour).length)
+                    );
+                    const rowMinHeight = Math.max(56, maxInRow * 40 + 8);
+
+                    return (
+                      <tr key={hour}>
+                        <td
+                          className="border p-2 bg-gray-50 text-center text-sm sticky left-0 z-10"
+                          style={{ minHeight: `${rowMinHeight}px` }}
+                        >
+                          {formatTime(hour)}
+                        </td>
+                        {weekDays.map((day, idx) => {
+                          const slotAppointments = getAppointmentsForSlot(day, hour);
+                          return (
+                            <td
+                              key={idx}
+                              className="border p-1 align-top cursor-pointer hover:bg-gray-50 transition-colors"
+                              style={{ minHeight: `${rowMinHeight}px`, height: `${rowMinHeight}px` }}
+                              onClick={() => handleSlotClick(day, hour)}
+                            >
+                              {slotAppointments.map((apt) => renderAppointmentCard(apt, slotAppointments.length > 2))}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           ) : (
             <div className="space-y-2">
               {hours.map((hour) => {
-                const appointments = getAppointmentsForSlot(selectedDate, hour);
+                const slotAppointments = getAppointmentsForSlot(selectedDate, hour);
                 return (
                   <div
                     key={hour}
                     className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    style={{ minHeight: slotAppointments.length > 1 ? `${slotAppointments.length * 52 + 16}px` : undefined }}
                     onClick={() => handleSlotClick(selectedDate, hour)}
                   >
-                    <div className="w-20 shrink-0 text-gray-600">
-                      {hour.toString().padStart(2, '0')}:00
-                    </div>
+                    <div className="w-20 shrink-0 text-gray-600">{formatTime(hour)}</div>
                     <div className="flex-1">
-                      {appointments.length > 0 ? (
-                        appointments.map((apt) => (
+                      {slotAppointments.length > 0 ? (
+                        slotAppointments.map((apt) => (
                           <div
                             key={apt.id}
-                            className="bg-blue-100 border border-blue-300 rounded p-3 mb-2"
-                            onClick={(e) => e.stopPropagation()}
+                            className={`${getStatusColor(apt.status)} border rounded p-3 mb-2 cursor-pointer hover:opacity-80`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAppointmentClick(apt);
+                            }}
                           >
-                            <div className="text-blue-900">{apt.patient}</div>
-                            <div className="text-sm text-blue-700">{apt.phone}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{apt.patient_name}</span>
+                              <span className="text-sm opacity-75">{apt.time.substring(0, 5)}</span>
+                            </div>
+                             <div className="text-sm opacity-75">{apt.patient_phone}</div>
+                             {(apt.treatment_type || apt.notes) && (
+                               <div className="text-xs mt-1 opacity-60 truncate max-w-lg italic">
+                                 {apt.treatment_type || apt.notes}
+                               </div>
+                             )}
                           </div>
                         ))
                       ) : (
                         <div className="text-gray-400 text-sm">Boş</div>
                       )}
                     </div>
-                    <Button size="sm" variant="ghost">
-                      <Plus className="h-4 w-4" />
-                    </Button>
                   </div>
                 );
               })}
@@ -206,6 +333,14 @@ export default function AppointmentCalendar() {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         selectedSlot={selectedSlot}
+        onSuccess={loadAppointments}
+      />
+      
+      <AppointmentDetailDialog
+        isOpen={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        appointment={selectedAppointment}
+        onUpdated={loadAppointments}
       />
     </div>
   );

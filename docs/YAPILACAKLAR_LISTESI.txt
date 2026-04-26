@@ -7,91 +7,161 @@ Her maddenin yanında sorumlu kişi belirtilmiştir.
 FAZ 1: TEMEL ALTYAPI
 ================================================================================
 
-1.  Sanal ortam oluşturma ve bağımlılıkları yükleme (venv, pip install)          [Şükrü]
-2.  CustomUser modeli oluşturma (AbstractUser, role alanı)                       [Yaman]
-3.  settings.py'da AUTH_USER_MODEL = 'api.CustomUser' ayarlama                  [Yaman]
-4.  INSTALLED_APPS'da api'yi admin'den önce sıralama                            [Yaman]
-5.  python manage.py makemigrations ve migrate çalıştırma                       [Yaman]
-6.  djangorestframework-simplejwt kurulumu (requirements.txt'ta var)             [Ali]
-7.  JWT token endpoint'leri (auth/token, auth/token/refresh) ekleme              [Ali]
-8.  REST_FRAMEWORK ayarları (JWT auth, permission)                              [Ali]
-9.  POST /api/auth/token/ ile giriş testi                                       [Ali]
+1.  Sanal ortam oluşturma ve bağımlılıkları yükleme (venv, pip install)          [Şükrü]    [TAMAMLANDI]
+2.  CustomUser modeli oluşturma (AbstractUser, role alanı)                       [Yaman]    [TAMAMLANDI]
+3.  settings.py'da AUTH_USER_MODEL = 'api.CustomUser' ayarlama                  [Yaman]    [TAMAMLANDI]
+4.  INSTALLED_APPS'da api'yi admin'den önce sıralama                            [Yaman]    [TAMAMLANDI]
+5.  python manage.py makemigrations ve migrate çalıştırma                       [Yaman]    [TAMAMLANDI]
+6.  djangorestframework-simplejwt kurulumu (requirements.txt'ta var)             [Ali]      [TAMAMLANDI]
+7.  JWT token endpoint'leri (auth/token, auth/token/refresh) ekleme              [Ali]      [TAMAMLANDI]
+8.  REST_FRAMEWORK ayarları (JWT auth, permission)                              [Ali]      [TAMAMLANDI]
+9.  POST /api/auth/token/ ile giriş testi                                       [Ali]      [TAMAMLANDI]
 
 ================================================================================
 FAZ 2: VERİ MODELLERİ
 ================================================================================
 
-10. Patient (Hasta) modeli oluşturma                                            [Yaman]
-11. Anamnesis (Anamnez) modeli oluşturma                                        [Yaman]
-12. Appointment (Randevu) modeli oluşturma                                      [Yaman/Ali]
-13. TreatmentType (Tedavi Türü) modeli oluşturma                                [Yaman]
-14. Treatment (Tedavi) modeli oluşturma                                         [Yaman]
-15. ClinicSettings (Klinik Ayarları) modeli oluşturma                           [Şükrü]
-16. Payment (Ödeme) modeli oluşturma                                            [Cihan]
-17. Tüm modeller için makemigrations ve migrate                                 [Yaman]
+10. Patient (Hasta) modeli oluşturma                                            [Yaman]    [TAMAMLANDI]
+11. Anamnesis (Anamnez) modeli oluşturma                                        [Yaman]    [TAMAMLANDI]
+12. Appointment (Randevu) modeli oluşturma                                      [Yaman/Ali][TAMAMLANDI]
+13. TreatmentType (Tedavi Türü) modeli oluşturma                                [Yaman]    [TAMAMLANDI]
+14. Treatment (Tedavi) modeli oluşturma                                         [Yaman]    [TAMAMLANDI]
+15. ClinicSettings (Klinik Ayarları) modeli oluşturma                           [Şükrü]   [TAMAMLANDI]
+16. Payment (Ödeme) modeli oluşturma                                            [Cihan]   [TAMAMLANDI]
+17. Tüm modeller için makemigrations ve migrate                                 [Yaman]   [TAMAMLANDI]
 
 ================================================================================
 FAZ 3: API UÇ NOKTALARI
 ================================================================================
 
-18. api/urls.py oluşturma ve core/urls.py'da include                           [Ali]
-19. PatientSerializer ve PatientViewSet                                         [Ali]
-20. GET /api/patients/ ve POST /api/patients/ endpoint'leri                     [Ali]
-21. GET /api/patients/{id}/ ve PUT /api/patients/{id}/                          [Ali]
-22. Patient arama (search parametresi, F-004)                                   [Ali]
-23. AppointmentSerializer ve AppointmentViewSet                                 [Ali]
-24. GET /api/appointments/ ve POST /api/appointments/                           [Ali]
-25. Randevu çakışma kontrolü (F-008, validate)                                  [Yaman/Ali]
-26. Randevu durumu güncelleme (İptal, Tamamlandı, Gelmedi)                      [Ali]
-27. TreatmentTypeSerializer ve ViewSet (Admin için)                             [Yaman]
-28. TreatmentSerializer ve TreatmentViewSet                                     [Yaman]
-29. GET /api/treatments/?patient= hastaya göre filtreleme                       [Yaman]
-30. ClinicSettings API (GET, PUT)                                               [Şükrü]
-31. Dashboard API - bugünün randevuları (GET /api/dashboard/today/)             [Cihan]
-32. PaymentSerializer ve PaymentViewSet                                         [Cihan]
-33. İzin kontrolleri (IsAuthenticated, rol bazlı)                               [Ali/Yaman]
+18. api/urls.py oluşturma ve core/urls.py'da include                           [Ali]      [TAMAMLANDI]
+19. PatientSerializer ve PatientViewSet                                         [Ali]      [TAMAMLANDI]
+20. GET /api/patients/ ve POST /api/patients/ endpoint'leri                     [Ali]      [TAMAMLANDI]
+21. GET /api/patients/{id}/ ve PUT /api/patients/{id}/                          [Ali]      [TAMAMLANDI]
+22. Patient arama (search parametresi, F-004)                                   [Ali]      [TAMAMLANDI]
+23. AppointmentSerializer ve AppointmentViewSet                                 [Ali]      [TAMAMLANDI]
+24. GET /api/appointments/ ve POST /api/appointments/                           [Ali]      [TAMAMLANDI]
+25. Randevu çakışma kontrolü (F-008, validate)                                  [Yaman/Ali][TAMAMLANDI]
+26. Randevu durumu güncelleme (İptal, Tamamlandı, Gelmedi)                      [Ali]      [TAMAMLANDI]
+27. TreatmentTypeSerializer ve ViewSet (Admin için)                             [Yaman]    [TAMAMLANDI]
+28. TreatmentSerializer ve TreatmentViewSet                                     [Yaman]    [TAMAMLANDI]
+29. GET /api/treatments/?patient= hastaya göre filtreleme                       [Yaman]    [TAMAMLANDI]
+30. ClinicSettings API (GET, PUT)                                               [Şükrü]   [TAMAMLANDI]
+31. Dashboard API - bugünün randevuları (GET /api/dashboard/today/)             [Cihan]   [TAMAMLANDI]
+32. PaymentSerializer ve PaymentViewSet                                         [Cihan]   [TAMAMLANDI]
+33. İzin kontrolleri (IsAuthenticated, rol bazlı)                               [Ali/Yaman][TAMAMLANDI]
 
 ================================================================================
 FAZ 4: FRONTEND ENTEGRASYONU
 ================================================================================
 
-34. Frontend'de api servis katmanı (axios/fetch, baseURL, JWT header)           [Ali]
-35. LoginPage - gerçek API ile giriş (POST /api/auth/token/)                    [Ali]
-36. Token saklama (localStorage) ve App.tsx'da auth durumu                      [Ali]
-37. PatientSearch - mock yerine GET /api/patients/?search=                      [Cihan]
-38. PatientDialog - mock yerine POST /api/patients/                             [Cihan]
-39. AppointmentCalendar - mock yerine GET /api/appointments/?date=              [Cihan]
-40. AppointmentDialog - mock yerine POST /api/appointments/                     [Cihan]
-41. PatientProfile - mock yerine GET /api/patients/{id}/                        [Cihan]
-42. Dashboard - mock yerine GET /api/dashboard/today/                           [Cihan]
-43. 401 hatasında login sayfasına yönlendirme                                   [Ali]
+34. Frontend'de api servis katmanı (axios/fetch, baseURL, JWT header)           [Ali]      [TAMAMLANDI]
+35. LoginPage - gerçek API ile giriş (POST /api/auth/token/)                    [Ali]      [TAMAMLANDI]
+36. Token saklama (localStorage) ve App.tsx'da auth durumu                      [Ali]      [TAMAMLANDI]
+37. PatientSearch - mock yerine GET /api/patients/?search=                      [Cihan]   [TAMAMLANDI]
+38. PatientDialog - mock yerine POST /api/patients/                             [Cihan]   [TAMAMLANDI]
+39. AppointmentCalendar - mock yerine GET /api/appointments/?date=              [Cihan]   [TAMAMLANDI]
+40. AppointmentDialog - mock yerine POST /api/appointments/                     [Cihan]   [TAMAMLANDI]
+41. PatientProfile - mock yerine GET /api/patients/{id}/                        [Cihan]   [TAMAMLANDI]
+42. Dashboard - mock yerine GET /api/dashboard/today/                           [Cihan]   [TAMAMLANDI]
+43. 401 hatasında login sayfasına yönlendirme                                   [Ali]      [TAMAMLANDI]
 
 ================================================================================
-FAZ 5: EK ÖZELLİKLER VE GÜVENLİK
+FAZ 5: RANDEVU OLUŞTURMA İYİLEŞTİRMELERİ
 ================================================================================
 
-44. Admin paneli - tüm modelleri kaydetme                                       [Şükrü]
-45. İlk superuser oluşturma (createsuperuser)                                   [Şükrü]
-46. Document (Doküman) modeli ve dosya yükleme (F-016)                          [Cihan]
-47. MEDIA_ROOT, MEDIA_URL ayarları                                              [Cihan]
-48. KVKK - hassas veri şifreleme (opsiyonel, ileriki aşama)                     [Yaman]
-49. CORS ve ALLOWED_HOSTS production ayarları                                   [Şükrü]
-50. docker-compose.yml (Django + PostgreSQL)                                    [Şükrü]
-51. .env dosyası ile ortam değişkenleri                                         [Şükrü]
+54. Patient arama filtresine TC kimlik numarası ekleme (backend)                [Ali]      [TAMAMLANDI]
+    - PatientViewSet.get_queryset() içine tckn__icontains filtresi eklendi
+55. Hasta listesi sonuçlarını alfabetik sıraya dizme (last_name, first_name)    [Ali]      [TAMAMLANDI]
+56. AppointmentDialog - Hasta seçimi canlı arama input'una çevrildi             [Ali]      [TAMAMLANDI]
+    - Ad, soyad, telefon ve TC no ile arama destekleniyor
+    - 300ms debounce ile optimize edilmiş anlık arama
+    - Dropdown: hasta adı + telefon + TC no gösterimi
+57. AppointmentDialog - Hekim dropdown'u alfabetik sıralı                      [Ali]      [TAMAMLANDI]
+58. AppointmentDialog - İşlem alanı serbest text yerine TreatmentType          [Ali]      [TAMAMLANDI]
+    dropdown'una çevrildi (GET /api/treatment-types/)
+59. TreatmentType seed data - 56 diş kliniği işlem türü eklendi                [Ali]      [TAMAMLANDI]
+    - Muayene, Röntgen, Dolgu, Kanal Tedavisi, Protez, İmplant,
+      Çekim, Ortodonti, Pedodonti, Kozmetik vb. tüm kategoriler
+60. fetchTreatmentTypes() fonksiyonu api.ts'e eklendi                          [Ali]      [TAMAMLANDI]
+61. TreatmentTypeViewSet - is_active filtresi + alfabetik sıralama             [Ali]      [TAMAMLANDI]
 
 ================================================================================
-TEST VE DOKÜMANTASYON
+FAZ 6: MİMARİ, GÜVENLİK VE UX İYİLEŞTİRMELERİ
 ================================================================================
 
-52. API unit testleri yazma                                                     [Tüm ekip]
-53. README güncelleme - backend kurulum talimatları                             [Şükrü/Ali]
+62. Çoklu Klinik (Multi-Tenancy) altyapısı ve Data Migration                   [Ekip]     [TAMAMLANDI]
+63. Sinyaller (signals.py) ile Otomatik Yetki Grubu (Group) Atamaları           [Ekip]     [TAMAMLANDI]
+64. Rol bazlı API güvenliği (IsAdminUser, IsAdminOrDoctorUser DRF Perms)        [Ekip]     [TAMAMLANDI]
+65. API sayfalandırma (Pagination) entegrasyonu (Backend & Frontend API)        [Ekip]     [TAMAMLANDI]
+66. Frontend & Backend genelinde Türkçe dil, timezone ve hata mesajı adaptasyonu[Ekip]     [TAMAMLANDI]
+67. Hasta profili düzenleme yeteneği (PatientDialog Edit Mode)                  [Ekip]     [TAMAMLANDI]
+68. Randevu takviminde oklarla gün/hafta bazlı dinamik dolaşım                  [Ekip]     [TAMAMLANDI]
+69. Randevu saati oluştururken spesifik dakika seçimi (type="time")             [Ekip]     [TAMAMLANDI]
+70. Takvimde randevuya tıklandığında Randevu Detayı Pop-up ekranı               [Ekip]     [TAMAMLANDI]
+71. Varsayılan klinik oluşturma + tüm mevcut verileri kliniğe bağlama          [Ali]      [TAMAMLANDI]
+    - Yaşca Dental Klinik oluşturuldu; mevcut user/patient/appointment
+      verilerinin tamamı bu kliniğe migrate edildi
+72. seed_treatment_types.py → klinike bağlı çalışacak şekilde güncellendi     [Ali]      [TAMAMLANDI]
+73. AppointmentDialog: duration alanı (silinmiş model alanı) payload'dan kaldırıldı [Ali]  [TAMAMLANDI]
+
+================================================================================
+FAZ 7: HASTA PROFİLİ & ÖDEME MODÜLÜ
+================================================================================
+
+74. TreatmentAddDialog.tsx bileşeni oluşturuldu                                 [Ali]      [TAMAMLANDI]
+    - Tarih, hekim, işlem türü (dropdown), özel işlem adı, diş no (FDI),
+      durum (Tamamlandı/Yapılacak), notlar alanları
+75. PaymentDialog.tsx bileşeni oluşturuldu                                     [Ali]      [TAMAMLANDI]
+    - Tutar, ödeme tarihi, açıklama alanları
+76. PatientProfile'a "Tedavi Geçmişi" sekmesine Tedavi Ekle butonu eklendi     [Ali]      [TAMAMLANDI]
+    - Tedavi kartlarına durum badge'i eklendi (Tamamlandı / Yapılacak)
+77. PatientProfile'a "Ödemeler" sekmesi eklendi                                [Ali]      [TAMAMLANDI]
+    - Toplam ödeme özeti kartı
+    - Ödeme listesi (tutar, tarih, açıklama)
+    - Ödeme Ekle butonu
+78. api.ts: createTreatment(), fetchPayments(), createPayment(),               [Ali]      [TAMAMLANDI]
+    updateClinicSettings() fonksiyonları eklendi
+
+================================================================================
+FAZ 8: KLİNİK AYARLARI SAYFASI
+================================================================================
+
+79. ClinicSettingsPage.tsx bileşeni oluşturuldu                                [Ali]      [TAMAMLANDI]
+    - Çalışma saatleri (başlangıç / bitiş)
+    - Çalışma günleri seçimi (toggle butonlar)
+    - Admin: düzenleyebilir; Diğer roller: sadece görüntüleyebilir
+    - Çalışma özeti metni
+80. Layout.tsx: "Klinik Ayarları" menü öğesi eklendi (dişli icon)             [Ali]      [TAMAMLANDI]
+81. App.tsx: /ayarlar route'u ve ClinicSettingsPage bağlandı                  [Ali]      [TAMAMLANDI]
+
+================================================================================
+FAZ 9: EK ÖZELLİKLER VE PRODUCTION HAZIRLIĞI (BEKLEYEN)
+================================================================================
+
+82. Document (Doküman) modeli ve dosya yükleme (F-016)                         [Cihan]    [TAMAMLANDI]
+    - Hasta profili Dokümanlar tab'ı eklendi.
+    - MEDIA_ROOT, MEDIA_URL ayarları yapıldı.
+83. DentalChart interaktif hale getirme                                        [Yaman]    [TAMAMLANDI]
+    - Dişe tıkla → Tedavi ekle dialog
+84. API unit testleri yazma                                                    [Tüm ekip]
+85. KVKK - hassas veri şifreleme (opsiyonel, ileriki aşama)                   [Yaman]
+86. SECRET_KEY → .env dosyasına taşıma                                        [Şükrü]
+87. ALLOWED_HOSTS production ayarları                                         [Şükrü]
+88. docker-compose.yml (Django + PostgreSQL)                                   [Şükrü]
 
 ================================================================================
 ÖZET - KİŞİ BAZLI GÖREV SAYILARI
 ================================================================================
-Ali      : Faz 1 (JWT), Faz 3 (Patient, Appointment API), Faz 4 (entegrasyon)
+Ali      : Faz 1 (JWT), Faz 3 (Patient, Appointment API), Faz 4 (entegrasyon),
+           Faz 5 (randevu iyileştirmeleri, hasta arama, işlem dropdown),
+           Faz 6 (tenant fix, seed, duration fix),
+           Faz 7 (tedavi/ödeme modülü), Faz 8 (klinik ayarları sayfası)
 Yaman    : CustomUser, tüm modeller, Treatment API, validasyonlar
 Cihan    : Payment, Dashboard, Document, Frontend API bağlantıları
 Şükrü    : ClinicSettings, Admin, Docker, ortam, dağıtım
+Ekip     : Multi-tenancy, güvenlik, UX iyileştirmeleri
 
+================================================================================
+SON GÜNCELLEME: 2026-04-06
 ================================================================================

@@ -1,0 +1,35 @@
+@startuml
+title Dis Klinigi - Hasta Kaydi ve Anamnez Guncelleme
+
+actor "Asistan / Hekim" as Staff
+boundary "PatientDialog / PatientProfile (UI)" as PatientUI
+boundary "api.ts Patient Service" as ApiService
+control "PatientViewSet" as PatientController
+control "PatientSerializer" as PatientSerializer
+entity "Patient" as Patient
+entity "Anamnesis" as Anamnesis
+
+Staff -> PatientUI : yeni hasta bilgilerini gir
+PatientUI -> ApiService : createPatient(payload)
+ApiService -> PatientController : POST /api/patients/
+PatientController -> PatientSerializer : validate(data)
+PatientSerializer -> Patient : create(...)
+alt anamnesis verisi varsa
+  PatientSerializer -> Anamnesis : create(patient,...)
+end
+PatientSerializer --> PatientController : patient DTO
+PatientController --> ApiService : 201 Created
+ApiService --> PatientUI : hasta olustu
+
+Staff -> PatientUI : anamnez alanlarini guncelle
+PatientUI -> ApiService : updatePatient(id,payload)
+ApiService -> PatientController : PUT /api/patients/{id}/
+PatientController -> PatientSerializer : update(instance,data)
+PatientSerializer -> Patient : save()
+PatientSerializer -> Anamnesis : get_or_create(patient)
+PatientSerializer -> Anamnesis : save()
+PatientSerializer --> PatientController : guncel patient DTO
+PatientController --> ApiService : 200 OK
+ApiService --> PatientUI : profil yenile
+
+@enduml

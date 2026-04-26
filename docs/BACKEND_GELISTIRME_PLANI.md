@@ -11,11 +11,11 @@ Bu doküman, frontend tamamlandıktan sonra backend geliştirme sürecinde izlen
 | Django projesi | ✅ Oluşturulmuş (`backend/`) |
 | DRF + CORS | ✅ Yapılandırılmış |
 | `api` uygulaması | ✅ Oluşturulmuş |
-| Models | ❌ Boş |
-| Views/API | ❌ Boş |
-| JWT Kimlik Doğrulama | ❌ Yok |
-| URL routing | ❌ Sadece admin |
-| Veritabanı | SQLite (geliştirme) → PostgreSQL (prod) |
+| Models | ✅ Oluşturulmuş (Hasta, Randevu, Klinik vb. Multi-tenant) |
+| Views/API | ✅ Oluşturulmuş (Sayfalandırma ve Filtreler dahil) |
+| JWT Kimlik Doğrulama | ✅ Aktif (Rol bazlı yetkilendirme ile) |
+| URL routing | ✅ Tamamlandı |
+| Veritabanı | SQLite (Geliştirme) / PostgreSQL'e göçe hazır |
 
 ---
 
@@ -338,24 +338,23 @@ python manage.py migrate
 
 ## 7. Hızlı Başlangıç Komutları
 
+Geliştirme sürecini hızlandırmak için ana dizinde bulunan scripti kullanabilirsiniz:
+
 ```bash
-# Backend dizinine geç
+# Proje ana dizininden:
+.\start-dev.ps1
+```
+
+*(Bu komut hem frontend hem backend sunucularını aynı anda iki ayrı terminal penceresinde başlatır.)*
+
+Manuel olarak sadece backend'i başlatmak isterseniz:
+```bash
 cd backend
-
-# Sanal ortam aktifleştir (Windows)
 .\venv\Scripts\activate
-
-# Bağımlılıkları yükle
 pip install -r requirements.txt
-
-# Migrasyonlar
 python manage.py makemigrations
 python manage.py migrate
-
-# Superuser oluştur
 python manage.py createsuperuser
-
-# Sunucuyu başlat
 python manage.py runserver
 # http://localhost:8000
 ```

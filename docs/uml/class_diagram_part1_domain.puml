@@ -1,0 +1,118 @@
+@startuml
+title Dis Klinigi - Sinif Diyagrami (Parca 1/2: Domain Entities)
+hide empty members
+skinparam classAttributeIconSize 0
+left to right direction
+
+package "Domain Entities" {
+  class Clinic {
+    +id: int
+    +name: string
+    +address: text
+    +phone: string
+    +created_at: datetime
+  }
+
+  class CustomUser {
+    +id: int
+    +username: string
+    +first_name: string
+    +last_name: string
+    +role: enum(admin,doctor,assistant)
+    +clinic: Clinic
+    +is_hekim: bool
+    +is_asistan: bool
+    +is_yonetici: bool
+  }
+
+  class Patient {
+    +id: int
+    +first_name: string
+    +last_name: string
+    +full_name: string
+    +phone: string
+    +tckn: string
+    +birth_date: date
+    +address: text
+    +notes: text
+    +created_at: datetime
+    +updated_at: datetime
+  }
+
+  class Anamnesis {
+    +id: int
+    +medical_history: text
+    +allergies: text
+    +medications: text
+    +chronic_diseases: text
+    +surgical_history: text
+    +family_history: text
+    +smoking: string
+    +alcohol: string
+    +pregnancy_status: string
+    +other_notes: text
+  }
+
+  class Appointment {
+    +id: int
+    +date: date
+    +time: time
+    +status: enum(scheduled,completed,cancelled,no_show)
+    +notes: text
+    +treatment_type: string
+    +created_at: datetime
+    +updated_at: datetime
+  }
+
+  class TreatmentType {
+    +id: int
+    +name: string
+    +default_price: decimal
+    +is_active: bool
+  }
+
+  class Treatment {
+    +id: int
+    +treatment_name: string
+    +tooth_number: string
+    +status: enum(planned,completed)
+    +notes: text
+    +date: date
+    +created_at: datetime
+  }
+
+  class Payment {
+    +id: int
+    +amount: decimal
+    +description: string
+    +payment_date: date
+    +created_at: datetime
+  }
+
+  class ClinicSettings {
+    +id: int
+    +work_start_time: time
+    +work_end_time: time
+    +work_days: JSON[]
+    +get_settings(clinic): ClinicSettings
+  }
+}
+
+Clinic "1" o-- "0..*" CustomUser : users
+Clinic "1" o-- "0..*" Patient : patients
+Clinic "1" o-- "0..*" Appointment : appointments
+Clinic "1" o-- "0..*" TreatmentType : treatment_types
+Clinic "1" o-- "0..*" Treatment : treatments
+Clinic "1" o-- "0..*" Payment : payments
+Clinic "1" *-- "1" ClinicSettings : settings
+
+Patient "1" *-- "0..1" Anamnesis : anamnesis
+Patient "1" o-- "0..*" Appointment : appointments
+Patient "1" o-- "0..*" Treatment : treatments
+Patient "1" o-- "0..*" Payment : payments
+
+CustomUser "1" o-- "0..*" Appointment : doctor
+CustomUser "1" o-- "0..*" Treatment : doctor
+TreatmentType "1" o-- "0..*" Treatment : type
+
+@enduml

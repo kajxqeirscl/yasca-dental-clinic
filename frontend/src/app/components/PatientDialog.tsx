@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,53 +10,145 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { createPatient, updatePatient } from '../services/api';
 
 interface PatientDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
+  patientId?: number;
+  initialData?: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    tckn?: string;
+    birth_date?: string | null;
+    address?: string;
+    notes?: string;
+  };
 }
 
-export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
+export default function PatientDialog({
+  isOpen,
+  onClose,
+  onSuccess,
+  patientId,
+  initialData,
+}: PatientDialogProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    surname: '',
+    first_name: '',
+    last_name: '',
     phone: '',
     tckn: '',
-    birthDate: '',
+    birth_date: '',
     address: '',
     notes: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          first_name: initialData.first_name || '',
+          last_name: initialData.last_name || '',
+          phone: initialData.phone || '',
+          tckn: initialData.tckn || '',
+          birth_date: initialData.birth_date || '',
+          address: initialData.address || '',
+          notes: initialData.notes || '',
+        });
+      } else {
+        setFormData({
+          first_name: '', last_name: '', phone: '', tckn: '', birth_date: '', address: '', notes: ''
+        });
+      }
+      setError('');
+    }
+  }, [isOpen, initialData]);
 
-  const handleSave = () => {
-    console.log('Saving patient:', formData);
+  const handleSave = async () => {
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.phone.trim()) {
+      setError('Ad, Soyad ve Telefon zorunludur.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const payload = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        phone: formData.phone.trim(),
+        tckn: formData.tckn || undefined,
+        birth_date: formData.birth_date || undefined,
+        address: formData.address || undefined,
+        notes: formData.notes || undefined,
+      };
+
+      if (patientId) {
+        await updatePatient(patientId.toString(), payload as any);
+      } else {
+        await createPatient(payload);
+      }
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Hasta eklenemedi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setError('');
+      setFormData({
+        first_name: '',
+        last_name: '',
+        phone: '',
+        tckn: '',
+        birth_date: '',
+        address: '',
+        notes: '',
+      });
+    }
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Yeni Hasta Ekle</DialogTitle>
+          <DialogTitle>{patientId ? 'Hastayı Düzenle' : 'Yeni Hasta Ekle'}</DialogTitle>
           <DialogDescription>
             Hasta bilgilerini girin ve kaydedin.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Ad</Label>
               <Input
                 id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.first_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, first_name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="surname">Soyad</Label>
               <Input
                 id="surname"
-                value={formData.surname}
-                onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
+                value={formData.last_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, last_name: e.target.value })
+                }
               />
             </div>
           </div>
@@ -69,7 +161,9 @@ export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
                 type="tel"
                 placeholder="0532 123 4567"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 required
               />
             </div>
@@ -81,7 +175,9 @@ export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
                 placeholder="12345678901"
                 maxLength={11}
                 value={formData.tckn}
-                onChange={(e) => setFormData({ ...formData, tckn: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, tckn: e.target.value })
+                }
               />
             </div>
           </div>
@@ -91,8 +187,10 @@ export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
             <Input
               id="birthDate"
               type="date"
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              value={formData.birth_date}
+              onChange={(e) =>
+                setFormData({ ...formData, birth_date: e.target.value })
+              }
             />
           </div>
 
@@ -101,7 +199,9 @@ export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
             <Textarea
               id="address"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
               rows={2}
             />
           </div>
@@ -112,17 +212,19 @@ export default function PatientDialog({ isOpen, onClose }: PatientDialogProps) {
               id="notes"
               placeholder="Alerji, kronik hastalık vb."
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
               rows={3}
             />
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             İptal
           </Button>
-          <Button onClick={handleSave}>
-            Kaydet
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? 'Kaydediliyor...' : 'Kaydet'}
           </Button>
         </div>
       </DialogContent>

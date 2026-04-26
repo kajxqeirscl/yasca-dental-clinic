@@ -1,0 +1,26 @@
+@startuml
+title Dis Klinigi - Gunluk Dashboard Ozet Akisi
+
+actor "Klinik Personeli" as Staff
+boundary "Dashboard (UI)" as DashboardUI
+boundary "api.ts Dashboard Service" as ApiService
+control "DashboardView" as DashboardController
+entity "Appointment" as Appointment
+entity "Patient" as Patient
+control "AppointmentSerializer" as AppointmentSerializer
+
+Staff -> DashboardUI : ana paneli ac
+DashboardUI -> ApiService : fetchDashboardToday()
+ApiService -> DashboardController : GET /api/dashboard/today/
+DashboardController -> Appointment : filtrele(clinic,today,status!=cancelled)
+Appointment --> DashboardController : bugunun randevulari
+DashboardController -> Appointment : count(status=completed)
+Appointment --> DashboardController : tamamlanan sayi
+DashboardController -> Patient : count(clinic)
+Patient --> DashboardController : toplam hasta
+DashboardController -> AppointmentSerializer : serialize(appointments)
+AppointmentSerializer --> DashboardController : today_appointments[]
+DashboardController --> ApiService : today_total, today_completed, total_patients
+ApiService --> DashboardUI : kartlar + liste guncelle
+
+@enduml

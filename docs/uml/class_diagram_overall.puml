@@ -1,0 +1,21 @@
+@startuml
+title Dis Klinigi - Butunsel Sinif Diyagrami (2 Parca)
+hide empty members
+skinparam classAttributeIconSize 0
+
+rectangle "Parca 1/2\nclass_diagram_part1_domain.puml" as P1
+rectangle "Parca 2/2\nclass_diagram_part2_application.puml" as P2
+
+P1 -[hidden]- P2
+
+note bottom of P1
+Domain varliklari, nitelikler
+ve entity iliskileri
+end note
+
+note bottom of P2
+Boundary-Control siniflari,
+operasyonlar ve servis baglantilari
+end note
+
+@enduml

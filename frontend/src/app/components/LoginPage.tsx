@@ -3,20 +3,31 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginPageProps {
-  onLogin: (role: 'hekim' | 'asistan' | 'admin') => void;
-}
-
-export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [email, setEmail] = useState('');
+export default function LoginPage() {
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo login - asistan rolü ile giriş
-    onLogin('asistan');
+    setError('');
+    setIsLoading(true);
+    try {
+      await login(username, password);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Giriş başarısız';
+      if (msg.includes('No active account found') || msg.includes('Giriş başarısız')) {
+        setError('Giriş başarısız. Lütfen kullanıcı adı ve şifrenizi kontrol ediniz.');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -37,15 +48,21 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="email">E-posta</Label>
+              <Label htmlFor="username">Kullanıcı adı</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="ornek@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="Kullanıcı adınız"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -57,10 +74,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Giriş Yap
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
             </Button>
             <button
               type="button"
@@ -70,12 +92,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               Şifremi Unuttum
             </button>
           </form>
-          <div className="mt-6 p-3 bg-blue-50 rounded-md flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-            <p className="text-sm text-blue-900">
-              Demo: Herhangi bir e-posta ve şifre ile giriş yapabilirsiniz.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
