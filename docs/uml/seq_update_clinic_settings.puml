@@ -1,0 +1,38 @@
+@startuml
+title Dis Klinigi - Klinik Ayarlari Guncelleme
+
+actor "Yonetici (Admin)" as Admin
+boundary "ClinicSettingsPage (UI)" as SettingsUI
+boundary "api.ts Settings Service" as ApiService
+control "ClinicSettingsView" as SettingsController
+control "IsAdminUser" as AdminPermission
+control "ClinicSettingsSerializer" as SettingsSerializer
+entity "ClinicSettings" as Settings
+
+Admin -> SettingsUI : ayarlar ekranini ac
+SettingsUI -> ApiService : fetchClinicSettings()
+ApiService -> SettingsController : GET /api/settings/clinic/
+SettingsController -> Settings : get_settings(clinic)
+Settings --> SettingsController : mevcut ayarlar
+SettingsController --> ApiService : ayar DTO
+ApiService --> SettingsUI : formu doldur
+
+Admin -> SettingsUI : calisma saat/gunlerini degistir
+SettingsUI -> ApiService : updateClinicSettings(payload)
+ApiService -> SettingsController : PUT /api/settings/clinic/
+SettingsController -> AdminPermission : yetki kontrolu
+alt admin degil
+  AdminPermission --> SettingsController : yetkisiz
+  SettingsController --> ApiService : 403 Forbidden
+  ApiService --> SettingsUI : yetki hatasi
+else admin
+  AdminPermission --> SettingsController : izin verildi
+  SettingsController -> SettingsSerializer : validate(payload)
+  SettingsSerializer -> Settings : save()
+  Settings --> SettingsSerializer : guncel ayarlar
+  SettingsSerializer --> SettingsController : ayar DTO
+  SettingsController --> ApiService : 200 OK
+  ApiService --> SettingsUI : kayit basarili
+end
+
+@enduml

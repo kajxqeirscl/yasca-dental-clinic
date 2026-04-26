@@ -299,3 +299,34 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.amount} TL ({self.payment_date})"
+
+def patient_directory_path(instance, filename):
+    return 'patients/patient_{0}/{1}'.format(instance.patient.id, filename)
+
+class Document(models.Model):
+    """Hasta dosya ve dokümanları."""
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="documents",
+    )
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="documents"
+    )
+    name = models.CharField("Doküman Adı", max_length=255)
+    file = models.FileField("Dosya", upload_to=patient_directory_path)
+    uploaded_by = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Doküman"
+        verbose_name_plural = "Dokümanlar"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.patient.full_name})"
+

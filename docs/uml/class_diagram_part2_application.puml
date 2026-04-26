@@ -1,0 +1,101 @@
+@startuml
+title Dis Klinigi - Sinif Diyagrami (Parca 2/2: Uygulama Katmanlari)
+hide empty members
+skinparam classAttributeIconSize 0
+left to right direction
+
+package "Boundary (Frontend)" {
+  class LoginPage
+  class Dashboard
+  class PatientDialog
+  class PatientProfile
+  class AppointmentDialog
+  class ClinicSettingsPage
+  class ApiService {
+    +login(username,password)
+    +fetchCurrentUser()
+    +createPatient(data)
+    +updatePatient(id,data)
+    +createAppointment(data)
+    +createTreatment(data)
+    +createPayment(data)
+    +fetchDashboardToday()
+    +fetchClinicSettings()
+    +updateClinicSettings(data)
+  }
+}
+
+package "Control (Backend API)" {
+  class CurrentUserView {
+    +get(request): Response
+  }
+  class DoctorListView {
+    +get(request): Response
+  }
+  class DashboardView {
+    +get(request): Response
+  }
+  class ClinicSettingsView {
+    +get(request): Response
+    +put(request): Response
+  }
+  class PatientViewSet {
+    +get_queryset()
+    +perform_create(serializer)
+  }
+  class AppointmentViewSet {
+    +get_queryset()
+    +perform_create(serializer)
+  }
+  class TreatmentViewSet {
+    +get_queryset()
+    +perform_create(serializer)
+  }
+  class TreatmentTypeViewSet {
+    +get_queryset()
+    +perform_create(serializer)
+  }
+  class PaymentViewSet {
+    +get_queryset()
+    +perform_create(serializer)
+  }
+
+  class PatientSerializer {
+    +create(validated_data): Patient
+    +update(instance,validated_data): Patient
+  }
+  class AppointmentCreateSerializer {
+    +validate(data)
+  }
+  class TreatmentSerializer
+  class PaymentSerializer
+  class ClinicSettingsSerializer
+}
+
+package "Domain (Referenced)" {
+  class Patient
+}
+
+ApiService ..> CurrentUserView : GET /auth/me
+ApiService ..> PatientViewSet : POST/PUT /patients
+ApiService ..> DoctorListView : GET /doctors
+ApiService ..> AppointmentViewSet : POST /appointments
+ApiService ..> TreatmentViewSet : POST /treatments
+ApiService ..> PaymentViewSet : POST /payments
+ApiService ..> ClinicSettingsView : GET/PUT /settings/clinic
+ApiService ..> DashboardView : GET /dashboard/today
+
+PatientViewSet ..> PatientSerializer
+AppointmentViewSet ..> AppointmentCreateSerializer
+TreatmentViewSet ..> TreatmentSerializer
+PaymentViewSet ..> PaymentSerializer
+ClinicSettingsView ..> ClinicSettingsSerializer
+
+LoginPage ..> ApiService
+Dashboard ..> ApiService
+PatientDialog ..> ApiService
+PatientProfile ..> ApiService
+AppointmentDialog ..> ApiService
+ClinicSettingsPage ..> ApiService
+
+@enduml

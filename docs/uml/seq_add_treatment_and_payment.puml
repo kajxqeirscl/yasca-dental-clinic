@@ -1,0 +1,44 @@
+@startuml
+title Dis Klinigi - Tedavi ve Odeme Girisi
+
+actor "Hekim / Asistan" as Staff
+boundary "PatientProfile + Dialoglar (UI)" as ProfileUI
+boundary "api.ts Treatment/Payment Service" as ApiService
+control "TreatmentTypeViewSet" as TypeController
+control "TreatmentViewSet" as TreatmentController
+control "PaymentViewSet" as PaymentController
+control "TreatmentSerializer" as TreatmentSerializer
+control "PaymentSerializer" as PaymentSerializer
+entity "TreatmentType" as TreatmentType
+entity "Treatment" as Treatment
+entity "Payment" as Payment
+
+Staff -> ProfileUI : hasta profilini ac
+ProfileUI -> ApiService : fetchTreatmentTypes()
+ApiService -> TypeController : GET /api/treatment-types/
+TypeController -> TreatmentType : aktif tedavi tiplerini getir
+TreatmentType --> TypeController : tip listesi
+TypeController --> ApiService : 200 OK
+ApiService --> ProfileUI : tipleri doldur
+
+Staff -> ProfileUI : tedavi kaydet
+ProfileUI -> ApiService : createTreatment(payload)
+ApiService -> TreatmentController : POST /api/treatments/
+TreatmentController -> TreatmentSerializer : validate+create
+TreatmentSerializer -> Treatment : create(...)
+Treatment --> TreatmentSerializer : tedavi kaydi
+TreatmentSerializer --> TreatmentController : treatment DTO
+TreatmentController --> ApiService : 201 Created
+ApiService --> ProfileUI : tedavi listesi yenilenir
+
+Staff -> ProfileUI : odeme kaydet
+ProfileUI -> ApiService : createPayment(payload)
+ApiService -> PaymentController : POST /api/payments/
+PaymentController -> PaymentSerializer : validate+create
+PaymentSerializer -> Payment : create(...)
+Payment --> PaymentSerializer : odeme kaydi
+PaymentSerializer --> PaymentController : payment DTO
+PaymentController --> ApiService : 201 Created
+ApiService --> ProfileUI : borc/odeme ozeti guncellenir
+
+@enduml

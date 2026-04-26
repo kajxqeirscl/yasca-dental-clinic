@@ -9,6 +9,7 @@ router.register(r"appointments", views.AppointmentViewSet, basename="appointment
 router.register(r"treatments", views.TreatmentViewSet, basename="treatment")
 router.register(r"treatment-types", views.TreatmentTypeViewSet, basename="treatment-type")
 router.register(r"payments", views.PaymentViewSet, basename="payment")
+router.register(r"documents", views.DocumentViewSet, basename="document")
 
 urlpatterns = [
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),

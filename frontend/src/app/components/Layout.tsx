@@ -1,20 +1,22 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, LogOut, LayoutDashboard } from 'lucide-react';
+import { Calendar, Users, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface LayoutProps {
   children: React.ReactNode;
   userRole: string;
   onLogout: () => void;
+  isAdmin?: boolean;
 }
 
-export default function Layout({ children, userRole, onLogout }: LayoutProps) {
+export default function Layout({ children, userRole, onLogout, isAdmin }: LayoutProps) {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Ana Sayfa', icon: LayoutDashboard },
-    { path: '/randevular', label: 'Randevular', icon: Calendar },
-    { path: '/hastalar', label: 'Hastalar', icon: Users },
+    { path: '/', label: 'Ana Sayfa', icon: LayoutDashboard, adminOnly: false },
+    { path: '/randevular', label: 'Randevular', icon: Calendar, adminOnly: false },
+    { path: '/hastalar', label: 'Hastalar', icon: Users, adminOnly: false },
+    { path: '/ayarlar', label: 'Klinik Ayarları', icon: Settings, adminOnly: false },
   ];
 
   return (
@@ -44,9 +46,12 @@ export default function Layout({ children, userRole, onLogout }: LayoutProps) {
       <nav className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-1">
-            {navItems.map((item) => {
+            {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive =
+                item.path === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(item.path);
               return (
                 <Link
                   key={item.path}

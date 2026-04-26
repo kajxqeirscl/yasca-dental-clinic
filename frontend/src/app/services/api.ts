@@ -184,7 +184,12 @@ export async function createAppointment(data: {
   const res = await fetchWithAuth(`${API_BASE}/appointments/`, {
     method: 'POST',
     body: JSON.stringify({
-      ...data,
+      patient: data.patient,
+      doctor: data.doctor,
+      date: data.date,
+      time: data.time,
+      notes: data.notes,
+      treatment_type: data.treatment_type,
       status: data.status ?? 'scheduled',
     }),
   });
@@ -237,6 +242,27 @@ export async function fetchTreatments(patientId?: string) {
   return data.results ? data.results : data;
 }
 
+export async function createTreatment(data: {
+  patient: number;
+  doctor: number;
+  treatment_type?: number | null;
+  treatment_name?: string;
+  tooth_number?: string;
+  status?: string;
+  notes?: string;
+  date: string;
+}) {
+  const res = await fetchWithAuth(`${API_BASE}/treatments/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi eklenemedi');
+  }
+  return res.json();
+}
+
 // --- Treatment Types ---
 export async function fetchTreatmentTypes() {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/`);
@@ -245,9 +271,88 @@ export async function fetchTreatmentTypes() {
   return data.results ? data.results : data;
 }
 
+// --- Payments ---
+export async function fetchPayments(patientId?: string) {
+  const params = patientId ? `?patient=${patientId}` : '';
+  const res = await fetchWithAuth(`${API_BASE}/payments/${params}`);
+  if (!res.ok) throw new Error('Ödemeler yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+export async function createPayment(data: {
+  patient: number;
+  amount: number | string;
+  description?: string;
+  payment_date: string;
+}) {
+  const res = await fetchWithAuth(`${API_BASE}/payments/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || 'Ödeme eklenemedi');
+  }
+  return res.json();
+}
+
 // --- Clinic Settings ---
 export async function fetchClinicSettings() {
   const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`);
   if (!res.ok) throw new Error('Klinik ayarları yüklenemedi');
   return res.json();
+}
+
+export async function updateClinicSettings(data: {
+  work_start_time?: string;
+  work_end_time?: string;
+  work_days?: number[];
+}) {
+  const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || 'Ayarlar kaydedilemedi');
+  }
+  return res.json();
+}
+
+// --- Doküman API ---
+export async function fetchPatientDocuments(patientId: number) {
+  const res = await fetchWithAuth(`${API_BASE}/documents/?patient=${patientId}`);
+  if (!res.ok) throw new Error('Dokümanlar yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+export async function uploadDocument(patientId: number, name: string, file: File) {
+  const token = getAccessToken();
+  const formData = new FormData();
+  formData.append('patient', patientId.toString());
+  formData.append('name', name);
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/documents/`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Doküman yüklenemedi');
+  }
+  return res.json();
+}
+
+export async function deleteDocument(documentId: number) {
+  const res = await fetchWithAuth(`${API_BASE}/documents/${documentId}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Doküman silinemedi');
 }

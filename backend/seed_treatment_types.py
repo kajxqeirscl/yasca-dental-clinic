@@ -81,13 +81,28 @@ TREATMENTS = [
     ("TME Splint Tedavisi", 3000),
 ]
 
+from api.models import Clinic
+
+# İlk kliniği bul veya oluştur
+clinic, _ = Clinic.objects.get_or_create(
+    name="Yaşca Dental Klinik",
+    defaults={"address": "", "phone": ""},
+)
+
 created = 0
 for name, price in TREATMENTS:
     obj, is_new = TreatmentType.objects.get_or_create(
         name=name,
+        clinic=clinic,
         defaults={"default_price": price, "is_active": True},
     )
     if is_new:
         created += 1
 
-print(f"Tamamlandı: {created} yeni tedavi türü eklendi, toplam {TreatmentType.objects.count()} kayıt.")
+# Klinige bağlı olmayan eski kayıtları da güncelle
+orphans = TreatmentType.objects.filter(clinic__isnull=True).update(clinic=clinic)
+if orphans:
+    print(f"  {orphans} klinike bağlı olmayan kayıt güncellendi.")
+
+total = TreatmentType.objects.filter(clinic=clinic).count()
+print(f"Tamamlandı: {created} yeni tedavi türü eklendi, klinik toplam {total} kayıt.")

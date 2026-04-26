@@ -8,6 +8,7 @@ from .models import (
     ClinicSettings,
     Payment,
     CustomUser,
+    Document,
 )
 
 
@@ -220,3 +221,19 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ["id", "patient", "amount", "description", "payment_date", "created_at"]
+
+class DocumentSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.CharField(source="uploaded_by.get_full_name", read_only=True)
+    file_url = serializers.FileField(source="file", read_only=True)
+    file_size = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ["id", "patient", "name", "file", "file_url", "file_size", "uploaded_by", "uploaded_by_name", "created_at"]
+        read_only_fields = ["uploaded_by"]
+
+    def get_file_size(self, obj):
+        try:
+            return obj.file.size
+        except Exception:
+            return 0

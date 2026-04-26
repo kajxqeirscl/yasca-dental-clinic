@@ -4,8 +4,9 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser
+from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document
 from .serializers import (
     PatientSerializer,
     PatientListSerializer,
@@ -16,6 +17,7 @@ from .serializers import (
     ClinicSettingsSerializer,
     PaymentSerializer,
     DoctorMinimalSerializer,
+    DocumentSerializer,
 )
 from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
@@ -186,3 +188,23 @@ class DashboardView(APIView):
             "today_completed": completed,
             "total_patients": total_patients,
         })
+
+class DocumentViewSet(viewsets.ModelViewSet):
+    """Hasta dokümanları için API."""
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Document.objects.filter(clinic=user.clinic)
+        patient_id = self.request.query_params.get("patient")
+        if patient_id:
+            queryset = queryset.filter(patient_id=patient_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(
+            clinic=self.request.user.clinic,
+            uploaded_by=self.request.user
+        )

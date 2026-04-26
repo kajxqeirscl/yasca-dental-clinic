@@ -1,0 +1,28 @@
+@startuml
+title Dis Klinigi - Kullanici Girisi ve Oturum Dogrulamasi
+
+actor "Klinik Personeli" as Staff
+boundary "LoginPage (UI)" as LoginUI
+boundary "api.ts Auth Service" as ApiService
+control "TokenObtainPairView" as TokenView
+control "CurrentUserView" as MeView
+entity "CustomUser" as User
+database "JWT Storage\n(localStorage)" as JwtStore
+
+Staff -> LoginUI : kullaniciAdi/sifre gir
+LoginUI -> ApiService : login(username,password)
+ApiService -> TokenView : POST /api/auth/token/
+TokenView -> User : kimlik bilgisi dogrula
+User --> TokenView : dogrulama sonucu
+TokenView --> ApiService : access, refresh token
+ApiService -> JwtStore : setTokens(access,refresh)
+ApiService --> LoginUI : login basarili
+
+LoginUI -> ApiService : fetchCurrentUser()
+ApiService -> MeView : GET /api/auth/me/ (Bearer access)
+MeView -> User : request.user bilgisini al
+User --> MeView : id, ad, rol
+MeView --> ApiService : kullanici profili
+ApiService --> LoginUI : ekrani role gore ac
+
+@enduml

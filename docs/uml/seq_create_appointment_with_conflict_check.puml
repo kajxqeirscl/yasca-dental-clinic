@@ -1,0 +1,38 @@
+@startuml
+title Dis Klinigi - Randevu Olusturma (Cakisma Kontrolu ile)
+
+actor "Asistan" as Assistant
+boundary "AppointmentDialog (UI)" as AppointmentUI
+boundary "api.ts Appointment Service" as ApiService
+control "DoctorListView" as DoctorList
+control "AppointmentViewSet" as AppointmentController
+control "AppointmentCreateSerializer" as AppointmentSerializer
+entity "Appointment" as Appointment
+entity "CustomUser (Doctor)" as Doctor
+
+Assistant -> AppointmentUI : tarih/saat/hasta/hekim sec
+AppointmentUI -> ApiService : fetchDoctors()
+ApiService -> DoctorList : GET /api/doctors/
+DoctorList -> Doctor : clinic + role=doctor sorgula
+Doctor --> DoctorList : doktor listesi
+DoctorList --> ApiService : doktorlar
+ApiService --> AppointmentUI : secim listesi
+
+Assistant -> AppointmentUI : randevu kaydet
+AppointmentUI -> ApiService : createAppointment(payload)
+ApiService -> AppointmentController : POST /api/appointments/
+AppointmentController -> AppointmentSerializer : validate(data)
+AppointmentSerializer -> Appointment : exists(doctor,date,time,status=scheduled)
+alt cakisma var
+  AppointmentSerializer --> AppointmentController : ValidationError
+  AppointmentController --> ApiService : 400 Bad Request
+  ApiService --> AppointmentUI : "Bu hekime bu saatte..."
+else cakisma yok
+  AppointmentSerializer -> Appointment : create(...)
+  Appointment --> AppointmentSerializer : yeni kayit
+  AppointmentSerializer --> AppointmentController : appointment DTO
+  AppointmentController --> ApiService : 201 Created
+  ApiService --> AppointmentUI : takvim guncelle
+end
+
+@enduml
