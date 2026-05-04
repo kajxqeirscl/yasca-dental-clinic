@@ -104,7 +104,7 @@ jobs:
           cd backend
           python manage.py runserver 0.0.0.0:8000 &
           # Wait for it to be ready
-          npx wait-on http://localhost:8000/api/auth/token/ --timeout 30000
+          npx wait-on http-get://localhost:8000/admin/login/ --timeout 30000
         env:
           DJANGO_SETTINGS_MODULE: core.settings_test
 
