@@ -68,6 +68,24 @@ Bu komut, backend ve frontend servislerini kendi ayrı terminal pencerelerinde �
 
 ---
 
+### 4. Demo Verisi Oluşturma
+
+Projeyi sunum için veya test amaçlı gerçekçi verilerle (klinik, doktor, hasta, randevular) doldurmak isterseniz:
+
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+# Mevcut veritabanını sıfırlamak için (dikkatli kullanın)
+python manage.py flush --no-input
+
+# Örnek verileri oluşturmak için
+python manage.py seed_demo_data
+```
+
+Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcılarının giriş bilgilerini (şifre: `demo123!`) konsolda verecektir.
+
+---
+
 ### Teknik Notlar
 - Stil yönetimi: Tailwind CSS v4 (Vite Engine)
 - Path Aliasing: `src` klasörü için `@/` alias yapısı tanımlıdır.
@@ -130,6 +148,19 @@ npm run test:coverage
 | `src/app/contexts/AuthContext.test.tsx` | Auth durumu, giriş/çıkış, olay dinleyicisi |
 
 > Mock API'ler için [MSW (Mock Service Worker)](https://mswjs.io/) kullanılmaktadır. `src/mocks/` dizininde tüm endpoint handler'ları tanımlıdır.
+
+### E2E Testleri (Playwright)
+
+Tüm sistemin uçtan uca testini yapmak için:
+
+```powershell
+cd frontend
+# Sadece ilk kullanımda tarayıcıları kurmak için:
+npx playwright install
+
+# Testleri çalıştırmak için (geliştirme sunucuları açık olmalıdır)
+npx playwright test
+```
 
 ---
 
