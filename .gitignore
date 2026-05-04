@@ -1,18 +1,49 @@
-# Node.js / React
+# Node.js / Frontend
 frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
 frontend/build/
 frontend/.env
-npm-debug.log
-yarn-error.log
+frontend/.env.*
+frontend/.eslintcache
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# Python / Django
+# Python / Django Backend
 backend/venv/
-backend/__pycache__/
-backend/*.pyc
-backend/db.sqlite3
-backend/.env
+backend/env/
+__pycache__/
 *.py[cod]
+*$py.class
+backend/db.sqlite3
+backend/db.sqlite3-journal
+backend/media/
+backend/.env
+backend/.env.*
 
-# OS Files
+# Testing & Coverage (Vitest, Pytest, Playwright)
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+frontend/coverage/
+backend/coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# IDEs & OS Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
