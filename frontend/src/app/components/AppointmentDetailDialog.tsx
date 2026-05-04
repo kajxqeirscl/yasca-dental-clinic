@@ -8,7 +8,7 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Calendar, Clock, User, Stethoscope, FileText, Trash2 } from 'lucide-react';
+import { Calendar, Clock, User, Stethoscope, Activity, FileText, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { updateAppointment, deleteAppointment } from '../services/api';
 
@@ -20,6 +20,7 @@ interface Appointment {
   patient_phone: string;
   patient: number;
   doctor: number;
+  doctor_name?: string;
   status: string;
   notes?: string;
   treatment_type?: string;
@@ -137,11 +138,21 @@ export default function AppointmentDetailDialog({
               </div>
             </div>
 
+            {appointment.doctor_name && (
+              <div className="flex items-start gap-3">
+                <Stethoscope className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">Hekim</p>
+                  <p className="font-medium text-gray-900">{appointment.doctor_name}</p>
+                </div>
+              </div>
+            )}
+
             {(appointment.treatment_type || appointment.notes) && (
               <div className="pt-3 border-t space-y-3">
                 {appointment.treatment_type && (
                   <div className="flex items-start gap-3">
-                    <Stethoscope className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                    <Activity className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">İşlem</p>
                       <p className="text-gray-900">{appointment.treatment_type}</p>

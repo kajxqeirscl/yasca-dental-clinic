@@ -48,7 +48,12 @@ class PatientViewSet(viewsets.ModelViewSet):
         return PatientSerializer
 
     def get_queryset(self):
-        qs = Patient.objects.filter(clinic=self.request.user.clinic)
+        user = self.request.user
+        qs = Patient.objects.filter(clinic=user.clinic)
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            qs = qs.filter(
+                Q(appointments__doctor=user) | Q(treatments__doctor=user)
+            ).distinct()
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -73,7 +78,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return AppointmentSerializer
 
     def get_queryset(self):
-        qs = Appointment.objects.filter(clinic=self.request.user.clinic).select_related("patient", "doctor")
+        user = self.request.user
+        qs = Appointment.objects.filter(clinic=user.clinic).select_related("patient", "doctor")
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            qs = qs.filter(doctor=user)
         date = self.request.query_params.get("date")
         patient_id = self.request.query_params.get("patient")
         if date:
@@ -92,7 +100,10 @@ class TreatmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = Treatment.objects.filter(clinic=self.request.user.clinic).select_related("patient", "doctor", "treatment_type")
+        user = self.request.user
+        qs = Treatment.objects.filter(clinic=user.clinic).select_related("patient", "doctor", "treatment_type")
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            qs = qs.filter(doctor=user)
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
@@ -148,7 +159,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = Payment.objects.filter(clinic=self.request.user.clinic).select_related("patient")
+        user = self.request.user
+        qs = Payment.objects.filter(clinic=user.clinic).select_related("patient")
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            qs = qs.filter(
+                Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
+            ).distinct()
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
@@ -172,14 +188,22 @@ class DashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
         today = timezone.localdate()
         appointments = Appointment.objects.filter(
-            clinic=request.user.clinic,
+            clinic=user.clinic,
             date=today
-        ).exclude(status=Appointment.Status.CANCELLED).select_related("patient", "doctor").order_by("time")
+        ).exclude(status=Appointment.Status.CANCELLED)
+        patients_qs = Patient.objects.filter(clinic=user.clinic)
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            appointments = appointments.filter(doctor=user)
+            patients_qs = patients_qs.filter(
+                Q(appointments__doctor=user) | Q(treatments__doctor=user)
+            ).distinct()
+        appointments = appointments.select_related("patient", "doctor").order_by("time")
 
         completed = appointments.filter(status=Appointment.Status.COMPLETED).count()
-        total_patients = Patient.objects.filter(clinic=request.user.clinic).count()
+        total_patients = patients_qs.count()
 
         serializer = AppointmentSerializer(appointments, many=True)
         return Response({
@@ -198,6 +222,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Document.objects.filter(clinic=user.clinic)
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
+            queryset = queryset.filter(
+                Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
+            ).distinct()
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             queryset = queryset.filter(patient_id=patient_id)
