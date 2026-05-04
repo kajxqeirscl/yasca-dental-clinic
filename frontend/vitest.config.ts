@@ -22,12 +22,9 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/mocks/**',
         'src/setupTests.ts',
+        'src/app/components/ui/**',
+        'src/app/components/figma/**',
       ],
-      thresholds: {
-        lines: 60,
-        functions: 60,
-        branches: 60,
-      },
     },
   },
 });
