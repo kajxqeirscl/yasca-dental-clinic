@@ -7,7 +7,7 @@ Yaşca, diş hekimliği kliniklerinin operasyonel iş akışlarını dijitalleş
 ### Gereksinimler
 - **Node.js:** v20.18.0 veya üzeri
 - **npm:** v10 veya üzeri
-- **Python:** 3.10 veya üzeri (backend için)
+- **Python:** 3.13 veya üzeri (backend için)
 
 ---
 
