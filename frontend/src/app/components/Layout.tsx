@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface LayoutProps {
@@ -16,6 +16,7 @@ export default function Layout({ children, userRole, onLogout, isAdmin }: Layout
     { path: '/', label: 'Ana Sayfa', icon: LayoutDashboard, adminOnly: false },
     { path: '/randevular', label: 'Randevular', icon: Calendar, adminOnly: false },
     { path: '/hastalar', label: 'Hastalar', icon: Users, adminOnly: false },
+    { path: '/tedavi-turleri', label: 'Tedavi Türleri', icon: Stethoscope, adminOnly: false },
     { path: '/ayarlar', label: 'Klinik Ayarları', icon: Settings, adminOnly: false },
   ];
 

@@ -15,7 +15,8 @@ interface TodayAppointment {
   patient_phone: string;
   patient: number;
   doctor: number;
-  treatment_type: string;
+  treatment_type?: number;
+  treatment_type_name?: string;
   status: string;
   notes?: string;
 }
@@ -214,9 +215,9 @@ export default function Dashboard() {
                         <span className="text-gray-400">•</span>
                         <span className="text-gray-900">{appointment.patient_name}</span>
                       </div>
-                      {(appointment.treatment_type || appointment.notes) && (
+                      {(appointment.treatment_type_name || appointment.notes) && (
                         <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
-                          {appointment.treatment_type || appointment.notes}
+                          {appointment.treatment_type_name || appointment.notes}
                         </p>
                       )}
                     </div>

@@ -57,6 +57,7 @@ export default function TreatmentAddDialog({
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState('completed');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -97,6 +98,7 @@ export default function TreatmentAddDialog({
     setNotes('');
     setStatus('completed');
     setDate(new Date().toISOString().split('T')[0]);
+    setPrice('');
     setError('');
   };
 
@@ -121,6 +123,7 @@ export default function TreatmentAddDialog({
         status,
         notes: notes.trim() || undefined,
         date,
+        price: price || undefined,
       });
       resetForm();
       onSuccess?.();
@@ -193,7 +196,12 @@ export default function TreatmentAddDialog({
                 setSelectedTypeId(val);
                 if (val) {
                   const found = treatmentTypes.find((t) => t.id === val);
-                  if (found) setTreatmentName('');
+                  if (found) {
+                    setTreatmentName('');
+                    setPrice(found.default_price);
+                  }
+                } else {
+                  setPrice('');
                 }
               }}
             >
@@ -249,16 +257,28 @@ export default function TreatmentAddDialog({
             </div>
           </div>
 
-          {/* Notlar */}
-          <div className="space-y-2">
-            <Label htmlFor="treat-notes">Notlar</Label>
-            <Textarea
-              id="treat-notes"
-              placeholder="Varsa ek bilgiler..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-            />
+          {/* Fiyat & Notlar */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="treat-price">Uygulanan Fiyat (TL)</Label>
+              <Input
+                id="treat-price"
+                type="number"
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="treat-notes">Notlar</Label>
+              <Textarea
+                id="treat-notes"
+                placeholder="Varsa ek bilgiler..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={1}
+              />
+            </div>
           </div>
         </div>
 

@@ -1,41 +1,56 @@
 # Node.js / Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/dist-ssr/
-frontend/build/
-frontend/.env
-frontend/.env.*
-frontend/.eslintcache
+node_modules/
+dist/
+dist-ssr/
+build/
+.eslintcache
+.vite/
+.next/
+.cache/
+
+# Python / Django Backend
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+*.sqlite3-journal
+media/
+
+# Environment Variables
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Logs
+*.log
 npm-debug.log*
 yarn-error.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# Python / Django Backend
-backend/venv/
-backend/env/
-__pycache__/
-*.py[cod]
-*$py.class
-backend/db.sqlite3
-backend/db.sqlite3-journal
-backend/media/
-backend/.env
-backend/.env.*
-
-# Testing & Coverage (Vitest, Pytest, Playwright)
+# Testing & Coverage
 .pytest_cache/
 .coverage
+coverage/
 coverage.xml
 htmlcov/
-frontend/coverage/
-backend/coverage/
 test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
 
-# IDEs & OS Files
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# OS Files
 .DS_Store
 .DS_Store?
 ._*
@@ -43,7 +58,4 @@ playwright/.cache/
 .Trashes
 ehthumbs.db
 Thumbs.db
-.vscode/
-.idea/
-*.swp
-*.swo
+Desktop.ini

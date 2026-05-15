@@ -18,7 +18,8 @@ interface Appointment {
   doctor: number;
   status: string;
   notes?: string;
-  treatment_type?: string;
+  treatment_type?: number;
+  treatment_type_name?: string;
 }
 
 interface ClinicSettings {
@@ -310,9 +311,9 @@ export default function AppointmentCalendar() {
                               <span className="text-sm opacity-75">{apt.time.substring(0, 5)}</span>
                             </div>
                              <div className="text-sm opacity-75">{apt.patient_phone}</div>
-                             {(apt.treatment_type || apt.notes) && (
+                             {(apt.treatment_type_name || apt.notes) && (
                                <div className="text-xs mt-1 opacity-60 truncate max-w-lg italic">
-                                 {apt.treatment_type || apt.notes}
+                                 {apt.treatment_type_name || apt.notes}
                                </div>
                              )}
                           </div>

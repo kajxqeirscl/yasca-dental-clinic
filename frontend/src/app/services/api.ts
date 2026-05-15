@@ -271,6 +271,37 @@ export async function fetchTreatmentTypes() {
   return data.results ? data.results : data;
 }
 
+export async function createTreatmentType(data: { name: string; default_price: number | string }) {
+  const res = await fetchWithAuth(`${API_BASE}/treatment-types/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi türü eklenemedi');
+  }
+  return res.json();
+}
+
+export async function updateTreatmentType(
+  id: number,
+  data: Partial<{ name: string; default_price: number | string; is_active: boolean }>
+) {
+  const res = await fetchWithAuth(`${API_BASE}/treatment-types/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Tedavi türü güncellenemedi');
+  return res.json();
+}
+
+export async function deleteTreatmentType(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/treatment-types/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Tedavi türü silinemedi');
+}
+
 // --- Payments ---
 export async function fetchPayments(patientId?: string) {
   const params = patientId ? `?patient=${patientId}` : '';
@@ -282,6 +313,7 @@ export async function fetchPayments(patientId?: string) {
 
 export async function createPayment(data: {
   patient: number;
+  treatment?: number;
   amount: number | string;
   description?: string;
   payment_date: string;

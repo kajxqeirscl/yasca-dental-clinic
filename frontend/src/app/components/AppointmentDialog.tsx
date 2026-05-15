@@ -185,7 +185,7 @@ export default function AppointmentDialog({
         date: selectedSlot.date,
         time: time,
         notes: notes || undefined,
-        treatment_type: selectedTreatment || undefined,
+        treatment_type: selectedTreatment ? Number(selectedTreatment) : undefined,
         status: 'scheduled',
       });
       resetForm();
@@ -327,7 +327,7 @@ export default function AppointmentDialog({
             >
               <option value="">İşlem seçin (opsiyonel)</option>
               {treatmentTypes.map((t) => (
-                <option key={t.id} value={t.name}>
+                <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
               ))}

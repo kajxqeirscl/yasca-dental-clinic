@@ -225,7 +225,8 @@ class TestAppointmentCRUD:
     def test_appointment_delete(self):
         appt = AppointmentFactory(clinic=self.clinic, patient=self.patient, doctor=self.doctor)
         assert self.client.delete(f"/api/appointments/{appt.pk}/").status_code == 204
-        assert not Appointment.objects.filter(pk=appt.pk).exists()
+        appt.refresh_from_db()
+        assert appt.is_active is False
 
 
 # ---------------------------------------------------------------------------

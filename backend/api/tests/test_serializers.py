@@ -162,7 +162,7 @@ class TestAppointmentConflictValidation:
             "time": "10:00:00",
             "status": "completed",
             "notes": "",
-            "treatment_type": "",
+            "treatment_type": None,
         }
         # Passing instance= means it's an update — should be valid
         serializer = AppointmentSerializer(instance=appt, data=data)

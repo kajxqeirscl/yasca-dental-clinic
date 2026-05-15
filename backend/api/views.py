@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document
+from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document, AuditLog
 from .serializers import (
     PatientSerializer,
     PatientListSerializer,
@@ -20,6 +20,40 @@ from .serializers import (
     DocumentSerializer,
 )
 from .permissions import IsAdminUser, IsAdminOrDoctorUser
+
+
+from .permissions import IsAdminUser, IsAdminOrDoctorUser
+
+
+class AuditMixin:
+    def _log_action(self, action, instance):
+        if not hasattr(instance, 'id'):
+            return
+        AuditLog.objects.create(
+            clinic=self.request.user.clinic,
+            user=self.request.user,
+            action=action,
+            model_name=instance.__class__.__name__,
+            object_id=instance.id,
+            object_repr=str(instance)[:255],
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        self._log_action(AuditLog.Action.UPDATE, instance)
+
+    def perform_destroy(self, instance):
+        if hasattr(instance, "is_active"):
+            instance.is_active = False
+            instance.save(update_fields=['is_active'])
+            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
+        elif hasattr(instance, "status") and hasattr(instance.__class__, "Status") and hasattr(instance.__class__.Status, "CANCELLED"):
+            instance.status = instance.__class__.Status.CANCELLED
+            instance.save(update_fields=['status'])
+            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
+        else:
+            instance.delete()
+            self._log_action(AuditLog.Action.DELETE, instance)
 
 
 class CurrentUserView(APIView):
@@ -38,7 +72,7 @@ class CurrentUserView(APIView):
         })
 
 
-class PatientViewSet(viewsets.ModelViewSet):
+class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
     permission_classes = [IsAuthenticated]
 
@@ -65,10 +99,11 @@ class PatientViewSet(viewsets.ModelViewSet):
         return qs.order_by("last_name", "first_name")
 
     def perform_create(self, serializer):
-        serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save(clinic=self.request.user.clinic)
+        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class AppointmentViewSet(viewsets.ModelViewSet):
+class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
     """Randevu CRUD. F-006, F-007, F-008, F-009."""
     permission_classes = [IsAuthenticated]
 
@@ -91,10 +126,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return qs.order_by("date", "time")
 
     def perform_create(self, serializer):
-        serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save(clinic=self.request.user.clinic)
+        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class TreatmentViewSet(viewsets.ModelViewSet):
+class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
     """Tedavi CRUD. F-010, F-011."""
     serializer_class = TreatmentSerializer
     permission_classes = [IsAuthenticated]
@@ -107,13 +143,14 @@ class TreatmentViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
-        return qs.order_by("-date")
+        return qs.filter(is_active=True).order_by("-date")
 
     def perform_create(self, serializer):
-        serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save(clinic=self.request.user.clinic)
+        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class TreatmentTypeViewSet(viewsets.ModelViewSet):
+class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
     """Tedavi türleri. F-020. Hekim ve Yönetici düzenleyebilir."""
     serializer_class = TreatmentTypeSerializer
     
@@ -126,7 +163,8 @@ class TreatmentTypeViewSet(viewsets.ModelViewSet):
         return TreatmentType.objects.filter(clinic=self.request.user.clinic, is_active=True).order_by("name")
 
     def perform_create(self, serializer):
-        serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save(clinic=self.request.user.clinic)
+        self._log_action(AuditLog.Action.CREATE, instance)
 
 
 class ClinicSettingsView(APIView):
@@ -153,7 +191,7 @@ class ClinicSettingsView(APIView):
         return Response(serializer.data)
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
     """Ödeme kayıtları. F-014, F-015."""
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
@@ -168,10 +206,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
-        return qs.order_by("-payment_date")
+        return qs.filter(is_active=True).order_by("-payment_date")
 
     def perform_create(self, serializer):
-        serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save(clinic=self.request.user.clinic)
+        self._log_action(AuditLog.Action.CREATE, instance)
 
 
 class DoctorListView(APIView):
@@ -213,7 +252,7 @@ class DashboardView(APIView):
             "total_patients": total_patients,
         })
 
-class DocumentViewSet(viewsets.ModelViewSet):
+class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
     """Hasta dokümanları için API."""
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated]
@@ -229,10 +268,11 @@ class DocumentViewSet(viewsets.ModelViewSet):
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             queryset = queryset.filter(patient_id=patient_id)
-        return queryset
+        return queryset.filter(is_active=True)
 
     def perform_create(self, serializer):
-        serializer.save(
+        instance = serializer.save(
             clinic=self.request.user.clinic,
             uploaded_by=self.request.user
         )
+        self._log_action(AuditLog.Action.CREATE, instance)
