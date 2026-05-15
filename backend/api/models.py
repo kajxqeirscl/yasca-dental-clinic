@@ -178,7 +178,14 @@ class Appointment(models.Model):
         max_length=20, choices=Status.choices, default=Status.SCHEDULED
     )
     notes = models.TextField("Notlar", blank=True)
-    treatment_type = models.CharField("İşlem", max_length=200, blank=True)
+    treatment_type = models.ForeignKey(
+        TreatmentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="appointments",
+        verbose_name="İşlem Türü"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -226,6 +233,8 @@ class Treatment(models.Model):
     )
     notes = models.TextField("Notlar", blank=True)
     date = models.DateField("Tarih")
+    price = models.DecimalField("Uygulanan Fiyat", max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -273,6 +282,31 @@ class ClinicSettings(models.Model):
         return obj
 
 
+class AuditLog(models.Model):
+    class Action(models.TextChoices):
+        CREATE = "create", "Oluşturma"
+        UPDATE = "update", "Güncelleme"
+        DELETE = "delete", "Silme"
+        SOFT_DELETE = "soft_delete", "Devre Dışı"
+
+    clinic = models.ForeignKey(Clinic, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=20, choices=Action.choices)
+    model_name = models.CharField(max_length=100)
+    object_id = models.IntegerField()
+    object_repr = models.CharField(max_length=255)
+    changes = models.JSONField(default=dict, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Audit Log"
+        verbose_name_plural = "Audit Loglar"
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.model_name} ({self.timestamp})"
+
+
 class Payment(models.Model):
     """Ödeme kaydı. F-014, F-015."""
     
@@ -287,9 +321,13 @@ class Payment(models.Model):
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="payments"
     )
+    treatment = models.ForeignKey(
+        Treatment, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments"
+    )
     amount = models.DecimalField("Tutar", max_digits=10, decimal_places=2)
     description = models.CharField("Açıklama", max_length=255, blank=True)
     payment_date = models.DateField("Ödeme Tarihi")
+    is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -320,6 +358,7 @@ class Document(models.Model):
     uploaded_by = models.ForeignKey(
         CustomUser, on_delete=models.SET_NULL, null=True, blank=True
     )
+    is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -435,9 +435,9 @@ export default function PatientProfile() {
                                 {appointment.time.substring(0, 5)}
                               </span>
                             </div>
-                            {(appointment.treatment_type || appointment.notes) && (
+                            {(appointment.treatment_type_name || appointment.notes) && (
                               <p className="text-sm text-gray-500 mt-1 truncate max-w-sm">
-                                {appointment.treatment_type || appointment.notes}
+                                {appointment.treatment_type_name || appointment.notes}
                               </p>
                             )}
                           </div>
@@ -525,12 +525,28 @@ export default function PatientProfile() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Toplam */}
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <span className="text-sm font-medium text-blue-800">Toplam Ödeme</span>
-                    <span className="text-lg font-bold text-blue-900">
-                      {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                    </span>
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="p-4 bg-gray-50 rounded-lg border">
+                      <span className="text-sm font-medium text-gray-500">Toplam Tedavi Tutarı</span>
+                      <p className="text-xl font-bold text-gray-900 mt-1">
+                        {treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                      </p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+                      <span className="text-sm font-medium text-green-700">Toplam Ödenen</span>
+                      <p className="text-xl font-bold text-green-800 mt-1">
+                        {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                      </p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                      <span className="text-sm font-medium text-blue-700">Kalan Bakiye</span>
+                      <p className="text-xl font-bold text-blue-800 mt-1">
+                        {(
+                          treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0) -
+                          payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)
+                        ).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                      </p>
+                    </div>
                   </div>
                   {payments.map((pay) => (
                     <div key={pay.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -542,6 +558,11 @@ export default function PatientProfile() {
                           <p className="font-medium text-gray-900">
                             {parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                           </p>
+                          {pay.treatment && (
+                            <p className="text-sm text-blue-600 font-medium">
+                              İlgili Tedavi: {treatments.find((t) => t.id === pay.treatment)?.treatment_type_name || 'Tedavi'}
+                            </p>
+                          )}
                           {pay.description && (
                             <p className="text-sm text-gray-500">{pay.description}</p>
                           )}

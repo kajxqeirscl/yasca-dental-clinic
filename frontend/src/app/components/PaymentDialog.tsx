@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { createPayment } from '../services/api';
+import { createPayment, fetchTreatments } from '../services/api';
 
 interface PaymentDialogProps {
   isOpen: boolean;
@@ -29,12 +29,23 @@ export default function PaymentDialog({
   const [paymentDate, setPaymentDate] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [treatmentId, setTreatmentId] = useState<number | ''>('');
+  const [treatments, setTreatments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen && patientId) {
+      fetchTreatments(patientId.toString())
+        .then((data) => setTreatments(data))
+        .catch(() => setTreatments([]));
+    }
+  }, [isOpen, patientId]);
 
   const resetForm = () => {
     setAmount('');
     setDescription('');
+    setTreatmentId('');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setError('');
   };
@@ -50,6 +61,7 @@ export default function PaymentDialog({
     try {
       await createPayment({
         patient: patientId,
+        treatment: treatmentId ? (treatmentId as number) : undefined,
         amount: parsedAmount,
         description: description.trim() || undefined,
         payment_date: paymentDate,
@@ -83,6 +95,23 @@ export default function PaymentDialog({
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="pay-treatment">İlgili Tedavi (Opsiyonel)</Label>
+            <select
+              id="pay-treatment"
+              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={treatmentId}
+              onChange={(e) => setTreatmentId(Number(e.target.value) || '')}
+            >
+              <option value="">Genel Ödeme (Tedavi seçilmedi)</option>
+              {treatments.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.treatment_type_name || t.treatment_name} - {t.date}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="pay-amount">Tutar (TL) *</Label>

@@ -102,6 +102,7 @@ class DoctorMinimalSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.full_name", read_only=True)
     patient_phone = serializers.CharField(source="patient.phone", read_only=True)
+    treatment_type_name = serializers.CharField(source="treatment_type.name", read_only=True)
     doctor_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -118,6 +119,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "status",
             "notes",
             "treatment_type",
+            "treatment_type_name",
             "created_at",
         ]
 
@@ -204,6 +206,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "status",
             "notes",
             "date",
+            "price",
             "created_at",
         ]
 
@@ -220,7 +223,7 @@ class ClinicSettingsSerializer(serializers.ModelSerializer):
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ["id", "patient", "amount", "description", "payment_date", "created_at"]
+        fields = ["id", "patient", "treatment", "amount", "description", "payment_date", "created_at"]
 
 class DocumentSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source="uploaded_by.get_full_name", read_only=True)

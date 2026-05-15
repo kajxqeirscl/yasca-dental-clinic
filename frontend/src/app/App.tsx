@@ -7,6 +7,7 @@ import PatientSearch from './components/PatientSearch';
 import PatientProfile from './components/PatientProfile';
 import Layout from './components/Layout';
 import ClinicSettingsPage from './components/ClinicSettingsPage';
+import TreatmentTypesPage from './components/TreatmentTypesPage';
 
 export default function App() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/hastalar" element={<PatientSearch />} />
           <Route path="/hasta/:id" element={<PatientProfile />} />
           <Route path="/ayarlar" element={<ClinicSettingsPage />} />
+          <Route path="/tedavi-turleri" element={<TreatmentTypesPage userRole={user.role} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

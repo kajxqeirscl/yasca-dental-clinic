@@ -70,16 +70,10 @@ Bu komut, backend ve frontend servislerini kendi ayrı terminal pencerelerinde �
 
 ### 4. Demo Verisi Oluşturma
 
-Projeyi sunum için veya test amaçlı gerçekçi verilerle (klinik, doktor, hasta, randevular) doldurmak isterseniz:
+Projeyi sunum için veya test amaçlı gerçekçi verilerle (klinik, doktor, hasta, randevular) doldurmak isterseniz ana dizinde bulunan **`run-demo.ps1`** dosyasını çalıştırabilirsiniz:
 
 ```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-# Mevcut veritabanını sıfırlamak için (dikkatli kullanın)
-python manage.py flush --no-input
-
-# Örnek verileri oluşturmak için
-python manage.py seed_demo_data
+.\run-demo.ps1
 ```
 
 Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcılarının giriş bilgilerini (şifre: `demo123!`) konsolda verecektir.

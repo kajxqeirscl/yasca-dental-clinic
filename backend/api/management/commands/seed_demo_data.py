@@ -120,13 +120,13 @@ class Command(BaseCommand):
                 date=today,
                 time=t,
                 status=status,
-                treatment_type=random.choice(treatment_types).name
+                treatment_type=random.choice(treatment_types)
             )
             
             # If completed, add a treatment and maybe a payment
             if status == Appointment.Status.COMPLETED:
                 tt = random.choice(treatment_types)
-                TreatmentFactory(
+                treatment = TreatmentFactory(
                     clinic=clinic,
                     patient=p,
                     doctor=doctor,
@@ -134,12 +134,14 @@ class Command(BaseCommand):
                     treatment_name=tt.name,
                     tooth_number=str(random.randint(11, 48)),
                     status=Treatment.Status.COMPLETED,
+                    price=tt.default_price,
                     date=today
                 )
                 if random.random() > 0.3: # 70% chance they paid
                     PaymentFactory(
                         clinic=clinic,
                         patient=p,
+                        treatment=treatment,
                         amount=tt.default_price,
                         description=f"{tt.name} Ödemesi",
                         payment_date=today
@@ -158,9 +160,9 @@ class Command(BaseCommand):
                 date=past_date,
                 time=time(random.randint(9, 17), random.choice([0, 30])),
                 status=Appointment.Status.COMPLETED,
-                treatment_type=tt.name
+                treatment_type=tt
             )
-            TreatmentFactory(
+            treatment = TreatmentFactory(
                 clinic=clinic,
                 patient=p,
                 doctor=doctor,
@@ -168,15 +170,31 @@ class Command(BaseCommand):
                 treatment_name=tt.name,
                 tooth_number=str(random.randint(11, 48)),
                 status=Treatment.Status.COMPLETED,
+                price=tt.default_price,
                 date=past_date
             )
-            PaymentFactory(
-                clinic=clinic,
-                patient=p,
-                amount=tt.default_price,
-                description=f"{tt.name} Ödemesi",
-                payment_date=past_date
-            )
+            # 50% chance of full payment, 30% chance of partial (installment)
+            rand = random.random()
+            if rand > 0.3:
+                PaymentFactory(
+                    clinic=clinic,
+                    patient=p,
+                    treatment=treatment,
+                    amount=tt.default_price,
+                    description=f"{tt.name} Ödemesi",
+                    payment_date=past_date
+                )
+            elif rand > 0.1:
+                # Partial payment (taksit)
+                partial = float(tt.default_price) * random.choice([0.5, 0.25])
+                PaymentFactory(
+                    clinic=clinic,
+                    patient=p,
+                    treatment=treatment,
+                    amount=partial,
+                    description=f"{tt.name} - 1. Taksit",
+                    payment_date=past_date
+                )
 
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded demo data!"))

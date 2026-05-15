@@ -23,7 +23,8 @@ interface Appointment {
   doctor_name?: string;
   status: string;
   notes?: string;
-  treatment_type?: string;
+  treatment_type?: number;
+  treatment_type_name?: string;
 }
 
 interface AppointmentDetailDialogProps {
@@ -148,14 +149,14 @@ export default function AppointmentDetailDialog({
               </div>
             )}
 
-            {(appointment.treatment_type || appointment.notes) && (
+            {(appointment.treatment_type_name || appointment.notes) && (
               <div className="pt-3 border-t space-y-3">
-                {appointment.treatment_type && (
+                {appointment.treatment_type_name && (
                   <div className="flex items-start gap-3">
                     <Activity className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm text-gray-500">İşlem</p>
-                      <p className="text-gray-900">{appointment.treatment_type}</p>
+                      <p className="text-gray-900">{appointment.treatment_type_name}</p>
                     </div>
                   </div>
                 )}
