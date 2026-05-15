@@ -1,19 +1,22 @@
 # Node.js / Frontend
 node_modules/
-frontend/dist/
-frontend/dist-ssr/
-frontend/build/
-frontend/.eslintcache
+dist/
+dist-ssr/
+build/
+.eslintcache
+.vite/
+.next/
+.cache/
 
 # Python / Django Backend
-backend/venv/
-backend/env/
+venv/
+env/
 __pycache__/
 *.py[cod]
 *$py.class
-backend/db.sqlite3
-backend/db.sqlite3-journal
-backend/media/
+*.sqlite3
+*.sqlite3-journal
+media/
 
 # Environment Variables
 .env
@@ -28,13 +31,12 @@ yarn-error.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# Testing & Coverage (Vitest, Pytest, Playwright)
+# Testing & Coverage
 .pytest_cache/
 .coverage
+coverage/
 coverage.xml
 htmlcov/
-frontend/coverage/
-backend/coverage/
 test-results/
 playwright-report/
 blob-report/
