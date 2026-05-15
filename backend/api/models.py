@@ -82,6 +82,7 @@ class Patient(models.Model):
     birth_date = models.DateField("Doğum Tarihi", null=True, blank=True)
     address = models.TextField("Adres", blank=True)
     notes = models.TextField("Notlar", blank=True)
+    is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -186,6 +187,7 @@ class Appointment(models.Model):
         related_name="appointments",
         verbose_name="İşlem Türü"
     )
+    is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
