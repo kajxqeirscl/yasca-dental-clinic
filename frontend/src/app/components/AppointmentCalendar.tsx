@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import AppointmentDialog from './AppointmentDialog';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
 import { fetchAppointments, fetchClinicSettings } from '../services/api';
@@ -36,6 +36,7 @@ export default function AppointmentCalendar() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -145,6 +146,12 @@ export default function AppointmentCalendar() {
     setDetailDialogOpen(true);
   };
 
+  const handleEditClick = (apt: Appointment) => {
+    setDetailDialogOpen(false);
+    setAppointmentToEdit(apt);
+    setIsDialogOpen(true);
+  };
+
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate);
     const amount = viewMode === 'daily' ? 1 : 7;
@@ -181,7 +188,10 @@ export default function AppointmentCalendar() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl text-gray-900">Randevu Takvimi</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <Button onClick={() => handleSlotClick(new Date(), startHour)}>
+            <Plus className="w-4 h-4 mr-2" /> Yeni Randevu
+          </Button>
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button
               variant={viewMode === 'daily' ? 'default' : 'ghost'}
@@ -331,8 +341,9 @@ export default function AppointmentCalendar() {
 
       <AppointmentDialog
         isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => { setIsDialogOpen(false); setAppointmentToEdit(null); }}
         selectedSlot={selectedSlot}
+        appointmentToEdit={appointmentToEdit}
         onSuccess={loadAppointments}
       />
       
@@ -341,6 +352,7 @@ export default function AppointmentCalendar() {
         onClose={() => setDetailDialogOpen(false)}
         appointment={selectedAppointment}
         onUpdated={loadAppointments}
+        onEdit={handleEditClick}
       />
     </div>
   );

@@ -263,6 +263,50 @@ export async function createTreatment(data: {
   return res.json();
 }
 
+export async function updateTreatment(
+  id: number,
+  data: Partial<{
+    doctor: number;
+    treatment_type: number | null;
+    treatment_name: string;
+    tooth_number: string;
+    status: string;
+    notes: string;
+    date: string;
+  }>
+) {
+  const res = await fetchWithAuth(`${API_BASE}/treatments/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Tedavi güncellenemedi');
+  return res.json();
+}
+
+export async function updatePayment(id: number, data: any) {
+  const res = await fetchWithAuth(`${API_BASE}/payments/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Ödeme güncellenemedi');
+  return res.json();
+}
+
+export async function deletePayment(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/payments/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Ödeme silinemedi');
+  return true;
+}
+
+export async function deleteTreatment(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/treatments/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Tedavi silinemedi');
+}
+
 // --- Treatment Types ---
 export async function fetchTreatmentTypes() {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/`);

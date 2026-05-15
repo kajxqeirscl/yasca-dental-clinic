@@ -63,26 +63,48 @@ const statusLabels: Record<ToothStatus, string> = {
 };
 
 interface DentalChartProps {
-  onToothSelect?: (toothNumber: number) => void;
+  onToothSelect?: (toothNumber: number, treatmentName?: string) => void;
+  treatments?: any[];
 }
 
-export default function DentalChart({ onToothSelect }: DentalChartProps) {
-  const [teethData, setTeethData] = useState<Record<number, ToothData>>({});
+export default function DentalChart({ onToothSelect, treatments = [] }: DentalChartProps) {
+  const [localTeethData, setLocalTeethData] = useState<Record<number, ToothStatus>>({});
   const [activeTab, setActiveTab] = useState<'adult' | 'primary'>('adult');
 
   const handleToothClick = (toothNumber: number, status: ToothStatus) => {
-    setTeethData((prev) => ({
-      ...prev,
-      [toothNumber]: {
-        number: toothNumber,
-        status,
-        note: '',
-      },
-    }));
+    // Sadece 'healthy' ise yerel durumu temizle, diğer durumlarda tedavi penceresini aç
+    if (status === 'healthy') {
+      setLocalTeethData((prev) => {
+        const newData = { ...prev };
+        delete newData[toothNumber];
+        return newData;
+      });
+    } else {
+      const label = statusLabels[status];
+      onToothSelect?.(toothNumber, label);
+    }
   };
 
   const getToothStatus = (toothNumber: number): ToothStatus => {
-    return teethData[toothNumber]?.status || 'healthy';
+    // 1. Manuel seçilen durum (geçici)
+    if (localTeethData[toothNumber]) return localTeethData[toothNumber];
+    
+    // 2. Tedavi geçmişinden hesapla
+    const toothTreatments = treatments.filter(t => t.tooth_number === toothNumber.toString());
+    if (toothTreatments.length > 0) {
+      // En son yapılan/planlanan tedaviye göre durum belirle
+      const last = toothTreatments[0]; // API genellikle yeniye göre sıralı döner
+      const name = (last.treatment_type_name || last.treatment_name || '').toLowerCase();
+      
+      if (name.includes('dolgu')) return 'filling';
+      if (name.includes('kanal')) return 'canal';
+      if (name.includes('çekim') || name.includes('çekildi')) return 'extraction';
+      if (name.includes('implant')) return 'implant';
+      if (name.includes('kron') || name.includes('kaplama')) return 'crown';
+      if (name.includes('detartraj') || name.includes('temizlik')) return 'detartraj';
+    }
+
+    return 'healthy';
   };
 
   const ToothButton = ({ number, isPrimary = false }: { number: number; isPrimary?: boolean }) => {

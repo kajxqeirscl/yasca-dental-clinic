@@ -5,6 +5,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { fetchDashboardToday } from '../services/api';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
+import AppointmentDialog from './AppointmentDialog';
 
 interface TodayAppointment {
   id: number;
@@ -35,6 +36,8 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<TodayAppointment | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<any>(null);
   const [filter, setFilter] = useState<FilterStatus>(() => {
     return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
   });
@@ -118,6 +121,12 @@ export default function Dashboard() {
   const handleAppointmentClick = (apt: TodayAppointment) => {
     setSelectedAppointment(apt);
     setDetailOpen(true);
+  };
+
+  const handleEditAppointment = (apt: any) => {
+    setAppointmentToEdit(apt);
+    setDetailOpen(false);
+    setIsEditOpen(true);
   };
 
   return (
@@ -234,6 +243,18 @@ export default function Dashboard() {
         onClose={() => setDetailOpen(false)}
         appointment={selectedAppointment}
         onUpdated={loadData}
+        onEdit={handleEditAppointment}
+      />
+
+      <AppointmentDialog
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setAppointmentToEdit(null);
+        }}
+        onSuccess={loadData}
+        appointmentToEdit={appointmentToEdit}
+        selectedSlot={null}
       />
     </div>
   );

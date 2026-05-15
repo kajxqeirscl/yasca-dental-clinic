@@ -12,9 +12,11 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import {
   createAppointment,
+  updateAppointment,
   fetchPatients,
   fetchDoctors,
   fetchTreatmentTypes,
+  fetchClinicSettings,
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -22,6 +24,7 @@ interface AppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedSlot: { date: string; time: string } | null;
+  appointmentToEdit?: any;
   onSuccess?: () => void;
 }
 
@@ -58,6 +61,7 @@ export default function AppointmentDialog({
   isOpen,
   onClose,
   selectedSlot,
+  appointmentToEdit,
   onSuccess,
 }: AppointmentDialogProps) {
   const { user } = useAuth();
@@ -79,10 +83,13 @@ export default function AppointmentDialog({
   const [selectedTreatment, setSelectedTreatment] = useState('');
 
   // --- Other ---
+  const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [workHours, setWorkHours] = useState({ start: 9, end: 18 });
 
   const debouncedSearch = useDebounce(patientSearch, 300);
 
@@ -109,13 +116,40 @@ export default function AppointmentDialog({
     fetchTreatmentTypes()
       .then((list: TreatmentTypeOption[]) => setTreatmentTypes(list))
       .catch(() => setTreatmentTypes([]));
+
+    fetchClinicSettings()
+      .then((settings) => {
+        if (settings.work_start_time) {
+          setWorkHours(prev => ({ ...prev, start: parseInt(settings.work_start_time.split(':')[0], 10) }));
+        }
+        if (settings.work_end_time) {
+          setWorkHours(prev => ({ ...prev, end: parseInt(settings.work_end_time.split(':')[0], 10) }));
+        }
+      })
+      .catch(() => {});
   }, [isOpen, user?.role, user?.id]);
 
   useEffect(() => {
-    if (selectedSlot) {
+    if (appointmentToEdit) {
+      setSelectedPatient({
+        id: appointmentToEdit.patient,
+        full_name: appointmentToEdit.patient_name,
+        phone: appointmentToEdit.patient_phone
+      });
+      setPatientSearch(appointmentToEdit.patient_name);
+      setDate(appointmentToEdit.date);
+      setTime(appointmentToEdit.time);
+      setSelectedDoctorId(appointmentToEdit.doctor);
+      setNotes(appointmentToEdit.notes || '');
+      
+      if (appointmentToEdit.treatment_type) {
+        setSelectedTreatment(appointmentToEdit.treatment_type);
+      }
+    } else if (selectedSlot) {
+      setDate(selectedSlot.date);
       setTime(selectedSlot.time);
     }
-  }, [selectedSlot]);
+  }, [appointmentToEdit, selectedSlot, treatmentTypes]);
 
   // Search patients with debounce
   useEffect(() => {
@@ -166,28 +200,60 @@ export default function AppointmentDialog({
     setPatientResults([]);
     setPatientDropdownOpen(false);
     setSelectedTreatment('');
-    setTime(selectedSlot?.time || '');
+    setDate(appointmentToEdit?.date || selectedSlot?.date || '');
+    setTime(appointmentToEdit?.time || selectedSlot?.time || '');
     setNotes('');
     setError('');
+    setValidationErrors([]);
   };
 
   const handleSave = async () => {
-    if (!selectedPatient || !selectedSlot || !selectedDoctorId) {
-      setError('Lütfen hasta ve hekim seçin.');
+    const missing: string[] = [];
+    if (!selectedPatient) missing.push('patient');
+    if (!selectedDoctorId) missing.push('doctor');
+    if (!date) missing.push('date');
+    if (!time || time === ':00') missing.push('time');
+
+    setValidationErrors(missing);
+    if (missing.length > 0) {
+      if (missing.length === 1) {
+        const singleMessages: { [key: string]: string } = {
+          patient: 'Lütfen randevu için bir hasta seçin.',
+          doctor: 'Lütfen randevuyu gerçekleştirecek hekimi seçin.',
+          date: 'Lütfen geçerli bir randevu tarihi belirleyin.',
+          time: 'Lütfen randevu saatini seçin.'
+        };
+        setError(singleMessages[missing[0]]);
+      } else {
+        const fieldNames: { [key: string]: string } = {
+          patient: 'hasta',
+          doctor: 'hekim',
+          date: 'tarih',
+          time: 'saat'
+        };
+        const list = missing.map(m => fieldNames[m]).join(', ');
+        setError(`Randevu oluşturabilmek için lütfen eksik alanları tamamlayın: ${list}.`);
+      }
       return;
     }
     setLoading(true);
     setError('');
     try {
-      await createAppointment({
+      const payload = {
         patient: selectedPatient.id,
         doctor: selectedDoctorId as number,
-        date: selectedSlot.date,
+        date: date,
         time: time,
         notes: notes || undefined,
         treatment_type: selectedTreatment || undefined,
-        status: 'scheduled',
-      });
+        status: appointmentToEdit ? appointmentToEdit.status : 'scheduled',
+      };
+
+      if (appointmentToEdit) {
+        await updateAppointment(appointmentToEdit.id, payload);
+      } else {
+        await createAppointment(payload);
+      }
       resetForm();
       onSuccess?.();
       onClose();
@@ -196,6 +262,19 @@ export default function AppointmentDialog({
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let h = workHours.start; h < workHours.end; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        options.push(timeStr);
+      }
+    }
+    // Add the end hour (e.g., 18:00)
+    options.push(`${workHours.end.toString().padStart(2, '0')}:00`);
+    return options;
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -207,9 +286,9 @@ export default function AppointmentDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Yeni Randevu Ekle</DialogTitle>
+          <DialogTitle>{appointmentToEdit ? 'Randevuyu Düzenle' : 'Yeni Randevu Ekle'}</DialogTitle>
           <DialogDescription>
-            Randevu bilgilerini girin ve kaydedin.
+            {appointmentToEdit ? 'Randevu bilgilerini güncelleyin.' : 'Randevu bilgilerini girin ve kaydedin.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -220,20 +299,36 @@ export default function AppointmentDialog({
             </div>
           )}
 
-          {/* Date & Time (read-only) */}
+          {/* Date & Time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tarih</Label>
-              <Input value={selectedSlot?.date || ''} readOnly className="bg-gray-50" />
+              <Input 
+                type="date"
+                value={date} 
+                min={new Date().toLocaleDateString('en-CA')}
+                onChange={(e) => setDate(e.target.value)} 
+                required 
+                className={validationErrors.includes('date') ? 'border-red-500 focus:ring-red-500' : ''}
+              />
             </div>
             <div className="space-y-2">
               <Label>Saat</Label>
-              <Input 
-                type="time" 
-                value={time} 
-                onChange={(e) => setTime(e.target.value)} 
-                required 
-              />
+              <select
+                className={`w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  validationErrors.includes('time') ? 'border-red-500 focus:ring-red-500' : ''
+                }`}
+                value={time.substring(0, 5)}
+                onChange={(e) => setTime(e.target.value + ':00')}
+                required
+              >
+                <option value="">Saat seçin</option>
+                {generateTimeOptions().map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -250,6 +345,7 @@ export default function AppointmentDialog({
                   if (patientResults.length > 0) setPatientDropdownOpen(true);
                 }}
                 autoComplete="off"
+                className={validationErrors.includes('patient') ? 'border-red-500 focus:ring-red-500' : ''}
               />
               {patientLoading && (
                 <div className="absolute right-3 top-2.5 text-gray-400 text-sm">
@@ -298,7 +394,9 @@ export default function AppointmentDialog({
             <Label htmlFor="doctor">Hekim *</Label>
             <select
               id="doctor"
-              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                validationErrors.includes('doctor') ? 'border-red-500 focus:ring-red-500' : ''
+              }`}
               value={selectedDoctorId}
               onChange={(e) => setSelectedDoctorId(Number(e.target.value) || '')}
             >

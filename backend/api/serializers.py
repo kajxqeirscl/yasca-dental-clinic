@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import (
     Patient,
     Anamnesis,
@@ -164,14 +165,22 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         doctor = data.get("doctor")
         date = data.get("date")
         time = data.get("time")
+        
+        # Sadece yeni oluşturmada geçmiş tarih kontrolü
+        if not self.instance and date and date < timezone.localdate():
+            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+
         if doctor and date and time:
             existing = Appointment.objects.filter(
                 doctor=doctor,
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
-            ).exists()
-            if existing:
+            )
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
                 raise serializers.ValidationError(
                     "Bu hekime bu saatte zaten randevu kayıtlı."
                 )
