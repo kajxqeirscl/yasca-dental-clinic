@@ -126,7 +126,16 @@ class Anamnesis(models.Model):
 
 class TreatmentType(models.Model):
     """Tedavi türleri ve varsayılan fiyatları. F-020."""
-    
+
+    class Category(models.TextChoices):
+        FILLING    = "filling",    "Dolgu"
+        CANAL      = "canal",      "Kanal Tedavisi"
+        CROWN      = "crown",      "Kron / Kaplama"
+        EXTRACTION = "extraction", "Diş Çekimi"
+        IMPLANT    = "implant",    "İmplant"
+        DETARTRAJ  = "detartraj",  "Diş Taşı Temizliği"
+        OTHER      = "other",      "Diğer"
+
     clinic = models.ForeignKey(
         Clinic,
         on_delete=models.CASCADE,
@@ -136,6 +145,12 @@ class TreatmentType(models.Model):
     )
 
     name = models.CharField("Tedavi Türü", max_length=100)
+    category = models.CharField(
+        "Kategori",
+        max_length=20,
+        choices=Category.choices,
+        default=Category.OTHER,
+    )
     default_price = models.DecimalField(
         "Varsayılan Fiyat", max_digits=10, decimal_places=2, default=0
     )

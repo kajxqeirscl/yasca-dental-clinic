@@ -12,6 +12,8 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { createTreatment, updateTreatment, deleteTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { type TreatmentCategory } from './TreatmentTypesPage';
+import { DatePicker } from './ui/date-picker';
 
 interface Treatment {
   id: number;
@@ -31,7 +33,8 @@ interface TreatmentAddDialogProps {
   patientId: number;
   onSuccess?: () => void;
   initialToothNumber?: string | number;
-  initialTreatmentName?: string;
+  /** Pre-selects the first treatment type matching this category. Replaces the old string-matching approach. */
+  initialCategory?: TreatmentCategory;
   treatmentToEdit?: Treatment | null;
 }
 
@@ -44,6 +47,7 @@ interface DoctorOption {
 interface TreatmentTypeOption {
   id: number;
   name: string;
+  category: string;
   default_price: string;
 }
 
@@ -60,7 +64,7 @@ export default function TreatmentAddDialog({
   patientId,
   onSuccess,
   initialToothNumber,
-  initialTreatmentName,
+  initialCategory,
   treatmentToEdit,
 }: TreatmentAddDialogProps) {
   const { user } = useAuth();
@@ -78,7 +82,7 @@ export default function TreatmentAddDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
-  // Dialog her açıldığında varsayılanı resetlerken initialToothNumber'ı da basıyoruz
+  // Dialog her açıldığında varsayılanı resetlerken initialToothNumber ve initialCategory'yi de uyguluyoruz
   useEffect(() => {
     if (isOpen) {
       if (treatmentToEdit) {
@@ -91,19 +95,23 @@ export default function TreatmentAddDialog({
         setDate(treatmentToEdit.date);
       } else {
         setToothNumber(initialToothNumber?.toString() || '');
-        if (initialTreatmentName) {
-          const match = treatmentTypes.find(t => t.name.toLowerCase() === initialTreatmentName.toLowerCase());
+        if (initialCategory) {
+          // Find the first active treatment type with matching category — no string matching.
+          const match = treatmentTypes.find((t) => t.category === initialCategory);
           if (match) {
             setSelectedTypeId(match.id);
-            setTreatmentName('');
+            setPrice(match.default_price);
           } else {
             setSelectedTypeId('');
-            setTreatmentName(initialTreatmentName);
           }
+          setTreatmentName('');
+        } else {
+          setSelectedTypeId('');
+          setTreatmentName('');
         }
       }
     }
-  }, [isOpen, treatmentToEdit, initialToothNumber, initialTreatmentName, treatmentTypes]);
+  }, [isOpen, treatmentToEdit, initialToothNumber, initialCategory, treatmentTypes]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -217,11 +225,9 @@ export default function TreatmentAddDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="treat-date">Tarih *</Label>
-              <Input
-                id="treat-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+              <DatePicker
+                date={date}
+                onDateChange={setDate}
               />
             </div>
             <div className="space-y-2">

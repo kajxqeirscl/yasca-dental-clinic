@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { createPatient, updatePatient } from '../services/api';
+import { DatePicker } from './ui/date-picker';
 
 interface PatientDialogProps {
   isOpen: boolean;
@@ -184,13 +185,9 @@ export default function PatientDialog({
 
           <div className="space-y-2">
             <Label htmlFor="birthDate">Doğum Tarihi</Label>
-            <Input
-              id="birthDate"
-              type="date"
-              value={formData.birth_date}
-              onChange={(e) =>
-                setFormData({ ...formData, birth_date: e.target.value })
-              }
+            <DatePicker
+              date={formData.birth_date}
+              onDateChange={(val) => setFormData({ ...formData, birth_date: val })}
             />
           </div>
 

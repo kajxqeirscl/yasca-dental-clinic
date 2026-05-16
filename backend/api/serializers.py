@@ -198,12 +198,15 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
 class TreatmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TreatmentType
-        fields = ["id", "name", "default_price", "is_active"]
+        fields = ["id", "name", "category", "default_price", "is_active"]
 
 
 class TreatmentSerializer(serializers.ModelSerializer):
     treatment_type_name = serializers.CharField(
         source="treatment_type.name", read_only=True
+    )
+    treatment_type_category = serializers.CharField(
+        source="treatment_type.category", read_only=True
     )
     doctor_name = serializers.SerializerMethodField()
 
@@ -216,6 +219,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "doctor_name",
             "treatment_type",
             "treatment_type_name",
+            "treatment_type_category",
             "treatment_name",
             "tooth_number",
             "status",

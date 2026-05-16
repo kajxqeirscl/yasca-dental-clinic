@@ -11,6 +11,7 @@ import { Badge } from './ui/badge';
 import { Calendar, Clock, User, Stethoscope, Activity, FileText, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { updateAppointment, deleteAppointment } from '../services/api';
+import { formatDateDDMMYYYY } from '../utils/date';
 
 interface Appointment {
   id: number;
@@ -114,7 +115,7 @@ export default function AppointmentDetailDialog({
                 <Calendar className="w-4 h-4" /> Tarih
               </div>
               <div className="font-medium text-gray-900">
-                {new Date(appointment.date).toLocaleDateString('tr-TR')}
+                {formatDateDDMMYYYY(appointment.date)}
               </div>
             </div>
             <div className="space-y-1">

@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { DatePicker } from './ui/date-picker';
 import {
   createAppointment,
   updateAppointment,
@@ -318,12 +319,10 @@ return (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Tarih</Label>
-            <Input
-              type="date"
-              value={date}
-              min={new Date().toLocaleDateString('en-CA')}
-              onChange={(e) => setDate(e.target.value)}
-              required
+            <DatePicker
+              date={date}
+              onDateChange={setDate}
+              minDate={new Date().toLocaleDateString('en-CA')}
               className={validationErrors.includes('date') ? 'border-red-500 focus:ring-red-500' : ''}
             />
           </div>

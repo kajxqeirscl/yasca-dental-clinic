@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchTreatmentTypes, createTreatmentType, updateTreatmentType, deleteTreatmentType } from '../services/api';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from './ui/table';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,9 +9,27 @@ import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Category definitions — must mirror backend TreatmentType.Category choices
+export const CATEGORY_OPTIONS = [
+  { value: 'filling',    label: 'Dolgu' },
+  { value: 'canal',      label: 'Kanal Tedavisi' },
+  { value: 'crown',      label: 'Kron / Kaplama' },
+  { value: 'extraction', label: 'Diş Çekimi' },
+  { value: 'implant',    label: 'İmplant' },
+  { value: 'detartraj',  label: 'Diş Taşı Temizliği' },
+  { value: 'other',      label: 'Diğer' },
+] as const;
+
+export type TreatmentCategory = typeof CATEGORY_OPTIONS[number]['value'];
+
+export function getCategoryLabel(value: string) {
+  return CATEGORY_OPTIONS.find((c) => c.value === value)?.label ?? 'Diğer';
+}
+
 interface TreatmentType {
   id: number;
   name: string;
+  category: TreatmentCategory;
   default_price: string;
   is_active: boolean;
 }
@@ -25,7 +43,11 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<TreatmentType | null>(null);
-  const [formData, setFormData] = useState({ name: '', default_price: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'other' as TreatmentCategory,
+    default_price: '',
+  });
 
   const canEdit = userRole === 'admin' || userRole === 'doctor';
 
@@ -33,7 +55,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     try {
       const data = await fetchTreatmentTypes();
       setTypes(data);
-    } catch (err) {
+    } catch {
       toast.error('Tedavi türleri yüklenirken hata oluştu.');
     } finally {
       setLoading(false);
@@ -47,10 +69,10 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   const handleOpenDialog = (type?: TreatmentType) => {
     if (type) {
       setEditingType(type);
-      setFormData({ name: type.name, default_price: type.default_price });
+      setFormData({ name: type.name, category: type.category, default_price: type.default_price });
     } else {
       setEditingType(null);
-      setFormData({ name: '', default_price: '' });
+      setFormData({ name: '', category: 'other', default_price: '' });
     }
     setIsDialogOpen(true);
   };
@@ -66,8 +88,8 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       }
       setIsDialogOpen(false);
       loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Kaydetme işlemi başarısız');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Kaydetme işlemi başarısız');
     }
   };
 
@@ -77,8 +99,8 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       await deleteTreatmentType(id);
       toast.success('Tedavi türü devre dışı bırakıldı');
       loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Silme işlemi başarısız');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Silme işlemi başarısız');
     }
   };
 
@@ -87,7 +109,9 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tedavi Türleri</h2>
-          <p className="text-muted-foreground">Klinikte uygulanan tedavi türlerini ve fiyatlarını yönetin.</p>
+          <p className="text-muted-foreground">
+            Klinikte uygulanan tedavi türlerini, fiyatlarını ve diş şeması kategorilerini yönetin.
+          </p>
         </div>
         {canEdit && (
           <Button onClick={() => handleOpenDialog()}>
@@ -103,6 +127,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             <TableHeader>
               <TableRow>
                 <TableHead>Tedavi Adı</TableHead>
+                <TableHead>Kategori (Şema)</TableHead>
                 <TableHead>Varsayılan Fiyat</TableHead>
                 <TableHead>Durum</TableHead>
                 {canEdit && <TableHead className="text-right">İşlemler</TableHead>}
@@ -110,31 +135,47 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Yükleniyor...</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                    Yükleniyor...
+                  </TableCell>
+                </TableRow>
               ) : types.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Henüz tedavi türü eklenmemiş.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                    Henüz tedavi türü eklenmemiş.
+                  </TableCell>
+                </TableRow>
               ) : (
-                types.map((type) => (
-                  <TableRow key={type.id}>
-                    <TableCell className="font-medium">{type.name}</TableCell>
-                    <TableCell>{type.default_price} TL</TableCell>
-                    <TableCell>
-                      <Badge variant={type.is_active ? 'default' : 'secondary'}>
-                        {type.is_active ? 'Aktif' : 'Pasif'}
-                      </Badge>
-                    </TableCell>
-                    {canEdit && (
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(type)}>
-                          <Edit className="w-4 h-4 text-blue-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(type.id)}>
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
+                types.map((type) => {
+                  const cat = CATEGORY_OPTIONS.find((c) => c.value === type.category);
+                  return (
+                    <TableRow key={type.id}>
+                      <TableCell className="font-medium">{type.name}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          <span>{cat?.label ?? 'Diğer'}</span>
+                        </span>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))
+                      <TableCell>{type.default_price} TL</TableCell>
+                      <TableCell>
+                        <Badge variant={type.is_active ? 'default' : 'secondary'}>
+                          {type.is_active ? 'Aktif' : 'Pasif'}
+                        </Badge>
+                      </TableCell>
+                      {canEdit && (
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(type)}>
+                            <Edit className="w-4 h-4 text-blue-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(type.id)}>
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -144,7 +185,9 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingType ? 'Tedavi Türünü Düzenle' : 'Yeni Tedavi Türü Ekle'}</DialogTitle>
+            <DialogTitle>
+              {editingType ? 'Tedavi Türünü Düzenle' : 'Yeni Tedavi Türü Ekle'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -152,9 +195,30 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Örn: Kanal Tedavisi"
+                placeholder="Örn: Kompozit Dolgu"
               />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Kategori (Diş Şemasında Rengi Belirler)</label>
+              <select
+                className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value as TreatmentCategory })
+                }
+              >
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                Bu kategori, diş şemasında dişin hangi renk ve durumda gösterileceğini belirler.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Varsayılan Fiyat (TL)</label>
               <Input
@@ -166,7 +230,9 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>İptal</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              İptal
+            </Button>
             <Button onClick={handleSave} disabled={!formData.name || !formData.default_price}>
               Kaydet
             </Button>

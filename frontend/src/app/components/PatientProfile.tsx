@@ -44,6 +44,8 @@ import AppointmentDetailDialog from './AppointmentDetailDialog';
 import AppointmentDialog from './AppointmentDialog';
 import TreatmentAddDialog from './TreatmentAddDialog';
 import PaymentDialog from './PaymentDialog';
+import { DatePicker } from './ui/date-picker';
+import { formatDateDDMMYYYY } from '../utils/date';
 
 interface Anamnesis {
   medical_history: string;
@@ -155,7 +157,7 @@ export default function PatientProfile() {
   const [isTreatmentAddOpen, setIsTreatmentAddOpen] = useState(false);
   const [isPaymentAddOpen, setIsPaymentAddOpen] = useState(false);
   const [selectedToothForTreatment, setSelectedToothForTreatment] = useState<number | ''>('');
-  const [selectedTreatmentName, setSelectedTreatmentName] = useState<string | undefined>(undefined);
+  const [selectedCategory, setSelectedCategory] = useState<import('./TreatmentTypesPage').TreatmentCategory | undefined>(undefined);
   const [treatmentToEdit, setTreatmentToEdit] = useState<any>(null);
   const [paymentToEdit, setPaymentToEdit] = useState<any>(null);
 
@@ -496,10 +498,9 @@ export default function PatientProfile() {
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
                       <Calendar className="w-3 h-3" /> Doğum Tarihi
                     </Label>
-                    <Input 
-                      type="date"
-                      value={editedPatient?.birth_date || ''} 
-                      onChange={(e) => handleFieldChange('birth_date', e.target.value)}
+                    <DatePicker
+                      date={editedPatient?.birth_date || undefined}
+                      onDateChange={(val) => handleFieldChange('birth_date', val)}
                     />
                   </div>
                   <div className="space-y-1">
@@ -661,7 +662,7 @@ export default function PatientProfile() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="text-gray-900 font-semibold">
-                                {new Date(appointment.date).toLocaleDateString('tr-TR')}
+                                {formatDateDDMMYYYY(appointment.date)}
                               </h4>
                               <span className="text-gray-400">•</span>
                               <span className="text-blue-600 text-sm font-medium">
@@ -729,7 +730,7 @@ export default function PatientProfile() {
                           <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
                             <span className="font-medium text-gray-700">{t.doctor_name}</span>
                             <span>•</span>
-                            <span>{new Date(t.date).toLocaleDateString('tr-TR')}</span>
+                            <span>{formatDateDDMMYYYY(t.date)}</span>
                           </div>
                         </div>
                       </div>
@@ -807,7 +808,7 @@ export default function PatientProfile() {
                         </div>
                       </div>
                       <span className="text-sm text-gray-400">
-                        {new Date(pay.payment_date).toLocaleDateString('tr-TR')}
+                        {formatDateDDMMYYYY(pay.payment_date)}
                       </span>
                     </div>
                   ))}
@@ -828,9 +829,9 @@ export default function PatientProfile() {
             <CardContent>
               <DentalChart 
                 treatments={treatments}
-                onToothSelect={(toothNum, treatName) => {
+                onToothSelect={(toothNum, category) => {
                   setSelectedToothForTreatment(toothNum);
-                  setSelectedTreatmentName(treatName);
+                  setSelectedCategory(category);
                   setIsTreatmentAddOpen(true);
                 }} 
               />
@@ -919,7 +920,7 @@ export default function PatientProfile() {
                             </h4>
                             <div className="flex items-center justify-between mt-2">
                               <span className="text-[10px] text-gray-400 font-medium">
-                                {new Date(doc.created_at).toLocaleDateString('tr-TR')}
+                                {formatDateDDMMYYYY(doc.created_at)}
                               </span>
                               <div className="flex items-center gap-1">
                                 <a 
@@ -978,17 +979,17 @@ export default function PatientProfile() {
         onClose={() => { 
           setIsTreatmentAddOpen(false); 
           setSelectedToothForTreatment('');
-          setSelectedTreatmentName(undefined);
+          setSelectedCategory(undefined);
           setTreatmentToEdit(null);
         }}
         patientId={Number(patient.id)}
         onSuccess={() => {
           loadData();
-          setSelectedTreatmentName(undefined);
+          setSelectedCategory(undefined);
           setTreatmentToEdit(null);
         }}
         initialToothNumber={selectedToothForTreatment}
-        initialTreatmentName={selectedTreatmentName}
+        initialCategory={selectedCategory}
         treatmentToEdit={treatmentToEdit}
       />
 

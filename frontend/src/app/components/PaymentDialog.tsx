@@ -10,6 +10,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { createPayment, fetchTreatments, updatePayment, deletePayment } from '../services/api';
+import { formatDateDDMMYYYY } from '../utils/date';
+import { DatePicker } from './ui/date-picker';
 
 interface Payment {
   id: number;
@@ -150,7 +152,7 @@ export default function PaymentDialog({
               <option value="">Genel Ödeme (Tedavi seçilmedi)</option>
               {treatments.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.treatment_type_name || t.treatment_name} - {t.date}
+                  {t.treatment_type_name || t.treatment_name} - {formatDateDDMMYYYY(t.date)}
                 </option>
               ))}
             </select>
@@ -171,11 +173,9 @@ export default function PaymentDialog({
 
           <div className="space-y-2">
             <Label htmlFor="pay-date">Ödeme Tarihi *</Label>
-            <Input
-              id="pay-date"
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+            <DatePicker
+              date={paymentDate}
+              onDateChange={setPaymentDate}
             />
           </div>
 

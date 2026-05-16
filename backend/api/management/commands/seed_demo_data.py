@@ -67,18 +67,19 @@ class Command(BaseCommand):
         assistant.save()
 
         self.stdout.write("Generating Treatment Types...")
-        tt_names = [
-            ("Kanal Tedavisi", 2500.00),
-            ("Diş Çekimi", 800.00),
-            ("Gömülü Diş Çekimi", 1500.00),
-            ("İmplant", 12000.00),
-            ("Zirkonyum Kaplama", 4500.00),
-            ("Kompozit Dolgu", 1000.00),
-            ("Diş Taşı Temizliği", 800.00),
+        # (name, price, category)
+        tt_data = [
+            ("Kanal Tedavisi",     2500.00, TreatmentType.Category.CANAL),
+            ("Diş Çekimi",          800.00, TreatmentType.Category.EXTRACTION),
+            ("Gömülü Diş Çekimi", 1500.00, TreatmentType.Category.EXTRACTION),
+            ("İmplant",           12000.00, TreatmentType.Category.IMPLANT),
+            ("Zirkonyum Kaplama",  4500.00, TreatmentType.Category.CROWN),
+            ("Kompozit Dolgu",     1000.00, TreatmentType.Category.FILLING),
+            ("Diş Taşı Temizliği",  800.00, TreatmentType.Category.DETARTRAJ),
         ]
         treatment_types = []
-        for name, price in tt_names:
-            tt = TreatmentTypeFactory(clinic=clinic, name=name, default_price=price)
+        for name, price, category in tt_data:
+            tt = TreatmentTypeFactory(clinic=clinic, name=name, default_price=price, category=category)
             treatment_types.append(tt)
 
         self.stdout.write("Generating Patients and Anamnesis...")
