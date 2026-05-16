@@ -11,12 +11,19 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { createPayment, fetchTreatments, updatePayment, deletePayment } from '../services/api';
 
+interface Payment {
+  id: number;
+  amount: number | string;
+  description: string;
+  payment_date: string;
+}
+
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   patientId: number;
   onSuccess?: () => void;
-  paymentToEdit?: any;
+  paymentToEdit?: Payment | null;
 }
 
 export default function PaymentDialog({
@@ -99,10 +106,6 @@ export default function PaymentDialog({
 
   const handleDelete = async () => {
     if (!paymentToEdit) return;
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
     setLoading(true);
     try {
       await deletePayment(paymentToEdit.id);
@@ -121,6 +124,7 @@ export default function PaymentDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -189,12 +193,12 @@ export default function PaymentDialog({
         <div className="flex justify-between items-center pt-2">
           {paymentToEdit ? (
             <Button
-              variant="ghost"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={handleDelete}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-100"
+              onClick={() => setConfirmDelete(true)}
               disabled={loading}
             >
-              {confirmDelete ? 'Emin misiniz?' : 'Sil'}
+              Sil
             </Button>
           ) : <div />}
 
@@ -209,5 +213,23 @@ export default function PaymentDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Ödemeyi Sil</DialogTitle>
+            <DialogDescription>
+              Bu ödemeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

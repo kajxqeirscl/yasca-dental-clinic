@@ -13,6 +13,18 @@ import { Textarea } from './ui/textarea';
 import { createTreatment, updateTreatment, deleteTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
+interface Treatment {
+  id: number;
+  doctor: number;
+  treatment_type?: number;
+  treatment_name?: string;
+  tooth_number?: string;
+  notes?: string;
+  status: string;
+  date: string;
+  price?: number | string;
+}
+
 interface TreatmentAddDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +32,7 @@ interface TreatmentAddDialogProps {
   onSuccess?: () => void;
   initialToothNumber?: string | number;
   initialTreatmentName?: string;
-  treatmentToEdit?: any;
+  treatmentToEdit?: Treatment | null;
 }
 
 interface DoctorOption {
@@ -168,10 +180,6 @@ export default function TreatmentAddDialog({
 
   const handleDelete = async () => {
     if (!treatmentToEdit) return;
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
     setLoading(true);
     try {
       await deleteTreatment(treatmentToEdit.id);
@@ -190,6 +198,7 @@ export default function TreatmentAddDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -334,12 +343,12 @@ export default function TreatmentAddDialog({
         <div className="flex justify-between items-center pt-2">
           {treatmentToEdit ? (
             <Button
-              variant="ghost"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={handleDelete}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-100"
+              onClick={() => setConfirmDelete(true)}
               disabled={loading}
             >
-              {confirmDelete ? 'Emin misiniz?' : 'Kaydı Sil'}
+              Kaydı Sil
             </Button>
           ) : <div />}
 
@@ -354,5 +363,23 @@ export default function TreatmentAddDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Tedavi Kaydını Sil</DialogTitle>
+            <DialogDescription>
+              Bu tedavi kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

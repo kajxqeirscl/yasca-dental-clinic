@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState<TodayAppointment | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [appointmentToEdit, setAppointmentToEdit] = useState<any>(null);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<TodayAppointment | null>(null);
   const [filter, setFilter] = useState<FilterStatus>(() => {
     return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
   });

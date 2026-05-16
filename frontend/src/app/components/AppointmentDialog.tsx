@@ -20,11 +20,26 @@ import {
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
+interface Appointment {
+  id: number;
+  date: string;
+  time: string;
+  patient_name: string;
+  patient_phone: string;
+  patient: number;
+  doctor: number;
+  doctor_name?: string;
+  status: string;
+  notes?: string;
+  treatment_type?: number;
+  treatment_type_name?: string;
+}
+
 interface AppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedSlot: { date: string; time: string } | null;
-  appointmentToEdit?: any;
+  appointmentToEdit?: Appointment | null;
   onSuccess?: () => void;
 }
 
