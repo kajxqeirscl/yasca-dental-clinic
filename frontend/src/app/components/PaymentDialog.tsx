@@ -9,13 +9,14 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { createPayment, fetchTreatments } from '../services/api';
+import { createPayment, fetchTreatments, updatePayment, deletePayment } from '../services/api';
 
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   patientId: number;
   onSuccess?: () => void;
+  paymentToEdit?: any;
 }
 
 export default function PaymentDialog({
@@ -23,6 +24,7 @@ export default function PaymentDialog({
   onClose,
   patientId,
   onSuccess,
+  paymentToEdit,
 }: PaymentDialogProps) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +34,7 @@ export default function PaymentDialog({
   const [treatmentId, setTreatmentId] = useState<number | ''>('');
   const [treatments, setTreatments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -48,10 +51,21 @@ export default function PaymentDialog({
     setTreatmentId('');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setError('');
+    setConfirmDelete(false);
   };
 
+  useEffect(() => {
+    if (isOpen && paymentToEdit) {
+      setAmount(paymentToEdit.amount.toString());
+      setDescription(paymentToEdit.description || '');
+      setPaymentDate(paymentToEdit.payment_date);
+    } else if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen, paymentToEdit]);
+
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
+    const parsedAmount = parseFloat(amount.toString().replace(',', '.'));
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       setError('Geçerli bir tutar giriniz.');
       return;
@@ -59,18 +73,43 @@ export default function PaymentDialog({
     setLoading(true);
     setError('');
     try {
-      await createPayment({
+      const payload = {
         patient: patientId,
         treatment: treatmentId ? (treatmentId as number) : undefined,
         amount: parsedAmount,
         description: description.trim() || undefined,
         payment_date: paymentDate,
-      });
+      };
+
+      if (paymentToEdit) {
+        await updatePayment(paymentToEdit.id, payload);
+      } else {
+        await createPayment(payload);
+      }
+
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ödeme eklenemedi');
+      setError(err instanceof Error ? err.message : 'İşlem başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!paymentToEdit) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setLoading(true);
+    try {
+      await deletePayment(paymentToEdit.id);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError('Silinemedi');
     } finally {
       setLoading(false);
     }
@@ -85,9 +124,9 @@ export default function PaymentDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Ödeme Ekle</DialogTitle>
+          <DialogTitle>{paymentToEdit ? 'Ödemeyi Düzenle' : 'Ödeme Ekle'}</DialogTitle>
           <DialogDescription>
-            Hastadan alınan ödemeyi kaydedin.
+            {paymentToEdit ? 'Ödeme bilgilerini güncelleyin veya silin.' : 'Hastadan alınan ödemeyi kaydedin.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -147,13 +186,26 @@ export default function PaymentDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+        <div className="flex justify-between items-center pt-2">
+          {paymentToEdit ? (
+            <Button
+              variant="ghost"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {confirmDelete ? 'Emin misiniz?' : 'Sil'}
+            </Button>
+          ) : <div />}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              {loading ? 'Kaydediliyor...' : paymentToEdit ? 'Güncelle' : 'Kaydet'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

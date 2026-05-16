@@ -32,6 +32,7 @@ interface AppointmentDetailDialogProps {
   onClose: () => void;
   appointment: Appointment | null;
   onUpdated?: () => void;
+  onEdit?: (appointment: Appointment) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -46,6 +47,7 @@ export default function AppointmentDetailDialog({
   onClose,
   appointment,
   onUpdated,
+  onEdit,
 }: AppointmentDetailDialogProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -73,10 +75,6 @@ export default function AppointmentDetailDialog({
   };
 
   const handleDelete = async () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
     setLoading(true);
     try {
       await deleteAppointment(appointment.id);
@@ -196,25 +194,49 @@ export default function AppointmentDetailDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="grid grid-cols-4 gap-2 pt-4 border-t">
           <Button
-            variant="ghost"
+            variant="destructive"
             size="sm"
-            className={`text-red-600 hover:text-red-700 hover:bg-red-50 ${confirmDelete ? 'bg-red-50' : ''}`}
-            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-100"
+            onClick={() => setConfirmDelete(true)}
             disabled={loading}
           >
             <Trash2 className="w-4 h-4 mr-1" />
-            {confirmDelete ? 'Emin misiniz?' : 'Sil'}
+            Sil
           </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setConfirmDelete(false); onClose(); }}>Kapat</Button>
-            <Button onClick={handleGoToPatient} className="bg-blue-600 hover:bg-blue-700">
-              Hasta Profili
+          
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={() => appointment && onEdit(appointment)}>
+              Düzenle
             </Button>
-          </div>
+          )}
+          
+          <Button variant="outline" size="sm" onClick={() => { setConfirmDelete(false); onClose(); }}>Kapat</Button>
+          
+          <Button size="sm" onClick={handleGoToPatient} className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-100 px-1">
+            Hasta Profili
+          </Button>
         </div>
       </DialogContent>
+
+      {/* Silme Onayı Diyaloğu */}
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Randevuyu Sil</DialogTitle>
+            <DialogDescription>
+              Bu randevuyu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

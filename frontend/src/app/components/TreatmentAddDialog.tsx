@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { createTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
+import { createTreatment, updateTreatment, deleteTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 interface TreatmentAddDialogProps {
@@ -19,6 +19,8 @@ interface TreatmentAddDialogProps {
   patientId: number;
   onSuccess?: () => void;
   initialToothNumber?: string | number;
+  initialTreatmentName?: string;
+  treatmentToEdit?: any;
 }
 
 interface DoctorOption {
@@ -34,10 +36,10 @@ interface TreatmentTypeOption {
 }
 
 const TOOTH_NUMBERS = [
-  '11','12','13','14','15','16','17','18',
-  '21','22','23','24','25','26','27','28',
-  '31','32','33','34','35','36','37','38',
-  '41','42','43','44','45','46','47','48',
+  '11', '12', '13', '14', '15', '16', '17', '18',
+  '21', '22', '23', '24', '25', '26', '27', '28',
+  '31', '32', '33', '34', '35', '36', '37', '38',
+  '41', '42', '43', '44', '45', '46', '47', '48',
 ];
 
 export default function TreatmentAddDialog({
@@ -46,6 +48,8 @@ export default function TreatmentAddDialog({
   patientId,
   onSuccess,
   initialToothNumber,
+  initialTreatmentName,
+  treatmentToEdit,
 }: TreatmentAddDialogProps) {
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
@@ -59,14 +63,35 @@ export default function TreatmentAddDialog({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
   // Dialog her açıldığında varsayılanı resetlerken initialToothNumber'ı da basıyoruz
   useEffect(() => {
     if (isOpen) {
-      setToothNumber(initialToothNumber?.toString() || '');
+      if (treatmentToEdit) {
+        setSelectedDoctorId(treatmentToEdit.doctor);
+        setSelectedTypeId(treatmentToEdit.treatment_type || '');
+        setTreatmentName(treatmentToEdit.treatment_name || '');
+        setToothNumber(treatmentToEdit.tooth_number || '');
+        setNotes(treatmentToEdit.notes || '');
+        setStatus(treatmentToEdit.status);
+        setDate(treatmentToEdit.date);
+      } else {
+        setToothNumber(initialToothNumber?.toString() || '');
+        if (initialTreatmentName) {
+          const match = treatmentTypes.find(t => t.name.toLowerCase() === initialTreatmentName.toLowerCase());
+          if (match) {
+            setSelectedTypeId(match.id);
+            setTreatmentName('');
+          } else {
+            setSelectedTypeId('');
+            setTreatmentName(initialTreatmentName);
+          }
+        }
+      }
     }
-  }, [isOpen, initialToothNumber]);
+  }, [isOpen, treatmentToEdit, initialToothNumber, initialTreatmentName, treatmentTypes]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -114,7 +139,7 @@ export default function TreatmentAddDialog({
     setLoading(true);
     setError('');
     try {
-      await createTreatment({
+      const payload = {
         patient: patientId,
         doctor: selectedDoctorId as number,
         treatment_type: selectedTypeId ? (selectedTypeId as number) : null,
@@ -124,12 +149,36 @@ export default function TreatmentAddDialog({
         notes: notes.trim() || undefined,
         date,
         price: price || undefined,
-      });
+      };
+
+      if (treatmentToEdit) {
+        await updateTreatment(treatmentToEdit.id, payload);
+      } else {
+        await createTreatment(payload);
+      }
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Tedavi eklenemedi');
+      setError(err instanceof Error ? err.message : 'İşlem başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!treatmentToEdit) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setLoading(true);
+    try {
+      await deleteTreatment(treatmentToEdit.id);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError('Silinemedi');
     } finally {
       setLoading(false);
     }
@@ -144,9 +193,9 @@ export default function TreatmentAddDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Yeni Tedavi Kaydı Ekle</DialogTitle>
+          <DialogTitle>{treatmentToEdit ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Kaydı Ekle'}</DialogTitle>
           <DialogDescription>
-            Hastaya yapılan tedaviyi kaydedin.
+            {treatmentToEdit ? 'Mevcut tedavi bilgilerini güncelleyin veya silin.' : 'Hastaya yapılan tedaviyi kaydedin.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -282,13 +331,26 @@ export default function TreatmentAddDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+        <div className="flex justify-between items-center pt-2">
+          {treatmentToEdit ? (
+            <Button
+              variant="ghost"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {confirmDelete ? 'Emin misiniz?' : 'Kaydı Sil'}
+            </Button>
+          ) : <div />}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              {loading ? 'Kaydediliyor...' : treatmentToEdit ? 'Güncelle' : 'Kaydet'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
