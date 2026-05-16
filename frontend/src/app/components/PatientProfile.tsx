@@ -692,7 +692,7 @@ export default function PatientProfile() {
               <div className="flex items-center justify-between">
                 <CardTitle>Tedavi Geçmişi</CardTitle>
                 <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> Tedavi Ekle
+                  <Plus className="w-4 h-4 mr-1" /> Yeni Tedavi Ekle
                 </Button>
               </div>
             </CardHeader>
@@ -749,7 +749,7 @@ export default function PatientProfile() {
               <div className="flex items-center justify-between">
                 <CardTitle>Ödemeler</CardTitle>
                 <Button size="sm" onClick={handleNewPayment}>
-                  <Plus className="w-4 h-4 mr-1" /> Ödeme Ekle
+                  <Plus className="w-4 h-4 mr-1" /> Yeni Ödeme Ekle
                 </Button>
               </div>
             </CardHeader>
