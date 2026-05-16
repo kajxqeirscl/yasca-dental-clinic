@@ -9,13 +9,23 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { createPayment, fetchTreatments } from '../services/api';
+import { createPayment, fetchTreatments, updatePayment, deletePayment } from '../services/api';
+import { formatDateDDMMYYYY } from '../utils/date';
+import { DatePicker } from './ui/date-picker';
+
+interface Payment {
+  id: number;
+  amount: number | string;
+  description: string;
+  payment_date: string;
+}
 
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   patientId: number;
   onSuccess?: () => void;
+  paymentToEdit?: Payment | null;
 }
 
 export default function PaymentDialog({
@@ -23,6 +33,7 @@ export default function PaymentDialog({
   onClose,
   patientId,
   onSuccess,
+  paymentToEdit,
 }: PaymentDialogProps) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +43,7 @@ export default function PaymentDialog({
   const [treatmentId, setTreatmentId] = useState<number | ''>('');
   const [treatments, setTreatments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -48,10 +60,21 @@ export default function PaymentDialog({
     setTreatmentId('');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setError('');
+    setConfirmDelete(false);
   };
 
+  useEffect(() => {
+    if (isOpen && paymentToEdit) {
+      setAmount(paymentToEdit.amount.toString());
+      setDescription(paymentToEdit.description || '');
+      setPaymentDate(paymentToEdit.payment_date);
+    } else if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen, paymentToEdit]);
+
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
+    const parsedAmount = parseFloat(amount.toString().replace(',', '.'));
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       setError('Geçerli bir tutar giriniz.');
       return;
@@ -59,18 +82,39 @@ export default function PaymentDialog({
     setLoading(true);
     setError('');
     try {
-      await createPayment({
+      const payload = {
         patient: patientId,
         treatment: treatmentId ? (treatmentId as number) : undefined,
         amount: parsedAmount,
         description: description.trim() || undefined,
         payment_date: paymentDate,
-      });
+      };
+
+      if (paymentToEdit) {
+        await updatePayment(paymentToEdit.id, payload);
+      } else {
+        await createPayment(payload);
+      }
+
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ödeme eklenemedi');
+      setError(err instanceof Error ? err.message : 'İşlem başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!paymentToEdit) return;
+    setLoading(true);
+    try {
+      await deletePayment(paymentToEdit.id);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError('Silinemedi');
     } finally {
       setLoading(false);
     }
@@ -82,12 +126,13 @@ export default function PaymentDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Ödeme Ekle</DialogTitle>
+          <DialogTitle>{paymentToEdit ? 'Ödemeyi Düzenle' : 'Ödeme Ekle'}</DialogTitle>
           <DialogDescription>
-            Hastadan alınan ödemeyi kaydedin.
+            {paymentToEdit ? 'Ödeme bilgilerini güncelleyin veya silin.' : 'Hastadan alınan ödemeyi kaydedin.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,7 +152,7 @@ export default function PaymentDialog({
               <option value="">Genel Ödeme (Tedavi seçilmedi)</option>
               {treatments.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.treatment_type_name || t.treatment_name} - {t.date}
+                  {t.treatment_type_name || t.treatment_name} - {formatDateDDMMYYYY(t.date)}
                 </option>
               ))}
             </select>
@@ -128,11 +173,9 @@ export default function PaymentDialog({
 
           <div className="space-y-2">
             <Label htmlFor="pay-date">Ödeme Tarihi *</Label>
-            <Input
-              id="pay-date"
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+            <DatePicker
+              date={paymentDate}
+              onDateChange={setPaymentDate}
             />
           </div>
 
@@ -147,15 +190,46 @@ export default function PaymentDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+        <div className="flex justify-between items-center pt-2">
+          {paymentToEdit ? (
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-100"
+              onClick={() => setConfirmDelete(true)}
+              disabled={loading}
+            >
+              Sil
+            </Button>
+          ) : <div />}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              {loading ? 'Kaydediliyor...' : paymentToEdit ? 'Güncelle' : 'Kaydet'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
+
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Ödemeyi Sil</DialogTitle>
+            <DialogDescription>
+              Bu ödemeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

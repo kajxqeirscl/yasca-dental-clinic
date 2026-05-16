@@ -10,8 +10,22 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { createTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
+import { createTreatment, updateTreatment, deleteTreatment, fetchDoctors, fetchTreatmentTypes } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { type TreatmentCategory } from './TreatmentTypesPage';
+import { DatePicker } from './ui/date-picker';
+
+interface Treatment {
+  id: number;
+  doctor: number;
+  treatment_type?: number;
+  treatment_name?: string;
+  tooth_number?: string;
+  notes?: string;
+  status: string;
+  date: string;
+  price?: number | string;
+}
 
 interface TreatmentAddDialogProps {
   isOpen: boolean;
@@ -19,6 +33,9 @@ interface TreatmentAddDialogProps {
   patientId: number;
   onSuccess?: () => void;
   initialToothNumber?: string | number;
+  /** Pre-selects the first treatment type matching this category. Replaces the old string-matching approach. */
+  initialCategory?: TreatmentCategory;
+  treatmentToEdit?: Treatment | null;
 }
 
 interface DoctorOption {
@@ -30,14 +47,15 @@ interface DoctorOption {
 interface TreatmentTypeOption {
   id: number;
   name: string;
+  category: string;
   default_price: string;
 }
 
 const TOOTH_NUMBERS = [
-  '11','12','13','14','15','16','17','18',
-  '21','22','23','24','25','26','27','28',
-  '31','32','33','34','35','36','37','38',
-  '41','42','43','44','45','46','47','48',
+  '11', '12', '13', '14', '15', '16', '17', '18',
+  '21', '22', '23', '24', '25', '26', '27', '28',
+  '31', '32', '33', '34', '35', '36', '37', '38',
+  '41', '42', '43', '44', '45', '46', '47', '48',
 ];
 
 export default function TreatmentAddDialog({
@@ -46,6 +64,8 @@ export default function TreatmentAddDialog({
   patientId,
   onSuccess,
   initialToothNumber,
+  initialCategory,
+  treatmentToEdit,
 }: TreatmentAddDialogProps) {
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
@@ -59,14 +79,39 @@ export default function TreatmentAddDialog({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
-  // Dialog her açıldığında varsayılanı resetlerken initialToothNumber'ı da basıyoruz
+  // Dialog her açıldığında varsayılanı resetlerken initialToothNumber ve initialCategory'yi de uyguluyoruz
   useEffect(() => {
     if (isOpen) {
-      setToothNumber(initialToothNumber?.toString() || '');
+      if (treatmentToEdit) {
+        setSelectedDoctorId(treatmentToEdit.doctor);
+        setSelectedTypeId(treatmentToEdit.treatment_type || '');
+        setTreatmentName(treatmentToEdit.treatment_name || '');
+        setToothNumber(treatmentToEdit.tooth_number || '');
+        setNotes(treatmentToEdit.notes || '');
+        setStatus(treatmentToEdit.status);
+        setDate(treatmentToEdit.date);
+      } else {
+        setToothNumber(initialToothNumber?.toString() || '');
+        if (initialCategory) {
+          // Find the first active treatment type with matching category — no string matching.
+          const match = treatmentTypes.find((t) => t.category === initialCategory);
+          if (match) {
+            setSelectedTypeId(match.id);
+            setPrice(match.default_price);
+          } else {
+            setSelectedTypeId('');
+          }
+          setTreatmentName('');
+        } else {
+          setSelectedTypeId('');
+          setTreatmentName('');
+        }
+      }
     }
-  }, [isOpen, initialToothNumber]);
+  }, [isOpen, treatmentToEdit, initialToothNumber, initialCategory, treatmentTypes]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -114,7 +159,7 @@ export default function TreatmentAddDialog({
     setLoading(true);
     setError('');
     try {
-      await createTreatment({
+      const payload = {
         patient: patientId,
         doctor: selectedDoctorId as number,
         treatment_type: selectedTypeId ? (selectedTypeId as number) : null,
@@ -124,12 +169,32 @@ export default function TreatmentAddDialog({
         notes: notes.trim() || undefined,
         date,
         price: price || undefined,
-      });
+      };
+
+      if (treatmentToEdit) {
+        await updateTreatment(treatmentToEdit.id, payload);
+      } else {
+        await createTreatment(payload);
+      }
       resetForm();
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Tedavi eklenemedi');
+      setError(err instanceof Error ? err.message : 'İşlem başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!treatmentToEdit) return;
+    setLoading(true);
+    try {
+      await deleteTreatment(treatmentToEdit.id);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError('Silinemedi');
     } finally {
       setLoading(false);
     }
@@ -141,12 +206,13 @@ export default function TreatmentAddDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Yeni Tedavi Kaydı Ekle</DialogTitle>
+          <DialogTitle>{treatmentToEdit ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Kaydı Ekle'}</DialogTitle>
           <DialogDescription>
-            Hastaya yapılan tedaviyi kaydedin.
+            {treatmentToEdit ? 'Mevcut tedavi bilgilerini güncelleyin veya silin.' : 'Hastaya yapılan tedaviyi kaydedin.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -159,11 +225,9 @@ export default function TreatmentAddDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="treat-date">Tarih *</Label>
-              <Input
-                id="treat-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+              <DatePicker
+                date={date}
+                onDateChange={setDate}
               />
             </div>
             <div className="space-y-2">
@@ -282,15 +346,46 @@ export default function TreatmentAddDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+        <div className="flex justify-between items-center pt-2">
+          {treatmentToEdit ? (
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-100"
+              onClick={() => setConfirmDelete(true)}
+              disabled={loading}
+            >
+              Kaydı Sil
+            </Button>
+          ) : <div />}
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              {loading ? 'Kaydediliyor...' : treatmentToEdit ? 'Güncelle' : 'Kaydet'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
+
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Tedavi Kaydını Sil</DialogTitle>
+            <DialogDescription>
+              Bu tedavi kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

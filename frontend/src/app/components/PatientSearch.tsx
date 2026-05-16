@@ -14,6 +14,7 @@ import {
 } from './ui/table';
 import PatientDialog from './PatientDialog';
 import { fetchPatients } from '../services/api';
+import { formatDateDDMMYYYY } from '../utils/date';
 
 export default function PatientSearch() {
   const navigate = useNavigate();
@@ -122,9 +123,11 @@ export default function PatientSearch() {
                     <TableCell>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        {patient.last_visit
-                          ? new Date(patient.last_visit).toLocaleDateString('tr-TR')
-                          : '-'}
+                        <span className="text-gray-900 font-medium">
+                          {patient.last_visit 
+                          ? formatDateDDMMYYYY(patient.last_visit)
+                          : 'Kayıt Yok'}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import (
     Patient,
     Anamnesis,
@@ -128,19 +129,25 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """F-008: Aynı hekime aynı saatte randevu çakışması kontrolü."""
-        if self.instance:
-            return data
         doctor = data.get("doctor")
         date = data.get("date")
         time = data.get("time")
+        
+        # Sadece yeni oluşturmada geçmiş tarih kontrolü
+        if not self.instance and date and date < timezone.localdate():
+            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+
         if doctor and date and time:
             existing = Appointment.objects.filter(
                 doctor=doctor,
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
-            ).exists()
-            if existing:
+            )
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
                 raise serializers.ValidationError(
                     "Bu hekime bu saatte zaten randevu kayıtlı."
                 )
@@ -166,14 +173,22 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         doctor = data.get("doctor")
         date = data.get("date")
         time = data.get("time")
+        
+        # Sadece yeni oluşturmada geçmiş tarih kontrolü
+        if not self.instance and date and date < timezone.localdate():
+            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+
         if doctor and date and time:
             existing = Appointment.objects.filter(
                 doctor=doctor,
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
-            ).exists()
-            if existing:
+            )
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
                 raise serializers.ValidationError(
                     "Bu hekime bu saatte zaten randevu kayıtlı."
                 )
@@ -183,12 +198,15 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
 class TreatmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TreatmentType
-        fields = ["id", "name", "default_price", "is_active"]
+        fields = ["id", "name", "category", "default_price", "is_active"]
 
 
 class TreatmentSerializer(serializers.ModelSerializer):
     treatment_type_name = serializers.CharField(
         source="treatment_type.name", read_only=True
+    )
+    treatment_type_category = serializers.CharField(
+        source="treatment_type.category", read_only=True
     )
     doctor_name = serializers.SerializerMethodField()
 
@@ -201,6 +219,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "doctor_name",
             "treatment_type",
             "treatment_type_name",
+            "treatment_type_category",
             "treatment_name",
             "tooth_number",
             "status",

@@ -101,6 +101,7 @@ class TreatmentTypeFactory(DjangoModelFactory):
     default_price = factory.Faker(
         "pydecimal", left_digits=4, right_digits=2, positive=True
     )
+    category = TreatmentType.Category.OTHER
     is_active = True
 
 

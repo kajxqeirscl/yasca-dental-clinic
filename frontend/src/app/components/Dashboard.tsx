@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Calendar, Users, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle, Plus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { fetchDashboardToday } from '../services/api';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
+import AppointmentDialog from './AppointmentDialog';
 
 interface TodayAppointment {
   id: number;
@@ -36,6 +37,9 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<TodayAppointment | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<TodayAppointment | null>(null);
+  const [isNewOpen, setIsNewOpen] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>(() => {
     return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
   });
@@ -121,6 +125,12 @@ export default function Dashboard() {
     setDetailOpen(true);
   };
 
+  const handleEditAppointment = (apt: any) => {
+    setAppointmentToEdit(apt);
+    setDetailOpen(false);
+    setIsEditOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl text-gray-900">Hoş Geldiniz</h2>
@@ -164,31 +174,36 @@ export default function Dashboard() {
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle>Bugünün Randevuları</CardTitle>
-            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-              <Button 
-                variant={filter === 'all' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => handleFilterChange('all')}
-                className="text-xs px-3 h-8"
-              >
-                Tümü
+            <div className="flex items-center gap-3">
+              <Button size="sm" onClick={() => setIsNewOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
               </Button>
-              <Button 
-                variant={filter === 'completed' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => handleFilterChange('completed')}
-                className="text-xs px-3 h-8"
-              >
-                Tamamlanan
-              </Button>
-              <Button 
-                variant={filter === 'scheduled' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => handleFilterChange('scheduled')}
-                className="text-xs px-3 h-8"
-              >
-                Planlanan
-              </Button>
+              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                <Button 
+                  variant={filter === 'all' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => handleFilterChange('all')}
+                  className="text-xs px-3 h-8"
+                >
+                  Tümü
+                </Button>
+                <Button 
+                  variant={filter === 'completed' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => handleFilterChange('completed')}
+                  className="text-xs px-3 h-8"
+                >
+                  Tamamlanan
+                </Button>
+                <Button 
+                  variant={filter === 'scheduled' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => handleFilterChange('scheduled')}
+                  className="text-xs px-3 h-8"
+                >
+                  Planlanan
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -235,6 +250,26 @@ export default function Dashboard() {
         onClose={() => setDetailOpen(false)}
         appointment={selectedAppointment}
         onUpdated={loadData}
+        onEdit={handleEditAppointment}
+      />
+
+      <AppointmentDialog
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setAppointmentToEdit(null);
+        }}
+        onSuccess={loadData}
+        appointmentToEdit={appointmentToEdit}
+        selectedSlot={null}
+      />
+
+      <AppointmentDialog
+        isOpen={isNewOpen}
+        onClose={() => setIsNewOpen(false)}
+        onSuccess={() => { loadData(); setIsNewOpen(false); }}
+        appointmentToEdit={null}
+        selectedSlot={null}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
 } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { CATEGORY_OPTIONS, type TreatmentCategory } from './TreatmentTypesPage';
 
 // Diş numaraları - FDI Sistemi
 
@@ -34,60 +35,67 @@ const lowerTeethPrimary = [
   [71, 72, 73, 74, 75], // Alt sol
 ];
 
-type ToothStatus = 'healthy' | 'filling' | 'canal' | 'crown' | 'extraction' | 'implant' | 'detartraj';
-
-interface ToothData {
-  number: number;
-  status: ToothStatus;
-  note: string;
-}
+/**
+ * ToothStatus directly maps to TreatmentCategory values (plus 'healthy').
+ * DentalChart no longer does any string matching — it reads treatment_type_category
+ * from the API response directly.
+ */
+type ToothStatus = 'healthy' | TreatmentCategory;
 
 const statusColors: Record<ToothStatus, string> = {
-  healthy: 'bg-white',
-  filling: 'bg-blue-200 border-blue-400',
-  canal: 'bg-red-200 border-red-400',
-  crown: 'bg-yellow-200 border-yellow-400',
-  extraction: 'bg-gray-300 border-gray-500',
-  implant: 'bg-purple-200 border-purple-400',
+  healthy:   'bg-white',
+  filling:   'bg-blue-200 border-blue-400',
+  canal:     'bg-red-200 border-red-400',
+  crown:     'bg-yellow-200 border-yellow-400',
+  extraction:'bg-gray-300 border-gray-500',
+  implant:   'bg-purple-200 border-purple-400',
   detartraj: 'bg-green-200 border-green-400',
+  other:     'bg-orange-100 border-orange-300',
 };
 
-const statusLabels: Record<ToothStatus, string> = {
-  healthy: 'Sağlıklı',
-  filling: 'Dolgu',
-  canal: 'Kanal Tedavisi',
-  crown: 'Kron',
-  extraction: 'Çekildi',
-  implant: 'İmplant',
-  detartraj: 'Detartraj',
-};
+// Map from TreatmentCategory to human-readable label (for the dropdown menu)
+const categoryToLabel: Record<TreatmentCategory, string> = Object.fromEntries(
+  CATEGORY_OPTIONS.map((c) => [c.value, c.label])
+) as Record<TreatmentCategory, string>;
 
-interface DentalChartProps {
-  onToothSelect?: (toothNumber: number) => void;
+const STATUS_DISPLAY: { status: ToothStatus; label: string }[] = [
+  { status: 'healthy',   label: 'Sağlıklı' },
+  ...CATEGORY_OPTIONS.map((c) => ({ status: c.value as ToothStatus, label: c.label })),
+];
+
+interface Treatment {
+  tooth_number?: string;
+  treatment_type_category?: string;
 }
 
-export default function DentalChart({ onToothSelect }: DentalChartProps) {
-  const [teethData, setTeethData] = useState<Record<number, ToothData>>({});
+interface DentalChartProps {
+  /** Called when user clicks "Yeni Tedavi Ekle" on a tooth. */
+  onToothSelect?: (toothNumber: number, category?: TreatmentCategory) => void;
+  treatments?: Treatment[];
+}
+
+export default function DentalChart({ onToothSelect, treatments = [] }: DentalChartProps) {
   const [activeTab, setActiveTab] = useState<'adult' | 'primary'>('adult');
 
-  const handleToothClick = (toothNumber: number, status: ToothStatus) => {
-    setTeethData((prev) => ({
-      ...prev,
-      [toothNumber]: {
-        number: toothNumber,
-        status,
-        note: '',
-      },
-    }));
-  };
-
+  /**
+   * Determine the status of a tooth purely from treatment_type_category.
+   * No string matching involved.
+   */
   const getToothStatus = (toothNumber: number): ToothStatus => {
-    return teethData[toothNumber]?.status || 'healthy';
+    const toothTreatments = treatments.filter(
+      (t) => t.tooth_number === toothNumber.toString()
+    );
+    if (toothTreatments.length === 0) return 'healthy';
+
+    // API returns newest-first; use the most recent treatment's category.
+    const category = toothTreatments[0].treatment_type_category;
+    if (category && category in statusColors) return category as ToothStatus;
+    return 'healthy';
   };
 
   const ToothButton = ({ number, isPrimary = false }: { number: number; isPrimary?: boolean }) => {
     const status = getToothStatus(number);
-    
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -108,31 +116,23 @@ export default function DentalChart({ onToothSelect }: DentalChartProps) {
         <DropdownMenuContent align="center">
           <DropdownMenuLabel>Diş {number} - İşlem Seç</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onToothSelect?.(number)} className="font-medium text-blue-600 focus:text-blue-700 cursor-pointer">
+          {/* Primary action: open TreatmentAddDialog without pre-selecting a category */}
+          <DropdownMenuItem
+            onClick={() => onToothSelect?.(number, undefined)}
+            className="font-medium text-blue-600 focus:text-blue-700 cursor-pointer"
+          >
             + Yeni Tedavi Ekle
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'healthy')}>
-            Sağlıklı
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'filling')}>
-            Dolgu
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'canal')}>
-            Kanal Tedavisi
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'crown')}>
-            Kron
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'extraction')}>
-            Çekildi
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'implant')}>
-            İmplant
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleToothClick(number, 'detartraj')}>
-            Detartraj
-          </DropdownMenuItem>
+          {/* Secondary actions: open dialog pre-filtered to a specific category */}
+          {CATEGORY_OPTIONS.map((cat) => (
+            <DropdownMenuItem
+              key={cat.value}
+              onClick={() => onToothSelect?.(number, cat.value as TreatmentCategory)}
+            >
+              {cat.label}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -197,12 +197,11 @@ export default function DentalChart({ onToothSelect }: DentalChartProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Renk Açıklaması */}
       <div className="flex flex-wrap justify-center gap-4 pt-6 border-t">
-        {Object.entries(statusLabels).map(([status, label]) => (
+        {STATUS_DISPLAY.map(({ status, label }) => (
           <div key={status} className="flex items-center gap-2">
-            <div className={`w-6 h-6 border-2 rounded ${statusColors[status as ToothStatus]}`} />
-            <span className="text-sm text-gray-600">{label}</span>
+            <div className={`w-6 h-6 border-2 rounded ${statusColors[status]}`} />
+            <span className="text-xs text-gray-600">{label}</span>
           </div>
         ))}
       </div>
