@@ -49,7 +49,7 @@ class AnamnesisSerializer(serializers.ModelSerializer):
 class PatientSerializer(serializers.ModelSerializer):
     """Hasta detay ve oluşturma."""
 
-    anamnesis = AnamnesisSerializer(required=False)
+    anamnesis = AnamnesisSerializer(required=False, allow_null=True)
     full_name = serializers.ReadOnlyField()
 
     class Meta:
