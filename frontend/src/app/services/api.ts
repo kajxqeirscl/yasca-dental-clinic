@@ -78,6 +78,31 @@ async function fetchWithAuth(
   return res;
 }
 
+// --- API Error Parser Helper ---
+export function parseApiError(err: any, defaultMsg = 'Bir hata oluştu'): string {
+  if (!err) return defaultMsg;
+  if (typeof err === 'string') return err;
+  if (err.detail) return err.detail;
+  
+  if (typeof err === 'object') {
+    const messages: string[] = [];
+    for (const key of Object.keys(err)) {
+      const fieldErrors = err[key];
+      if (Array.isArray(fieldErrors)) {
+        messages.push(...fieldErrors);
+      } else if (typeof fieldErrors === 'string') {
+        messages.push(fieldErrors);
+      } else if (typeof fieldErrors === 'object' && fieldErrors !== null) {
+        messages.push(parseApiError(fieldErrors));
+      }
+    }
+    if (messages.length > 0) {
+      return messages.join('\n');
+    }
+  }
+  return defaultMsg;
+}
+
 // --- Auth ---
 export async function login(username: string, password: string) {
   const res = await fetch(`${API_BASE}/auth/token/`, {
@@ -130,7 +155,7 @@ export async function createPatient(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Hasta eklenemedi');
+    throw new Error(parseApiError(err, 'Hasta eklenemedi'));
   }
   return res.json();
 }
@@ -152,7 +177,10 @@ export async function updatePatient(
     method: 'PUT',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Hasta güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Hasta güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -195,7 +223,7 @@ export async function createAppointment(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Randevu eklenemedi');
+    throw new Error(parseApiError(err, 'Randevu eklenemedi'));
   }
   return res.json();
 }
@@ -208,7 +236,10 @@ export async function updateAppointment(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Randevu güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Randevu güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -216,7 +247,10 @@ export async function deleteAppointment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Randevu silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Randevu silinemedi'));
+  }
 }
 
 // --- Dashboard ---
@@ -258,7 +292,7 @@ export async function createTreatment(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi eklenemedi');
+    throw new Error(parseApiError(err, 'Tedavi eklenemedi'));
   }
   return res.json();
 }
@@ -279,7 +313,10 @@ export async function updateTreatment(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Tedavi güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -288,7 +325,10 @@ export async function updatePayment(id: number, data: any) {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Ödeme güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Ödeme güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -296,7 +336,10 @@ export async function deletePayment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/payments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Ödeme silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Ödeme silinemedi'));
+  }
   return true;
 }
 
@@ -304,7 +347,10 @@ export async function deleteTreatment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/treatments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Tedavi silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi silinemedi'));
+  }
 }
 
 // --- Treatment Types ---
@@ -322,7 +368,7 @@ export async function createTreatmentType(data: { name: string; default_price: n
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi türü eklenemedi');
+    throw new Error(parseApiError(err, 'Tedavi türü eklenemedi'));
   }
   return res.json();
 }
@@ -335,7 +381,10 @@ export async function updateTreatmentType(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Tedavi türü güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi türü güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -343,7 +392,10 @@ export async function deleteTreatmentType(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Tedavi türü silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi türü silinemedi'));
+  }
 }
 
 // --- Payments ---
@@ -368,7 +420,7 @@ export async function createPayment(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Ödeme eklenemedi');
+    throw new Error(parseApiError(err, 'Ödeme eklenemedi'));
   }
   return res.json();
 }
@@ -391,7 +443,7 @@ export async function updateClinicSettings(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Ayarlar kaydedilemedi');
+    throw new Error(parseApiError(err, 'Ayarlar kaydedilemedi'));
   }
   return res.json();
 }
