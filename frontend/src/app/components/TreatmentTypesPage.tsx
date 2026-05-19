@@ -11,13 +11,13 @@ import { toast } from 'sonner';
 
 // Category definitions — must mirror backend TreatmentType.Category choices
 export const CATEGORY_OPTIONS = [
-  { value: 'filling',    label: 'Dolgu' },
-  { value: 'canal',      label: 'Kanal Tedavisi' },
-  { value: 'crown',      label: 'Kron / Kaplama' },
+  { value: 'filling', label: 'Dolgu' },
+  { value: 'canal', label: 'Kanal Tedavisi' },
+  { value: 'crown', label: 'Kron / Kaplama' },
   { value: 'extraction', label: 'Diş Çekimi' },
-  { value: 'implant',    label: 'İmplant' },
-  { value: 'detartraj',  label: 'Diş Taşı Temizliği' },
-  { value: 'other',      label: 'Diğer' },
+  { value: 'implant', label: 'İmplant' },
+  { value: 'detartraj', label: 'Diş Taşı Temizliği' },
+  { value: 'other', label: 'Diğer' },
 ] as const;
 
 export type TreatmentCategory = typeof CATEGORY_OPTIONS[number]['value'];
@@ -116,7 +116,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
         {canEdit && (
           <Button onClick={() => handleOpenDialog()}>
             <Plus className="w-4 h-4 mr-2" />
-            Yeni Tedavi Ekle
+            Yeni Tedavi Türü Ekle
           </Button>
         )}
       </div>
