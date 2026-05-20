@@ -17,6 +17,11 @@ __pycache__/
 *.sqlite3
 *.sqlite3-journal
 media/
+*.egg-info/
+*.egg
+
+# Docker
+postgres_data/
 
 # Environment Variables
 .env
@@ -59,3 +64,6 @@ playwright/.cache/
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+
+# Gemini AI
+.gemini/
