@@ -1,10 +1,5 @@
-Write-Host "Mevcut veritabanı sıfırlanıyor (Docker üzerinden)..." -ForegroundColor Yellow
-docker-compose exec backend python manage.py flush --no-input
+Write-Host "Veritabanı sıfırlanıyor ve örnek veriler oluşturuluyor..." -ForegroundColor Yellow
 
-Write-Host "Demo verileri için gerekli paketler kuruluyor (faker, factory-boy)..." -ForegroundColor Yellow
-docker-compose exec backend pip install factory-boy faker
-
-Write-Host "Örnek veriler oluşturuluyor..." -ForegroundColor Yellow
-docker-compose exec backend python manage.py seed_demo_data
+docker-compose run --rm backend sh -c "python manage.py flush --no-input && pip install factory-boy faker && python manage.py seed_demo_data"
 
 Write-Host "Demo verisi oluşturma işlemi tamamlandı." -ForegroundColor Green
