@@ -1,16 +1,10 @@
-Set-Location backend
-if (Test-Path ".\venv\Scripts\Activate.ps1") {
-    .\venv\Scripts\Activate.ps1
-} else {
-    Write-Host "Hata: venv bulunamadı. Lütfen önce backend kurulumunu tamamlayın." -ForegroundColor Red
-    exit 1
-}
+Write-Host "Mevcut veritabanı sıfırlanıyor (Docker üzerinden)..." -ForegroundColor Yellow
+docker-compose exec backend python manage.py flush --no-input
 
-Write-Host "Mevcut veritabanı sıfırlanıyor..." -ForegroundColor Yellow
-python manage.py flush --no-input
+Write-Host "Demo verileri için gerekli paketler kuruluyor (faker, factory-boy)..." -ForegroundColor Yellow
+docker-compose exec backend pip install factory-boy faker
 
 Write-Host "Örnek veriler oluşturuluyor..." -ForegroundColor Yellow
-python manage.py seed_demo_data
+docker-compose exec backend python manage.py seed_demo_data
 
 Write-Host "Demo verisi oluşturma işlemi tamamlandı." -ForegroundColor Green
-Set-Location ..
