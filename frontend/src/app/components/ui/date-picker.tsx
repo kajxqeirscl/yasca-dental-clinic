@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../utils/i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from './utils';
 import { Button } from './button';
@@ -19,6 +21,7 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ date, onDateChange, className, minDate }: DatePickerProps) {
+  const { i18n } = useTranslation();
   // Parse incoming date string into a Date object for the calendar
   const parsedDate = date ? new Date(date) : undefined;
   
@@ -47,7 +50,7 @@ export function DatePicker({ date, onDateChange, className, minDate }: DatePicke
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(parsedDate!, 'dd.MM.yyyy', { locale: tr }) : <span>Tarih seçin</span>}
+          {date ? format(parsedDate!, i18n.language.startsWith('tr') ? 'dd.MM.yyyy' : 'MM/dd/yyyy', { locale: i18n.language.startsWith('tr') ? tr : enUS }) : <span>Tarih seçin</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -56,7 +59,7 @@ export function DatePicker({ date, onDateChange, className, minDate }: DatePicke
           selected={parsedDate}
           onSelect={handleSelect}
           initialFocus
-          locale={tr}
+          locale={i18n.language.startsWith('tr') ? tr : enUS}
           disabled={parsedMinDate ? (d) => d < parsedMinDate : undefined}
         />
       </PopoverContent>

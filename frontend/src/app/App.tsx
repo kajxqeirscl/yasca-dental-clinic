@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth, getUserRoleDisplay } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
@@ -10,12 +11,13 @@ import ClinicSettingsPage from './components/ClinicSettingsPage';
 import TreatmentTypesPage from './components/TreatmentTypesPage';
 
 export default function App() {
+  const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Yükleniyor...</div>
+        <div className="text-gray-500">{t('common:loading')}</div>
       </div>
     );
   }

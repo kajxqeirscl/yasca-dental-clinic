@@ -45,7 +45,8 @@ import AppointmentDialog from './AppointmentDialog';
 import TreatmentAddDialog from './TreatmentAddDialog';
 import PaymentDialog from './PaymentDialog';
 import { DatePicker } from './ui/date-picker';
-import { formatDateDDMMYYYY } from '../utils/date';
+import { formatDate, formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 
 interface Anamnesis {
   medical_history: string;
@@ -128,6 +129,7 @@ const defaultAnamnesis: Anamnesis = {
 };
 
 export default function PatientProfile() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => {
@@ -182,7 +184,7 @@ export default function PatientProfile() {
         setDocuments(docs);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Hasta bilgisi yüklenemedi');
+        setError(err instanceof Error ? err.message : t('patients:profile.error_load'));
         setPatient(null);
         setTreatments([]);
         setAppointments([]);
@@ -316,7 +318,7 @@ export default function PatientProfile() {
       setValidationErrors([]);
       loadData();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Güncellenemedi');
+      setSaveError(err instanceof Error ? err.message : t('patients:profile.error_load'));
     } finally {
       setLoading(false);
     }
@@ -329,7 +331,7 @@ export default function PatientProfile() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="text-gray-500">Yükleniyor...</div>
+        <div className="text-gray-500">{t('patients:profile.loading')}</div>
       </div>
     );
   }
@@ -340,7 +342,7 @@ export default function PatientProfile() {
         <Button variant="outline" size="icon" onClick={() => navigate('/hastalar')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <div className="p-4 bg-red-50 text-red-700 rounded-md">{error || 'Hasta bulunamadı'}</div>
+        <div className="p-4 bg-red-50 text-red-700 rounded-md">{error || t('patients:profile.not_found')}</div>
       </div>
     );
   }
@@ -351,13 +353,13 @@ export default function PatientProfile() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return <Badge className="bg-blue-100 text-blue-800 border-none">Planlandı</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-none">{t('patients:profile.appointments.status.scheduled')}</Badge>;
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800 border-none">Tamamlandı</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-none">{t('patients:profile.appointments.status.completed')}</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800 border-none">İptal</Badge>;
+        return <Badge className="bg-red-100 text-red-800 border-none">{t('patients:profile.appointments.status.cancelled')}</Badge>;
       case 'no_show':
-        return <Badge className="bg-orange-100 text-orange-800 border-none">Gelmedi</Badge>;
+        return <Badge className="bg-orange-100 text-orange-800 border-none">{t('patients:profile.appointments.status.no_show')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -445,34 +447,34 @@ export default function PatientProfile() {
                 : 'bg-gray-100 text-gray-400'
             }`}
           >
-            {loading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+            {loading ? t('patients:profile.saving') : t('patients:profile.save_changes')}
           </Button>
-          <p className="text-[10px] text-center text-gray-400 font-medium">Hasta ID: #{id}</p>
+          <p className="text-[10px] text-center text-gray-400 font-medium">{t('patients:profile.id')}: #{id}</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="bilgiler">Profil Bilgileri</TabsTrigger>
-          <TabsTrigger value="anamnez">Anamnez</TabsTrigger>
-          <TabsTrigger value="randevular">Randevular</TabsTrigger>
-          <TabsTrigger value="gecmis">Tedavi Geçmişi</TabsTrigger>
-          <TabsTrigger value="odeme">Ödemeler</TabsTrigger>
-          <TabsTrigger value="dokumanlar">Dokümanlar</TabsTrigger>
-          <TabsTrigger value="odontogram">Diş Şeması</TabsTrigger>
+          <TabsTrigger value="bilgiler">{t('patients:profile.tabs.info')}</TabsTrigger>
+          <TabsTrigger value="anamnez">{t('patients:profile.tabs.anamnesis')}</TabsTrigger>
+          <TabsTrigger value="randevular">{t('patients:profile.tabs.appointments')}</TabsTrigger>
+          <TabsTrigger value="gecmis">{t('patients:profile.tabs.history')}</TabsTrigger>
+          <TabsTrigger value="odeme">{t('patients:profile.tabs.payments')}</TabsTrigger>
+          <TabsTrigger value="dokumanlar">{t('patients:profile.tabs.documents')}</TabsTrigger>
+          <TabsTrigger value="odontogram">{t('patients:profile.tabs.dental_chart')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bilgiler" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Kişisel Bilgiler</CardTitle>
+              <CardTitle>{t('patients:profile.info.title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
-                      <Phone className="w-3 h-3" /> Telefon
+                      <Phone className="w-3 h-3" /> {t('patients:profile.info.phone')}
                     </Label>
                     <Input 
                       value={editedPatient?.phone || ''} 
@@ -483,7 +485,7 @@ export default function PatientProfile() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
-                      <IdCard className="w-3 h-3" /> TC Kimlik No
+                      <IdCard className="w-3 h-3" /> {t('patients:profile.info.tckn')}
                     </Label>
                     <Input 
                       value={editedPatient?.tckn || ''} 
@@ -496,7 +498,7 @@ export default function PatientProfile() {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Doğum Tarihi
+                      <Calendar className="w-3 h-3" /> {t('patients:profile.info.birth_date')}
                     </Label>
                     <DatePicker
                       date={editedPatient?.birth_date || undefined}
@@ -505,7 +507,7 @@ export default function PatientProfile() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> Adres
+                      <MapPin className="w-3 h-3" /> {t('patients:profile.info.address')}
                     </Label>
                     <Textarea 
                       value={editedPatient?.address || ''} 
@@ -520,7 +522,7 @@ export default function PatientProfile() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Genel Notlar</CardTitle>
+              <CardTitle>{t('patients:profile.info.general_notes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea 
@@ -539,14 +541,14 @@ export default function PatientProfile() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Hasta Anamnezi
+                {t('patients:profile.anamnesis.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Tıbbi Geçmiş</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.medical_history')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.medical_history || ''} 
                       onChange={(e) => handleFieldChange('medical_history', e.target.value, true)}
@@ -555,7 +557,7 @@ export default function PatientProfile() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-500" /> Alerjiler
+                      <AlertCircle className="w-4 h-4 text-red-500" /> {t('patients:profile.anamnesis.allergies')}
                     </Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.allergies || ''} 
@@ -565,21 +567,21 @@ export default function PatientProfile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Kullandığı İlaçlar</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.medications')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.medications || ''} 
                       onChange={(e) => handleFieldChange('medications', e.target.value, true)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Kronik Hastalıklar</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.chronic_diseases')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.chronic_diseases || ''} 
                       onChange={(e) => handleFieldChange('chronic_diseases', e.target.value, true)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Geçirdiği Ameliyatlar</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.surgical_history')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.surgical_history || ''} 
                       onChange={(e) => handleFieldChange('surgical_history', e.target.value, true)}
@@ -588,7 +590,7 @@ export default function PatientProfile() {
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Aile Öyküsü</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.family_history')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.family_history || ''} 
                       onChange={(e) => handleFieldChange('family_history', e.target.value, true)}
@@ -596,14 +598,14 @@ export default function PatientProfile() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Sigara</Label>
+                      <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.smoking')}</Label>
                       <Input 
                         value={editedPatient?.anamnesis?.smoking || ''} 
                         onChange={(e) => handleFieldChange('smoking', e.target.value, true)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Alkol</Label>
+                      <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.alcohol')}</Label>
                       <Input 
                         value={editedPatient?.anamnesis?.alcohol || ''} 
                         onChange={(e) => handleFieldChange('alcohol', e.target.value, true)}
@@ -611,14 +613,14 @@ export default function PatientProfile() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Gebelik Durumu</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.pregnancy_status')}</Label>
                     <Input 
                       value={editedPatient?.anamnesis?.pregnancy_status || ''} 
                       onChange={(e) => handleFieldChange('pregnancy_status', e.target.value, true)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Diğer Notlar</Label>
+                    <Label className="text-sm font-medium text-gray-700">{t('patients:profile.anamnesis.other_notes')}</Label>
                     <Textarea 
                       value={editedPatient?.anamnesis?.other_notes || ''} 
                       onChange={(e) => handleFieldChange('other_notes', e.target.value, true)}
@@ -635,9 +637,9 @@ export default function PatientProfile() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Tüm Randevular</CardTitle>
+                <CardTitle>{t('patients:profile.appointments.title')}</CardTitle>
                 <Button size="sm" onClick={handleNewAppointment}>
-                  <Plus className="w-4 h-4 mr-1" /> Yeni Randevu
+                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.new')}
                 </Button>
               </div>
             </CardHeader>
@@ -645,7 +647,7 @@ export default function PatientProfile() {
               <div className="space-y-4">
                 {appointments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    Henüz randevu kaydı bulunmuyor.
+                    {t('patients:profile.appointments.no_record')}
                   </div>
                 ) : (
                   appointments.map((appointment) => (
@@ -662,11 +664,11 @@ export default function PatientProfile() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="text-gray-900 font-semibold">
-                                {formatDateDDMMYYYY(appointment.date)}
+                                {formatDate(appointment.date)}
                               </h4>
                               <span className="text-gray-400">•</span>
                               <span className="text-blue-600 text-sm font-medium">
-                                {appointment.time.substring(0, 5)}
+                                {formatTimeStr(appointment.time)}
                               </span>
                             </div>
                             {(appointment.treatment_type_name || appointment.notes) && (
@@ -690,9 +692,9 @@ export default function PatientProfile() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Tedavi Geçmişi</CardTitle>
+                <CardTitle>{t('patients:profile.treatments.title')}</CardTitle>
                 <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> Yeni Tedavi Ekle
+                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.treatments.new')}
                 </Button>
               </div>
             </CardHeader>
@@ -700,7 +702,7 @@ export default function PatientProfile() {
               <div className="space-y-4">
                 {treatments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    Henüz tedavi kaydı bulunmuyor.
+                    {t('patients:profile.treatments.no_record')}
                   </div>
                 ) : (
                   treatments.map((t) => (
@@ -720,17 +722,17 @@ export default function PatientProfile() {
                             </h4>
                             {t.tooth_number && (
                               <Badge variant="outline" className="text-[10px]">
-                                Diş: {t.tooth_number}
+                                {t('patients:profile.treatments.tooth')}: {t.tooth_number}
                               </Badge>
                             )}
                             <Badge className={`${t.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
-                              {t.status === 'completed' ? 'Tamamlandı' : 'Yapılacak'}
+                              {t.status === 'completed' ? t('patients:profile.treatments.status.completed') : t('patients:profile.treatments.status.todo')}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
                             <span className="font-medium text-gray-700">{t.doctor_name}</span>
                             <span>•</span>
-                            <span>{formatDateDDMMYYYY(t.date)}</span>
+                            <span>{formatDate(t.date)}</span>
                           </div>
                         </div>
                       </div>
@@ -747,34 +749,34 @@ export default function PatientProfile() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Ödemeler</CardTitle>
+                <CardTitle>{t('patients:profile.payments.title')}</CardTitle>
                 <Button size="sm" onClick={handleNewPayment}>
-                  <Plus className="w-4 h-4 mr-1" /> Yeni Ödeme Ekle
+                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.payments.new')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {payments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Henüz ödeme kaydı bulunmuyor.
+                  {t('patients:profile.payments.no_record')}
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="p-4 bg-gray-50 rounded-lg border">
-                      <span className="text-sm font-medium text-gray-500">Toplam Tedavi Tutarı</span>
+                      <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
                       <p className="text-xl font-bold text-gray-900 mt-1">
                         {treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </p>
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                      <span className="text-sm font-medium text-green-700">Toplam Ödenen</span>
+                      <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
                       <p className="text-xl font-bold text-green-800 mt-1">
                         {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </p>
                     </div>
                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <span className="text-sm font-medium text-blue-700">Kalan Bakiye</span>
+                      <span className="text-sm font-medium text-blue-700">{t('patients:profile.payments.balance')}</span>
                       <p className="text-xl font-bold text-blue-800 mt-1">
                         {(
                           treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0) -
@@ -808,7 +810,7 @@ export default function PatientProfile() {
                         </div>
                       </div>
                       <span className="text-sm text-gray-400">
-                        {formatDateDDMMYYYY(pay.payment_date)}
+                        {formatDate(pay.payment_date)}
                       </span>
                     </div>
                   ))}
@@ -821,10 +823,7 @@ export default function PatientProfile() {
         <TabsContent value="odontogram">
           <Card>
             <CardHeader>
-              <CardTitle>Diş Şeması (Odontogram)</CardTitle>
-              <p className="text-sm text-gray-500 mt-2">
-                Dişlere tıklayarak kısa yoldan tedavi ekleyebilirsiniz.
-              </p>
+              <CardTitle>{t('patients:profile.tabs.dental_chart')}</CardTitle>
             </CardHeader>
             <CardContent>
               <DentalChart 
@@ -845,8 +844,7 @@ export default function PatientProfile() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Hasta Dokümanları</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">Röntgen, tahlil ve diğer ek dosyalar</p>
+                  <CardTitle>{t('patients:profile.documents.title')}</CardTitle>
                 </div>
                 <div>
                   <label 
@@ -858,7 +856,7 @@ export default function PatientProfile() {
                     }`}
                   >
                     <Plus className="w-4 h-4 mr-1.5" />
-                    {uploadingDoc ? 'Yükleniyor...' : 'Yeni Doküman Yükle'}
+                    {uploadingDoc ? t('patients:profile.loading') : t('patients:profile.documents.upload')}
                   </label>
                   <input
                     id="file-upload"
@@ -882,8 +880,7 @@ export default function PatientProfile() {
                     <div className={`w-16 h-16 mb-4 flex items-center justify-center rounded-full transition-transform ${isDragging ? 'scale-110 bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
                       <Download className="w-8 h-8" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-900">Dosyaları Buraya Sürükleyin</p>
-                    <p className="text-xs mt-1">veya "Yeni Doküman Yükle" butonunu kullanın</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('patients:profile.documents.no_record')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -920,7 +917,7 @@ export default function PatientProfile() {
                             </h4>
                             <div className="flex items-center justify-between mt-2">
                               <span className="text-[10px] text-gray-400 font-medium">
-                                {formatDateDDMMYYYY(doc.created_at)}
+                                {formatDate(doc.created_at)}
                               </span>
                               <div className="flex items-center gap-1">
                                 <a 
@@ -928,14 +925,14 @@ export default function PatientProfile() {
                                   target="_blank" 
                                   rel="noreferrer"
                                   className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                  title="Görüntüle / İndir"
+                                  title={t('patients:profile.documents.download')}
                                 >
                                   <Download className="w-4 h-4" />
                                 </a>
                                 <button 
                                   onClick={() => handleFileDelete(doc.id)}
                                   className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                  title="Sil"
+                                  title={t('patients:profile.documents.delete')}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1011,14 +1008,14 @@ export default function PatientProfile() {
       <Dialog open={!!isDeletingDoc} onOpenChange={(open) => !open && setIsDeletingDoc(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Dokümanı Sil</DialogTitle>
+            <DialogTitle>{t('patients:profile.documents.delete')}</DialogTitle>
             <DialogDescription>
-              Bu dosyayı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              {t('patients:profile.documents.delete_confirm')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setIsDeletingDoc(null)}>Vazgeç</Button>
-            <Button variant="destructive" onClick={confirmFileDelete}>Evet, Sil</Button>
+            <Button variant="outline" onClick={() => setIsDeletingDoc(null)}>{t('common:cancel')}</Button>
+            <Button variant="destructive" onClick={confirmFileDelete}>{t('common:delete')}</Button>
           </div>
         </DialogContent>
       </Dialog>

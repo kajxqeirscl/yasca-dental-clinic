@@ -1,0 +1,15 @@
+{
+  "title": "Welcome",
+  "today_appointments": "Today's Appointments",
+  "completed": "completed",
+  "waiting_patients": "Waiting Patients",
+  "waiting_desc": "For today (Scheduled + No Show)",
+  "total_patients": "Total Patients",
+  "active_records": "Active records",
+  "today_appointments_title": "Appointments for Today",
+  "new_appointment": "Add New Appointment",
+  "filter_all": "All",
+  "filter_completed": "Completed",
+  "filter_scheduled": "Scheduled",
+  "no_appointments": "No appointments match the filter."
+}

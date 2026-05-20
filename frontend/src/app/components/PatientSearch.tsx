@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Search, Plus, Phone, Calendar } from 'lucide-react';
+import { SearchInput } from './ui/search-input';
+import { Plus, Phone, Calendar } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -14,9 +15,11 @@ import {
 } from './ui/table';
 import PatientDialog from './PatientDialog';
 import { fetchPatients } from '../services/api';
-import { formatDateDDMMYYYY } from '../utils/date';
+import { formatDate } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 
 export default function PatientSearch() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -39,7 +42,7 @@ export default function PatientSearch() {
       const data = await fetchPatients(searchQuery);
       setPatients(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Hastalar yüklenemedi');
+      setError(err instanceof Error ? err.message : t('patients:search.error_loading'));
       setPatients([]);
     } finally {
       setLoading(false);
@@ -59,25 +62,22 @@ export default function PatientSearch() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl text-gray-900">Hasta Yönetimi</h2>
+        <h2 className="text-2xl text-gray-900">{t('patients:search.title')}</h2>
         <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Yeni Hasta Ekle
+          {t('patients:search.add_new')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Hasta Ara</CardTitle>
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Ad, soyad veya telefon ile ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <CardTitle>{t('patients:search.search_title')}</CardTitle>
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('patients:search.search_placeholder')}
+            className="mt-4"
+          />
         </CardHeader>
         <CardContent>
           {error && (
@@ -88,18 +88,18 @@ export default function PatientSearch() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ad Soyad</TableHead>
-                <TableHead>Telefon</TableHead>
-                <TableHead>TC Kimlik No</TableHead>
-                <TableHead>Son Ziyaret</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead>{t('patients:search.columns.name')}</TableHead>
+                <TableHead>{t('patients:search.columns.phone')}</TableHead>
+                <TableHead>{t('patients:search.columns.tckn')}</TableHead>
+                <TableHead>{t('patients:search.columns.last_visit')}</TableHead>
+                <TableHead className="text-right">{t('patients:search.columns.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    Yükleniyor...
+                    {t('common:loading')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -125,8 +125,8 @@ export default function PatientSearch() {
                         <Calendar className="w-4 h-4" />
                         <span className="text-gray-900 font-medium">
                           {patient.last_visit 
-                          ? formatDateDDMMYYYY(patient.last_visit)
-                          : 'Kayıt Yok'}
+                          ? formatDate(patient.last_visit)
+                          : t('patients:search.no_record')}
                         </span>
                       </div>
                     </TableCell>
@@ -136,7 +136,7 @@ export default function PatientSearch() {
                         size="sm"
                         onClick={() => navigate(`/hasta/${patient.id}`)}
                       >
-                        Detay
+                        {t('patients:search.detail')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -146,7 +146,7 @@ export default function PatientSearch() {
           </Table>
           {!loading && patients.length === 0 && !error && (
             <div className="text-center py-8 text-gray-500">
-              Hasta bulunamadı
+              {t('patients:search.not_found')}
             </div>
           )}
         </CardContent>

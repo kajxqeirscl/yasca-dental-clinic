@@ -1,0 +1,15 @@
+{
+  "title": "Hoş Geldiniz",
+  "today_appointments": "Bugünkü Randevular",
+  "completed": "tamamlandı",
+  "waiting_patients": "Bekleyen Hastalar",
+  "waiting_desc": "Bugün için (Planlanan + Gelmedi)",
+  "total_patients": "Toplam Hasta",
+  "active_records": "Aktif kayıtlar",
+  "today_appointments_title": "Bugünün Randevuları",
+  "new_appointment": "Yeni Randevu Ekle",
+  "filter_all": "Tümü",
+  "filter_completed": "Tamamlanan",
+  "filter_scheduled": "Planlanan",
+  "no_appointments": "Filtreye uygun randevu bulunmuyor."
+}

@@ -11,7 +11,8 @@ import { Badge } from './ui/badge';
 import { Calendar, Clock, User, Stethoscope, Activity, FileText, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { updateAppointment, deleteAppointment } from '../services/api';
-import { formatDateDDMMYYYY } from '../utils/date';
+import { formatDate, formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 
 interface Appointment {
   id: number;
@@ -37,10 +38,10 @@ interface AppointmentDetailDialogProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Planlandı', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-  { value: 'completed', label: 'Tamamlandı', color: 'bg-green-100 text-green-800 border-green-300' },
-  { value: 'cancelled', label: 'İptal', color: 'bg-red-100 text-red-800 border-red-300' },
-  { value: 'no_show', label: 'Gelmedi', color: 'bg-orange-100 text-orange-800 border-orange-300' },
+  { value: 'scheduled', labelKey: 'appointments:detail.status.scheduled', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { value: 'completed', labelKey: 'appointments:detail.status.completed', color: 'bg-green-100 text-green-800 border-green-300' },
+  { value: 'cancelled', labelKey: 'appointments:detail.status.cancelled', color: 'bg-red-100 text-red-800 border-red-300' },
+  { value: 'no_show', labelKey: 'appointments:detail.status.no_show', color: 'bg-orange-100 text-orange-800 border-orange-300' },
 ];
 
 export default function AppointmentDetailDialog({
@@ -50,6 +51,7 @@ export default function AppointmentDetailDialog({
   onUpdated,
   onEdit,
 }: AppointmentDetailDialogProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -92,7 +94,7 @@ export default function AppointmentDetailDialog({
   const getStatusBadge = (status: string) => {
     const opt = STATUS_OPTIONS.find((s) => s.value === status);
     if (!opt) return <Badge variant="outline">{status}</Badge>;
-    return <Badge className={`${opt.color} border-none`}>{opt.label}</Badge>;
+    return <Badge className={`${opt.color} border-none`}>{t(opt.labelKey)}</Badge>;
   };
 
   return (
@@ -100,11 +102,11 @@ export default function AppointmentDetailDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Randevu Detayı</span>
+            <span>{t('appointments:detail.title')}</span>
             {getStatusBadge(appointment.status)}
           </DialogTitle>
           <DialogDescription>
-            Randevu bilgilerini inceleyebilir, durumunu değiştirebilirsiniz.
+            {t('appointments:detail.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,18 +114,18 @@ export default function AppointmentDetailDialog({
           <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
             <div className="space-y-1">
               <div className="text-sm text-gray-500 flex items-center gap-1">
-                <Calendar className="w-4 h-4" /> Tarih
+                <Calendar className="w-4 h-4" /> {t('appointments:detail.fields.date')}
               </div>
               <div className="font-medium text-gray-900">
-                {formatDateDDMMYYYY(appointment.date)}
+                {formatDate(appointment.date)}
               </div>
             </div>
             <div className="space-y-1">
               <div className="text-sm text-gray-500 flex items-center gap-1">
-                <Clock className="w-4 h-4" /> Saat
+                <Clock className="w-4 h-4" /> {t('appointments:detail.fields.time')}
               </div>
               <div className="font-medium text-gray-900">
-                {appointment.time.substring(0, 5)}
+                {formatTimeStr(appointment.time)}
               </div>
             </div>
           </div>
@@ -132,7 +134,7 @@ export default function AppointmentDetailDialog({
             <div className="flex items-start gap-3">
               <User className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm text-gray-500">Hasta</p>
+                <p className="text-sm text-gray-500">{t('appointments:detail.fields.patient')}</p>
                 <p className="font-medium text-gray-900">{appointment.patient_name}</p>
                 <p className="text-sm text-gray-600">{appointment.patient_phone}</p>
               </div>
@@ -142,7 +144,7 @@ export default function AppointmentDetailDialog({
               <div className="flex items-start gap-3">
                 <Stethoscope className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm text-gray-500">Hekim</p>
+                  <p className="text-sm text-gray-500">{t('appointments:detail.fields.doctor')}</p>
                   <p className="font-medium text-gray-900">{appointment.doctor_name}</p>
                 </div>
               </div>
@@ -154,7 +156,7 @@ export default function AppointmentDetailDialog({
                   <div className="flex items-start gap-3">
                     <Activity className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm text-gray-500">İşlem</p>
+                      <p className="text-sm text-gray-500">{t('appointments:detail.fields.treatment')}</p>
                       <p className="text-gray-900">{appointment.treatment_type_name}</p>
                     </div>
                   </div>
@@ -164,7 +166,7 @@ export default function AppointmentDetailDialog({
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm text-gray-500">Notlar</p>
+                      <p className="text-sm text-gray-500">{t('appointments:detail.fields.notes')}</p>
                       <p className="text-gray-900 text-sm">{appointment.notes}</p>
                     </div>
                   </div>
@@ -175,7 +177,7 @@ export default function AppointmentDetailDialog({
 
           {/* Status Change Buttons */}
           <div className="pt-3 border-t">
-            <p className="text-sm text-gray-500 mb-2">Durumu Değiştir</p>
+            <p className="text-sm text-gray-500 mb-2">{t('appointments:detail.change_status')}</p>
             <div className="flex flex-wrap gap-2">
               {STATUS_OPTIONS.map((opt) => (
                 <button
@@ -188,7 +190,7 @@ export default function AppointmentDetailDialog({
                       : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                   } disabled:opacity-50`}
                 >
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </button>
               ))}
             </div>
@@ -204,19 +206,19 @@ export default function AppointmentDetailDialog({
             disabled={loading}
           >
             <Trash2 className="w-4 h-4 mr-1" />
-            Sil
+            {t('appointments:detail.actions.delete')}
           </Button>
           
           {onEdit && (
             <Button variant="outline" size="sm" onClick={() => appointment && onEdit(appointment)}>
-              Düzenle
+              {t('appointments:detail.actions.edit')}
             </Button>
           )}
           
-          <Button variant="outline" size="sm" onClick={() => { setConfirmDelete(false); onClose(); }}>Kapat</Button>
+          <Button variant="outline" size="sm" onClick={() => { setConfirmDelete(false); onClose(); }}>{t('appointments:detail.actions.close')}</Button>
           
           <Button size="sm" onClick={handleGoToPatient} className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-100 px-1">
-            Hasta Profili
+            {t('appointments:detail.actions.go_to_patient')}
           </Button>
         </div>
       </DialogContent>
@@ -225,15 +227,15 @@ export default function AppointmentDetailDialog({
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Randevuyu Sil</DialogTitle>
+            <DialogTitle>{t('appointments:detail.delete_dialog.title')}</DialogTitle>
             <DialogDescription>
-              Bu randevuyu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              {t('appointments:detail.delete_dialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>{t('appointments:detail.delete_dialog.cancel')}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+              {loading ? t('appointments:detail.delete_dialog.deleting') : t('appointments:detail.delete_dialog.confirm')}
             </Button>
           </div>
         </DialogContent>

@@ -25,7 +25,7 @@ class ClinicFactory(DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f"Klinik {n}")
     address = factory.Faker("address", locale="tr_TR")
-    phone = factory.Faker("phone_number", locale="tr_TR")
+    phone = factory.Sequence(lambda n: f"0555{n:07d}")
 
 
 class CustomUserFactory(DjangoModelFactory):

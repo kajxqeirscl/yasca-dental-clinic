@@ -1,0 +1,118 @@
+{
+  "search": {
+    "title": "Hasta Yönetimi",
+    "add_new": "Yeni Hasta Ekle",
+    "search_title": "Hasta Ara",
+    "search_placeholder": "Ad, soyad veya telefon ile ara...",
+    "error_loading": "Hastalar yüklenemedi",
+    "columns": {
+      "name": "Ad Soyad",
+      "phone": "Telefon",
+      "tckn": "TC Kimlik No",
+      "last_visit": "Son Ziyaret",
+      "actions": "İşlemler"
+    },
+    "no_record": "Kayıt Yok",
+    "detail": "Detay",
+    "not_found": "Hasta bulunamadı"
+  },
+  "dialog": {
+    "title_add": "Yeni Hasta Ekle",
+    "title_edit": "Hastayı Düzenle",
+    "description": "Hasta bilgilerini girin ve kaydedin.",
+    "error_required": "Ad, Soyad ve Telefon zorunludur.",
+    "error_add": "Hasta eklenemedi",
+    "saving": "Kaydediliyor...",
+    "fields": {
+      "first_name": "Ad",
+      "last_name": "Soyad",
+      "phone": "Telefon",
+      "phone_placeholder": "0532 123 4567",
+      "tckn": "TC Kimlik No",
+      "tckn_placeholder": "12345678901",
+      "birth_date": "Doğum Tarihi",
+      "address": "Adres",
+      "notes": "Notlar",
+      "notes_placeholder": "Alerji, kronik hastalık vb."
+    }
+  },
+  "profile": {
+    "loading": "Yükleniyor...",
+    "error_load": "Hasta bilgisi yüklenemedi",
+    "not_found": "Hasta bulunamadı",
+    "id": "Hasta ID",
+    "save_changes": "Değişiklikleri Kaydet",
+    "saving": "Kaydediliyor...",
+    "first_name": "Hasta Adı",
+    "last_name": "Hasta Soyadı",
+    "tabs": {
+      "info": "Profil Bilgileri",
+      "anamnesis": "Anamnez",
+      "appointments": "Randevular",
+      "history": "Tedavi Geçmişi",
+      "payments": "Ödemeler",
+      "documents": "Dokümanlar",
+      "dental_chart": "Diş Şeması"
+    },
+    "info": {
+      "title": "Kişisel Bilgiler",
+      "phone": "Telefon",
+      "tckn": "TC Kimlik No",
+      "birth_date": "Doğum Tarihi",
+      "address": "Adres",
+      "general_notes": "Genel Notlar"
+    },
+    "anamnesis": {
+      "title": "Hasta Anamnezi",
+      "medical_history": "Tıbbi Geçmiş",
+      "allergies": "Alerjiler",
+      "medications": "Kullandığı İlaçlar",
+      "chronic_diseases": "Kronik Hastalıklar",
+      "surgical_history": "Geçirdiği Ameliyatlar",
+      "family_history": "Aile Öyküsü",
+      "smoking": "Sigara",
+      "alcohol": "Alkol",
+      "pregnancy_status": "Gebelik Durumu",
+      "other_notes": "Diğer Notlar"
+    },
+    "appointments": {
+      "title": "Tüm Randevular",
+      "new": "Yeni Randevu",
+      "no_record": "Henüz randevu kaydı bulunmuyor.",
+      "status": {
+        "scheduled": "Planlandı",
+        "completed": "Tamamlandı",
+        "cancelled": "İptal",
+        "no_show": "Gelmedi"
+      }
+    },
+    "treatments": {
+      "title": "Tedavi Geçmişi",
+      "new": "Yeni Tedavi Ekle",
+      "no_record": "Henüz tedavi kaydı bulunmuyor.",
+      "tooth": "Diş",
+      "status": {
+        "completed": "Tamamlandı",
+        "todo": "Yapılacak"
+      }
+    },
+    "payments": {
+      "title": "Ödemeler",
+      "new": "Yeni Ödeme Ekle",
+      "no_record": "Henüz ödeme kaydı bulunmuyor.",
+      "total_treatment": "Toplam Tedavi Tutarı",
+      "total_paid": "Toplam Ödenen",
+      "balance": "Kalan Bakiye"
+    },
+    "documents": {
+      "title": "Hasta Dokümanları",
+      "upload": "Belge Yükle",
+      "no_record": "Henüz doküman bulunmuyor.",
+      "drag_drop": "Dosyaları sürükleyip bırakın veya",
+      "browse": "seçin",
+      "delete_confirm": "Bu dokümanı silmek istediğinize emin misiniz?",
+      "delete": "Sil",
+      "download": "İndir"
+    }
+  }
+}

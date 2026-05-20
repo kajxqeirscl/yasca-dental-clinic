@@ -1,0 +1,28 @@
+{
+  "dialog": {
+    "title_add": "Ödeme Ekle",
+    "title_edit": "Ödemeyi Düzenle",
+    "description_add": "Hastadan alınan ödemeyi kaydedin.",
+    "description_edit": "Ödeme bilgilerini güncelleyin veya silin.",
+    "error_amount": "Geçerli bir tutar giriniz.",
+    "error_fail": "İşlem başarısız",
+    "error_delete": "Silinemedi",
+    "treatment": "İlgili Tedavi (Opsiyonel)",
+    "select_treatment": "Genel Ödeme (Tedavi seçilmedi)",
+    "amount": "Tutar *",
+    "date": "Ödeme Tarihi *",
+    "description": "Açıklama",
+    "description_placeholder": "Örn: Kanal tedavisi ödemesi",
+    "delete": "Sil",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "update": "Güncelle"
+  },
+  "delete_dialog": {
+    "title": "Ödemeyi Sil",
+    "description": "Bu ödemeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+    "cancel": "Vazgeç",
+    "confirm": "Evet, Sil",
+    "deleting": "Siliniyor..."
+  }
+}

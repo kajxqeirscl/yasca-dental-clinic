@@ -1,0 +1,118 @@
+{
+  "search": {
+    "title": "Patient Management",
+    "add_new": "Add New Patient",
+    "search_title": "Search Patient",
+    "search_placeholder": "Search by name, surname or phone...",
+    "error_loading": "Failed to load patients",
+    "columns": {
+      "name": "Full Name",
+      "phone": "Phone",
+      "tckn": "National ID",
+      "last_visit": "Last Visit",
+      "actions": "Actions"
+    },
+    "no_record": "No Record",
+    "detail": "Detail",
+    "not_found": "Patient not found"
+  },
+  "dialog": {
+    "title_add": "Add New Patient",
+    "title_edit": "Edit Patient",
+    "description": "Enter patient details and save.",
+    "error_required": "First Name, Last Name, and Phone are required.",
+    "error_add": "Failed to add patient",
+    "saving": "Saving...",
+    "fields": {
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "phone": "Phone",
+      "phone_placeholder": "555 123 4567",
+      "tckn": "National ID",
+      "tckn_placeholder": "12345678901",
+      "birth_date": "Date of Birth",
+      "address": "Address",
+      "notes": "Notes",
+      "notes_placeholder": "Allergies, chronic diseases, etc."
+    }
+  },
+  "profile": {
+    "loading": "Loading...",
+    "error_load": "Failed to load patient information",
+    "not_found": "Patient not found",
+    "id": "Patient ID",
+    "save_changes": "Save Changes",
+    "saving": "Saving...",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "tabs": {
+      "info": "Profile Info",
+      "anamnesis": "Anamnesis",
+      "appointments": "Appointments",
+      "history": "Treatment History",
+      "payments": "Payments",
+      "documents": "Documents",
+      "dental_chart": "Dental Chart"
+    },
+    "info": {
+      "title": "Personal Information",
+      "phone": "Phone",
+      "tckn": "National ID",
+      "birth_date": "Date of Birth",
+      "address": "Address",
+      "general_notes": "General Notes"
+    },
+    "anamnesis": {
+      "title": "Patient Anamnesis",
+      "medical_history": "Medical History",
+      "allergies": "Allergies",
+      "medications": "Current Medications",
+      "chronic_diseases": "Chronic Diseases",
+      "surgical_history": "Surgical History",
+      "family_history": "Family History",
+      "smoking": "Smoking",
+      "alcohol": "Alcohol",
+      "pregnancy_status": "Pregnancy Status",
+      "other_notes": "Other Notes"
+    },
+    "appointments": {
+      "title": "All Appointments",
+      "new": "New Appointment",
+      "no_record": "No appointment records found.",
+      "status": {
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "no_show": "No Show"
+      }
+    },
+    "treatments": {
+      "title": "Treatment History",
+      "new": "Add New Treatment",
+      "no_record": "No treatment records found.",
+      "tooth": "Tooth",
+      "status": {
+        "completed": "Completed",
+        "todo": "To Do"
+      }
+    },
+    "payments": {
+      "title": "Payments",
+      "new": "Add New Payment",
+      "no_record": "No payment records found.",
+      "total_treatment": "Total Treatment Cost",
+      "total_paid": "Total Paid",
+      "balance": "Remaining Balance"
+    },
+    "documents": {
+      "title": "Patient Documents",
+      "upload": "Upload Document",
+      "no_record": "No documents found.",
+      "drag_drop": "Drag & drop files here or",
+      "browse": "browse",
+      "delete_confirm": "Are you sure you want to delete this document?",
+      "delete": "Delete",
+      "download": "Download"
+    }
+  }
+}

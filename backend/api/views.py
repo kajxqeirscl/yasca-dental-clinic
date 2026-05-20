@@ -91,10 +91,10 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
-                Q(first_name__icontains=search)
-                | Q(last_name__icontains=search)
-                | Q(phone__icontains=search)
-                | Q(tckn__icontains=search)
+                Q(first_name__tr_icontains=search)
+                | Q(last_name__tr_icontains=search)
+                | Q(phone__tr_icontains=search)
+                | Q(tckn__tr_icontains=search)
             )
         return qs.order_by("last_name", "first_name")
 

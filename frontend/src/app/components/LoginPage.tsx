@@ -4,9 +4,11 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useTranslation('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,9 +21,9 @@ export default function LoginPage() {
     try {
       await login(username, password);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Giriş başarısız';
-      if (msg.includes('No active account found') || msg.includes('Giriş başarısız')) {
-        setError('Giriş başarısız. Lütfen kullanıcı adı ve şifrenizi kontrol ediniz.');
+      const msg = err instanceof Error ? err.message : t('error_generic');
+      if (msg.includes('No active account found') || msg.includes('Giriş başarısız') || msg.includes(t('error_generic'))) {
+        setError(t('error_invalid_credentials'));
       } else {
         setError(msg);
       }
@@ -31,7 +33,7 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = () => {
-    alert('Şifrenizi sıfırlamak için lütfen admin ile iletişime geçiniz.');
+    alert(t('forgot_password_alert'));
   };
 
   return (
@@ -43,8 +45,8 @@ export default function LoginPage() {
               <span className="text-white text-2xl">Y</span>
             </div>
           </div>
-          <CardTitle className="text-2xl">Yaşça Dental Klinik</CardTitle>
-          <CardDescription>Hesabınıza giriş yapın</CardDescription>
+          <CardTitle className="text-2xl">{t('title')}</CardTitle>
+          <CardDescription>{t('subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -54,11 +56,11 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Kullanıcı adı</Label>
+              <Label htmlFor="username">{t('username_label')}</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Kullanıcı adınız"
+                placeholder={t('username_placeholder')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -66,11 +68,11 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Şifre</Label>
+              <Label htmlFor="password">{t('password_label')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('password_placeholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -82,14 +84,14 @@ export default function LoginPage() {
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isLoading}
             >
-              {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              {isLoading ? t('login_loading') : t('login_button')}
             </Button>
             <button
               type="button"
               onClick={handleForgotPassword}
               className="w-full text-sm text-blue-600 hover:text-blue-700 underline"
             >
-              Şifremi Unuttum
+              {t('forgot_password')}
             </button>
           </form>
         </CardContent>

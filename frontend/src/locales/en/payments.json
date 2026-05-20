@@ -1,0 +1,28 @@
+{
+  "dialog": {
+    "title_add": "Add Payment",
+    "title_edit": "Edit Payment",
+    "description_add": "Record the payment received from the patient.",
+    "description_edit": "Update or delete payment information.",
+    "error_amount": "Please enter a valid amount.",
+    "error_fail": "Operation failed",
+    "error_delete": "Failed to delete",
+    "treatment": "Related Treatment (Optional)",
+    "select_treatment": "General Payment (No treatment selected)",
+    "amount": "Amount *",
+    "date": "Payment Date *",
+    "description": "Description",
+    "description_placeholder": "e.g., Canal treatment payment",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving...",
+    "update": "Update"
+  },
+  "delete_dialog": {
+    "title": "Delete Payment",
+    "description": "Are you sure you want to delete this payment? This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Yes, Delete",
+    "deleting": "Deleting..."
+  }
+}

@@ -12,6 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { createPatient, updatePatient } from '../services/api';
 import { DatePicker } from './ui/date-picker';
+import { useTranslation } from 'react-i18next';
 
 interface PatientDialogProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export default function PatientDialog({
   patientId,
   initialData,
 }: PatientDialogProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -70,7 +72,7 @@ export default function PatientDialog({
 
   const handleSave = async () => {
     if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.phone.trim()) {
-      setError('Ad, Soyad ve Telefon zorunludur.');
+      setError(t('patients:dialog.error_required'));
       return;
     }
     setLoading(true);
@@ -94,7 +96,7 @@ export default function PatientDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Hasta eklenemedi');
+      setError(err instanceof Error ? err.message : t('patients:dialog.error_add'));
     } finally {
       setLoading(false);
     }
@@ -120,9 +122,9 @@ export default function PatientDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{patientId ? 'Hastayı Düzenle' : 'Yeni Hasta Ekle'}</DialogTitle>
+          <DialogTitle>{patientId ? t('patients:dialog.title_edit') : t('patients:dialog.title_add')}</DialogTitle>
           <DialogDescription>
-            Hasta bilgilerini girin ve kaydedin.
+            {t('patients:dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -133,7 +135,7 @@ export default function PatientDialog({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Ad</Label>
+              <Label htmlFor="name">{t('patients:dialog.fields.first_name')}</Label>
               <Input
                 id="name"
                 value={formData.first_name}
@@ -143,7 +145,7 @@ export default function PatientDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="surname">Soyad</Label>
+              <Label htmlFor="surname">{t('patients:dialog.fields.last_name')}</Label>
               <Input
                 id="surname"
                 value={formData.last_name}
@@ -156,11 +158,11 @@ export default function PatientDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
+              <Label htmlFor="phone">{t('patients:dialog.fields.phone')}</Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="0532 123 4567"
+                placeholder={t('patients:dialog.fields.phone_placeholder')}
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
@@ -169,11 +171,11 @@ export default function PatientDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tckn">TC Kimlik No</Label>
+              <Label htmlFor="tckn">{t('patients:dialog.fields.tckn')}</Label>
               <Input
                 id="tckn"
                 type="text"
-                placeholder="12345678901"
+                placeholder={t('patients:dialog.fields.tckn_placeholder')}
                 maxLength={11}
                 value={formData.tckn}
                 onChange={(e) =>
@@ -184,7 +186,7 @@ export default function PatientDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="birthDate">Doğum Tarihi</Label>
+            <Label htmlFor="birthDate">{t('patients:dialog.fields.birth_date')}</Label>
             <DatePicker
               date={formData.birth_date}
               onDateChange={(val) => setFormData({ ...formData, birth_date: val })}
@@ -192,7 +194,7 @@ export default function PatientDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Adres</Label>
+            <Label htmlFor="address">{t('patients:dialog.fields.address')}</Label>
             <Textarea
               id="address"
               value={formData.address}
@@ -204,10 +206,10 @@ export default function PatientDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notlar</Label>
+            <Label htmlFor="notes">{t('patients:dialog.fields.notes')}</Label>
             <Textarea
               id="notes"
-              placeholder="Alerji, kronik hastalık vb."
+              placeholder={t('patients:dialog.fields.notes_placeholder')}
               value={formData.notes}
               onChange={(e) =>
                 setFormData({ ...formData, notes: e.target.value })
@@ -218,10 +220,10 @@ export default function PatientDialog({
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
+            {t('common:cancel')}
           </Button>
           <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
+            {loading ? t('patients:dialog.saving') : t('common:save')}
           </Button>
         </div>
       </DialogContent>

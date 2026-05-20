@@ -1,0 +1,16 @@
+{
+  "save": "Kaydet",
+  "cancel": "İptal",
+  "delete": "Sil",
+  "loading": "Yükleniyor...",
+  "error": "Bir hata oluştu",
+  "success": "Başarılı",
+  "dashboard": "Ana Sayfa",
+  "patients": "Hastalar",
+  "appointments": "Randevular",
+  "treatments": "Tedavi Türleri",
+  "payments": "Ödemeler",
+  "settings": "Klinik Ayarları",
+  "logout": "Çıkış",
+  "clinic_name": "Yaşça Dental Klinik"
+}

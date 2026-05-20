@@ -9,12 +9,14 @@ Yaşca, diş hekimliği kliniklerinin operasyonel iş akışlarını dijitalleş
 
 ---
 
-### 1. Sistemi Çalıştırma (Docker)
+### 1. Sistemi Çalıştırma (Hybrid Development)
 
-Tüm sistemi (PostgreSQL veritabanı, Django backend, React frontend) tek bir komutla ayağa kaldırmak için ana dizinde şu komutu çalıştırın:
+Proje geliştirme ortamında **PostgreSQL** ve **Django Backend** servislerini Docker üzerinde, **React Frontend** uygulamasını ise yerel makinenizde Node.js ile çalıştırır.
+
+Sistemi ayağa kaldırmak için ana dizinde şu komutu çalıştırın:
 
 ```powershell
-docker-compose up --build
+npm run dev
 ```
 
 Veya ana dizindeki `start-dev.ps1` scriptini çalıştırabilirsiniz:
@@ -39,7 +41,7 @@ Projeyi test amaçlı örnek verilerle doldurmak isterseniz (sistem Docker'da ç
 
 Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcılarının giriş bilgilerini (şifre: `demo123!`) konsolda verecektir.
 
-*(Not: Bu script, Docker konteyneri içinde gerekli seed komutlarını otomatik olarak çalıştırır.)*
+*(Not: Bu script, Docker konteyneri içinde gerekli seed komutlarını otomatik olarak çalıştırır. Docker arkaplanda çalışmıyorsa bile DB'yi otomatik başlatır.)*
 
 ---
 
@@ -139,8 +141,8 @@ Bu proje, yüksek lisans/abonelik maliyetleri ve karmaşık arayüzler gibi sekt
 
 ### Kullanılan Teknolojiler (Tech Stack)
 - **Frontend:** React.js, TypeScript, Vite
-- **Backend:** Python 3.13, Django REST Framework
-- **Database:** SQLite (geliştirme) / PostgreSQL (üretim)
+- **Backend:** Python 3.12, Django REST Framework
+- **Database:** PostgreSQL
 - **Test (Backend):** pytest, pytest-django, factory-boy
 - **Test (Frontend):** Vitest, Testing Library, MSW
 - **CI/CD:** GitHub Actions

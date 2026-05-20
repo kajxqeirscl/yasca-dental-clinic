@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope } from 'lucide-react';
+import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope, Globe } from 'lucide-react';
 import { Button } from './ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,14 +12,20 @@ interface LayoutProps {
 
 export default function Layout({ children, userRole, onLogout, isAdmin }: LayoutProps) {
   const location = useLocation();
+  const { t, i18n } = useTranslation('common');
 
   const navItems = [
-    { path: '/', label: 'Ana Sayfa', icon: LayoutDashboard, adminOnly: false },
-    { path: '/randevular', label: 'Randevular', icon: Calendar, adminOnly: false },
-    { path: '/hastalar', label: 'Hastalar', icon: Users, adminOnly: false },
-    { path: '/tedavi-turleri', label: 'Tedavi Türleri', icon: Stethoscope, adminOnly: false },
-    { path: '/ayarlar', label: 'Klinik Ayarları', icon: Settings, adminOnly: false },
+    { path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
+    { path: '/randevular', label: t('appointments'), icon: Calendar, adminOnly: false },
+    { path: '/hastalar', label: t('patients'), icon: Users, adminOnly: false },
+    { path: '/tedavi-turleri', label: t('treatments'), icon: Stethoscope, adminOnly: false },
+    { path: '/ayarlar', label: t('settings'), icon: Settings, adminOnly: false },
   ];
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language.startsWith('tr') ? 'en' : 'tr';
+    i18n.changeLanguage(newLang);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,14 +38,27 @@ export default function Layout({ children, userRole, onLogout, isAdmin }: Layout
                 <span className="text-white">Y</span>
               </div>
               <div>
-                <h1 className="text-xl text-gray-900">Yaşça Dental Klinik</h1>
+                <h1 className="text-xl text-gray-900">{t('clinic_name')}</h1>
                 <p className="text-sm text-gray-500 capitalize">{userRole}</p>
               </div>
             </div>
-            <Button variant="ghost" onClick={onLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Çıkış
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-gray-500" />
+                <select
+                  value={i18n.language.startsWith('tr') ? 'tr' : 'en'}
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  className="bg-white border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="tr">🇹🇷 Türkçe</option>
+                  <option value="en">🇬🇧 English</option>
+                </select>
+              </div>
+              <Button variant="ghost" onClick={onLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                {t('logout')}
+              </Button>
+            </div>
           </div>
         </div>
       </header>

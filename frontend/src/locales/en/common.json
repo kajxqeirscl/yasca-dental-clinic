@@ -1,0 +1,16 @@
+{
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "success": "Success",
+  "dashboard": "Home",
+  "patients": "Patients",
+  "appointments": "Appointments",
+  "treatments": "Treatment Types",
+  "payments": "Payments",
+  "settings": "Clinic Settings",
+  "logout": "Log Out",
+  "clinic_name": "Yasca Dental Clinic"
+}

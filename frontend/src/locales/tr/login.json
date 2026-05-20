@@ -1,0 +1,14 @@
+{
+  "title": "Yaşça Dental Klinik",
+  "subtitle": "Hesabınıza giriş yapın",
+  "username_label": "Kullanıcı adı",
+  "username_placeholder": "Kullanıcı adınız",
+  "password_label": "Şifre",
+  "password_placeholder": "••••••••",
+  "login_button": "Giriş Yap",
+  "login_loading": "Giriş yapılıyor...",
+  "forgot_password": "Şifremi Unuttum",
+  "forgot_password_alert": "Şifrenizi sıfırlamak için lütfen admin ile iletişime geçiniz.",
+  "error_invalid_credentials": "Giriş başarısız. Lütfen kullanıcı adı ve şifrenizi kontrol ediniz.",
+  "error_generic": "Giriş başarısız"
+}

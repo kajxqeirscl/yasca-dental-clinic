@@ -1,29 +1,33 @@
 import { useState, useEffect } from 'react';
 import { fetchTreatmentTypes, createTreatmentType, updateTreatmentType, deleteTreatmentType } from '../services/api';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from './ui/table';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { SearchInput } from './ui/search-input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { useLocalizedSearch } from '../hooks/useLocalizedSearch';
 
 // Category definitions — must mirror backend TreatmentType.Category choices
 export const CATEGORY_OPTIONS = [
-  { value: 'filling', label: 'Dolgu' },
-  { value: 'canal', label: 'Kanal Tedavisi' },
-  { value: 'crown', label: 'Kron / Kaplama' },
-  { value: 'extraction', label: 'Diş Çekimi' },
-  { value: 'implant', label: 'İmplant' },
-  { value: 'detartraj', label: 'Diş Taşı Temizliği' },
-  { value: 'other', label: 'Diğer' },
+  { value: 'filling', labelKey: 'treatments:categories.filling' },
+  { value: 'canal', labelKey: 'treatments:categories.canal' },
+  { value: 'crown', labelKey: 'treatments:categories.crown' },
+  { value: 'extraction', labelKey: 'treatments:categories.extraction' },
+  { value: 'implant', labelKey: 'treatments:categories.implant' },
+  { value: 'detartraj', labelKey: 'treatments:categories.detartraj' },
+  { value: 'other', labelKey: 'treatments:categories.other' },
 ] as const;
 
 export type TreatmentCategory = typeof CATEGORY_OPTIONS[number]['value'];
 
-export function getCategoryLabel(value: string) {
-  return CATEGORY_OPTIONS.find((c) => c.value === value)?.label ?? 'Diğer';
+export function getCategoryLabel(value: string, t: any) {
+  const opt = CATEGORY_OPTIONS.find((c) => c.value === value);
+  return opt ? t(opt.labelKey) : t('treatments:page.other');
 }
 
 interface TreatmentType {
@@ -39,6 +43,9 @@ interface Props {
 }
 
 export default function TreatmentTypesPage({ userRole }: Props) {
+  const { t } = useTranslation();
+  const { match } = useLocalizedSearch();
+  const [searchQuery, setSearchQuery] = useState('');
   const [types, setTypes] = useState<TreatmentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,7 +63,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       const data = await fetchTreatmentTypes();
       setTypes(data);
     } catch {
-      toast.error('Tedavi türleri yüklenirken hata oluştu.');
+      toast.error(t('treatments:page.error_load'));
     } finally {
       setLoading(false);
     }
@@ -81,88 +88,91 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     try {
       if (editingType) {
         await updateTreatmentType(editingType.id, formData);
-        toast.success('Tedavi türü güncellendi');
+        toast.success(t('treatments:page.success_update'));
       } else {
         await createTreatmentType(formData);
-        toast.success('Tedavi türü eklendi');
+        toast.success(t('treatments:page.success_add'));
       }
       setIsDialogOpen(false);
       loadData();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Kaydetme işlemi başarısız');
+      toast.error(err instanceof Error ? err.message : t('treatments:page.error_save'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bu tedavi türünü devre dışı bırakmak istediğinize emin misiniz?')) return;
+    if (!confirm(t('treatments:page.confirm_delete'))) return;
     try {
       await deleteTreatmentType(id);
-      toast.success('Tedavi türü devre dışı bırakıldı');
+      toast.success(t('treatments:page.success_delete'));
       loadData();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Silme işlemi başarısız');
+      toast.error(err instanceof Error ? err.message : t('treatments:page.error_delete'));
     }
   };
 
+  const filteredTypes = types.filter((type) => {
+    const catLabel = getCategoryLabel(type.category, t);
+    return match(type.name, searchQuery) || match(catLabel, searchQuery);
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tedavi Türleri</h2>
-          <p className="text-muted-foreground">
-            Klinikte uygulanan tedavi türlerini, fiyatlarını ve diş şeması kategorilerini yönetin.
-          </p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl text-gray-900">{t('treatments:page.title')}</h2>
         {canEdit && (
           <Button onClick={() => handleOpenDialog()}>
             <Plus className="w-4 h-4 mr-2" />
-            Yeni Tedavi Türü Ekle
+            {t('treatments:page.add_new')}
           </Button>
         )}
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardHeader>
+          <CardTitle>{t('treatments:page.search_title')}</CardTitle>
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('treatments:page.search_placeholder')}
+            className="mt-4"
+          />
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tedavi Adı</TableHead>
-                <TableHead>Kategori (Şema)</TableHead>
-                <TableHead>Varsayılan Fiyat</TableHead>
-                <TableHead>Durum</TableHead>
-                {canEdit && <TableHead className="text-right">İşlemler</TableHead>}
+                <TableHead>{t('treatments:page.table_name')}</TableHead>
+                <TableHead>{t('treatments:page.table_category')}</TableHead>
+                <TableHead>{t('treatments:page.table_price')}</TableHead>
+                {canEdit && <TableHead className="text-right">{t('treatments:page.table_actions')}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    Yükleniyor...
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    {t('treatments:page.loading')}
                   </TableCell>
                 </TableRow>
-              ) : types.length === 0 ? (
+              ) : filteredTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    Henüz tedavi türü eklenmemiş.
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    {searchQuery ? t('treatments:page.no_results') : t('treatments:page.empty')}
                   </TableCell>
                 </TableRow>
               ) : (
-                types.map((type) => {
-                  const cat = CATEGORY_OPTIONS.find((c) => c.value === type.category);
+                filteredTypes.map((type) => {
+                  const catLabel = getCategoryLabel(type.category, t);
                   return (
                     <TableRow key={type.id}>
                       <TableCell className="font-medium">{type.name}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-sm">
-                          <span>{cat?.label ?? 'Diğer'}</span>
+                          <span>{catLabel}</span>
                         </span>
                       </TableCell>
                       <TableCell>{type.default_price} TL</TableCell>
-                      <TableCell>
-                        <Badge variant={type.is_active ? 'default' : 'secondary'}>
-                          {type.is_active ? 'Aktif' : 'Pasif'}
-                        </Badge>
-                      </TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(type)}>
@@ -186,21 +196,21 @@ export default function TreatmentTypesPage({ userRole }: Props) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingType ? 'Tedavi Türünü Düzenle' : 'Yeni Tedavi Türü Ekle'}
+              {editingType ? t('treatments:page.dialog_title_edit') : t('treatments:page.dialog_title_add')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tedavi Adı</label>
+              <label className="text-sm font-medium">{t('treatments:page.form_name')}</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Örn: Kompozit Dolgu"
+                placeholder={t('treatments:page.form_name_placeholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Kategori (Diş Şemasında Rengi Belirler)</label>
+              <label className="text-sm font-medium">{t('treatments:page.form_category')}</label>
               <select
                 className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.category}
@@ -210,17 +220,17 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               >
                 {CATEGORY_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-gray-500">
-                Bu kategori, diş şemasında dişin hangi renk ve durumda gösterileceğini belirler.
+                {t('treatments:page.form_category_desc')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Varsayılan Fiyat (TL)</label>
+              <label className="text-sm font-medium">{t('treatments:page.form_price')}</label>
               <Input
                 type="number"
                 value={formData.default_price}
@@ -231,10 +241,10 @@ export default function TreatmentTypesPage({ userRole }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              İptal
+              {t('treatments:page.cancel')}
             </Button>
             <Button onClick={handleSave} disabled={!formData.name || !formData.default_price}>
-              Kaydet
+              {t('treatments:page.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
