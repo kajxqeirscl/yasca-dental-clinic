@@ -6,107 +6,57 @@
 
 ---
 
-## 🔴 Critical Issues
+## ✅ Resolved Issues
 
-### 1. `TreatmentType.Category` Does Not Exist — Tests & Demo Seeding Are Broken
+### ~~1. `TreatmentType.Category` Does Not Exist~~ — FIXED
 
-[factories.py](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/api/tests/factories.py) and [seed_demo_data.py](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/api/management/commands/seed_demo_data.py) both reference `TreatmentType.Category` choices (e.g., `Category.FILLING`, `Category.CANAL`, `Category.EXTRACTION`).
+**What was wrong:** `factories.py` and `seed_demo_data.py` referenced `TreatmentType.Category` choices, but the model had no `Category` inner class. All backend tests and demo seeding crashed with `AttributeError`.
 
-However, the actual [TreatmentType model](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/api/models.py#L127-L150) has **no `Category` field or inner choices class**.
-
-**Impact:**
-- ❌ All backend tests crash on import → `AttributeError`
-- ❌ `run-demo.ps1` crashes → `seed_demo_data.py` imports from `factories.py`
-- ❌ CI pipeline fails on the backend test job
-
-**Fix:** Either add a `Category` field/choices to the `TreatmentType` model, or remove all `Category` references from `factories.py` and `seed_demo_data.py`.
+**Fix applied:** Added the `Category` TextChoices class and `category` field to the `TreatmentType` model in `models.py`. The migration (`0012_treatmenttype_category.py`) had already added the column to the database — only the model code was missing.
 
 ---
 
-### 2. Test Dependencies Missing from `requirements.txt`
+### ~~2. Test Dependencies Missing~~ — FIXED
 
-[requirements.txt](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/requirements.txt) has no test dependencies. There is no `requirements-dev.txt` either.
+**What was wrong:** `pytest`, `factory-boy`, `faker`, etc. were not in any requirements file. They were hardcoded in the CI YAML and installed at runtime by `run-demo.ps1`.
 
-| Package | Status | Used By |
-|---|---|---|
-| `pytest` | ❌ Missing | All backend tests |
-| `pytest-django` | ❌ Missing | `@pytest.mark.django_db` |
-| `pytest-cov` | ❌ Missing | CI coverage reports |
-| `factory-boy` | ❌ Missing | `factories.py`, `seed_demo_data.py` |
-| `faker` | ❌ Missing | `factories.py` (Turkish locale `tr_TR`) |
-
-These are currently hardcoded in the CI YAML and installed at runtime by `run-demo.ps1` (lost on every container restart).
-
-**Fix:** Create a `requirements-dev.txt` that extends `requirements.txt`. Update the Dockerfile and CI to use it.
+**Fix applied:** Created `backend/requirements-dev.txt` that extends `requirements.txt` with all test dependencies. CI now installs from `requirements-dev.txt`.
 
 ---
 
-### 3. Tests Run Against SQLite, Production Uses PostgreSQL
+### ~~3. Tests Run Against SQLite~~ — FIXED
 
-[settings_test.py](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/core/settings_test.py) forces **SQLite in-memory** for all tests:
+**What was wrong:** `settings_test.py` hardcoded SQLite in-memory. The entire CI pipeline ran against SQLite, never touching PostgreSQL.
 
-```python
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-    }
-}
-```
-
-[pytest.ini](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/pytest.ini) points to this file via `DJANGO_SETTINGS_MODULE = core.settings_test`. The CI E2E job also uses `settings_test`, meaning the **entire CI pipeline runs against SQLite** — never PostgreSQL.
-
-**Impact:** Subtle PostgreSQL-specific behaviors (`JSONField`, case sensitivity, constraint handling, date types) are **never tested**. Bugs can pass CI and break in production.
-
-**Fix:** Update `settings_test.py` to use PostgreSQL (connect to the CI service container). Add a PostgreSQL service to the CI backend job.
+**Fix applied:** Updated `settings_test.py` to read `DATABASE_URL` from the environment. When set (e.g., in CI), tests run against PostgreSQL. Falls back to SQLite for quick local runs when the env var is absent. Added a PostgreSQL 15 service container to the CI backend job.
 
 ---
 
-### 4. Root `package.json` Still References `venv`
+### ~~4. Root `package.json` References `venv`~~ — FIXED
 
-[package.json](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/package.json) scripts are completely outdated:
+**What was wrong:** Scripts referenced `venv\\Scripts\\activate` and local `pip install`.
 
-```json
-"backend": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver",
-"install:all": "npm install --prefix frontend && pip install -r backend/requirements.txt"
-```
-
-- ❌ `backend` script references `venv` which no longer exists in Docker
-- ❌ `install:all` runs local `pip install` — should use Docker
+**Fix applied:** Replaced with Docker-based scripts: `dev` (docker-compose up), `dev:frontend` (local Vite), and `demo` (docker-compose run for seeding).
 
 ---
 
-## 🟡 Medium Issues
+### ~~5. Python Version Mismatch~~ — FIXED
 
-### 5. Python Version Mismatch
+**What was wrong:** Dockerfile used Python 3.12, CI used Python 3.13.
 
-| Location | Python Version |
-|---|---|
-| [Dockerfile](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/backend/Dockerfile) | `python:3.12-slim` |
-| [ci.yml](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/.github/workflows/ci.yml) | `python-version: '3.13'` |
-
-Code could pass in CI but fail in Docker (or vice versa).
-
-**Fix:** Align both to `3.12`.
+**Fix applied:** Aligned CI to `python-version: '3.12'` to match the Dockerfile.
 
 ---
 
-### 6. E2E Tests Are Just a Placeholder
+### ~~6. E2E Tests Are Just a Placeholder~~ — FIXED
 
-[dummy.spec.ts](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/frontend/e2e/dummy.spec.ts) only checks the page loads:
+**What was wrong:** The CI had a full E2E job running a single placeholder test (`dummy.spec.ts`) that only checked if the page loaded.
 
-```typescript
-test('has title', async ({ page }) => {
-  await page.goto('/');
-  await expect(page).toHaveURL(/.*localhost.*/);
-});
-```
-
-The CI pipeline has a **full E2E job** that runs this placeholder, giving false confidence.
-
-**Fix:** Write real E2E scenarios or remove the E2E job from CI until ready.
+**Fix applied:** Removed the entire E2E job from `ci.yml`. The placeholder test file remains locally for future development, but no longer wastes CI resources or gives false confidence.
 
 ---
+
+## 🟡 Open Medium Issues
 
 ### 7. No `conftest.py` — No Shared Test Fixtures
 
@@ -141,7 +91,7 @@ backend:
 
 ### 9. README Test Section Still References `venv` and SQLite
 
-[README.md](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/README.md) test instructions still say:
+README.md test instructions still say:
 
 - Activate venv: `.\\venv\\Scripts\\Activate.ps1`
 - Manual `pip install pytest pytest-django ...`
@@ -150,11 +100,11 @@ backend:
 
 ---
 
-## 🟢 Low Issues
+## 🟢 Open Low Issues
 
 ### 10. Obsolete `version` in `docker-compose.yml`
 
-[docker-compose.yml](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/docker-compose.yml) Line 1 has `version: '3.8'`, which prints a warning on every run.
+`docker-compose.yml` Line 1 has `version: '3.8'`, which prints a warning on every run.
 
 **Fix:** Delete the line.
 
@@ -162,15 +112,15 @@ backend:
 
 ### 11. Old `db.sqlite3` Still Exists
 
-`backend/db.sqlite3` (270KB) still exists in the project. The `.gitignore` has `*.sqlite3` but the file may already be tracked in git history.
+`backend/db.sqlite3` (270KB) still exists in the project. Confirmed not tracked by git, but is clutter.
 
-**Fix:** Remove and add to `.gitignore` if not already (verify with `git ls-files`).
+**Fix:** Delete the file.
 
 ---
 
 ### 12. Frontend Dockerfile Uses `npm install` Instead of `npm ci`
 
-[Frontend Dockerfile](file:///d:/laian/Desktop/Yaman/projects/yasca-dental/frontend/Dockerfile) uses `npm install` which is less reproducible than `npm ci`.
+Frontend Dockerfile uses `npm install` which is less reproducible than `npm ci`.
 
 **Fix:** Change to `npm ci` for deterministic builds.
 
@@ -190,19 +140,19 @@ Only **2 frontend unit test files** exist (`api.test.ts`, `AuthContext.test.tsx`
 
 ## Summary Table
 
-| # | Issue | Severity | Files Affected |
+| # | Issue | Status | Severity |
 |---|---|---|---|
-| 1 | `TreatmentType.Category` doesn't exist | 🔴 Critical | `factories.py`, `seed_demo_data.py`, `models.py` |
-| 2 | Test deps missing from `requirements.txt` | 🔴 Critical | `requirements.txt`, `Dockerfile`, `ci.yml` |
-| 3 | Tests use SQLite, prod uses PostgreSQL | 🔴 Critical | `settings_test.py`, `pytest.ini`, `ci.yml` |
-| 4 | Root `package.json` references `venv` | 🔴 Critical | `package.json` |
-| 5 | Python version mismatch (3.12 vs 3.13) | 🟡 Medium | `Dockerfile`, `ci.yml` |
-| 6 | E2E tests are just a placeholder | 🟡 Medium | `dummy.spec.ts`, `ci.yml` |
-| 7 | No `conftest.py` / shared fixtures | 🟡 Medium | `backend/api/tests/` |
-| 8 | No DB health check in docker-compose | 🟡 Medium | `docker-compose.yml` |
-| 9 | README test section references venv/SQLite | 🟡 Medium | `README.md` |
-| 10 | Obsolete `version` in docker-compose | 🟢 Low | `docker-compose.yml` |
-| 11 | Old `db.sqlite3` still exists | 🟢 Low | `backend/db.sqlite3` |
-| 12 | Frontend Dockerfile: `npm install` vs `npm ci` | 🟢 Low | `frontend/Dockerfile` |
-| 13 | Frontend test coverage thin | 🟢 Low | `frontend/src/` |
-| 14 | `setupTests.ts` may be missing | 🟢 Low | `frontend/vitest.config.ts` |
+| 1 | `TreatmentType.Category` missing from model | ✅ Fixed | ~~Critical~~ |
+| 2 | Test deps missing from requirements | ✅ Fixed | ~~Critical~~ |
+| 3 | Tests ran against SQLite, not PostgreSQL | ✅ Fixed | ~~Critical~~ |
+| 4 | Root `package.json` referenced `venv` | ✅ Fixed | ~~Critical~~ |
+| 5 | Python version mismatch (3.12 vs 3.13) | ✅ Fixed | ~~Medium~~ |
+| 6 | E2E placeholder wasting CI resources | ✅ Fixed | ~~Medium~~ |
+| 7 | No `conftest.py` / shared fixtures | ⬜ Open | 🟡 Medium |
+| 8 | No DB health check in docker-compose | ⬜ Open | 🟡 Medium |
+| 9 | README test section references venv/SQLite | ⬜ Open | 🟡 Medium |
+| 10 | Obsolete `version` in docker-compose | ⬜ Open | 🟢 Low |
+| 11 | Old `db.sqlite3` still exists | ⬜ Open | 🟢 Low |
+| 12 | Frontend Dockerfile: `npm install` vs `npm ci` | ⬜ Open | 🟢 Low |
+| 13 | Frontend test coverage thin | ⬜ Open | 🟢 Low |
+| 14 | `setupTests.ts` may be missing | ⬜ Open | 🟢 Low |

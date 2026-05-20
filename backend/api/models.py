@@ -128,13 +128,13 @@ class TreatmentType(models.Model):
     """Tedavi türleri ve varsayılan fiyatları. F-020."""
 
     class Category(models.TextChoices):
-        FILLING    = "filling",    "Dolgu"
-        CANAL      = "canal",      "Kanal Tedavisi"
-        CROWN      = "crown",      "Kron / Kaplama"
+        FILLING = "filling", "Dolgu"
+        CANAL = "canal", "Kanal Tedavisi"
+        CROWN = "crown", "Kron / Kaplama"
         EXTRACTION = "extraction", "Diş Çekimi"
-        IMPLANT    = "implant",    "İmplant"
-        DETARTRAJ  = "detartraj",  "Diş Taşı Temizliği"
-        OTHER      = "other",      "Diğer"
+        IMPLANT = "implant", "İmplant"
+        DETARTRAJ = "detartraj", "Diş Taşı Temizliği"
+        OTHER = "other", "Diğer"
 
     clinic = models.ForeignKey(
         Clinic,

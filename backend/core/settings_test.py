@@ -10,13 +10,20 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-# --- Database: file-based SQLite (pytest-django handles setup/teardown) ---
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+# --- Database: use PostgreSQL from DATABASE_URL, fallback to SQLite for quick local runs ---
+import dj_database_url
+import os
+
+_db_url = os.environ.get("DATABASE_URL")
+if _db_url:
+    DATABASES = {"default": dj_database_url.parse(_db_url)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
     }
-}
 
 # --- Email: never hit a real SMTP server ---
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
