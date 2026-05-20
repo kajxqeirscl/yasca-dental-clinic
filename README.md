@@ -54,22 +54,14 @@ Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcıları
 
 ### Backend Testleri
 
-Test bağımlılıklarını yükleyin (ilk seferinde):
+Test bağımlılıklarını Docker üzerinden yükleyin ve çalıştırın:
 
 ```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-pip install pytest pytest-django pytest-cov factory-boy faker
-```
-
-Testleri çalıştırın:
-
-```powershell
-# Tüm testler
-.\venv\Scripts\python -m pytest api/tests/ -v
+# Sadece bağımlılıkları testler için kurup çalıştırma (eğer dev komutu ile çalışıyorsanız backend servisine bash ile girip çalıştırabilirsiniz):
+docker-compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest api/tests/ -v"
 
 # Kapsam raporu ile
-.\venv\Scripts\python -m pytest api/tests/ --cov=api --cov-report=term-missing
+docker-compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest api/tests/ --cov=api --cov-report=term-missing"
 ```
 
 **Test yapısı:**
