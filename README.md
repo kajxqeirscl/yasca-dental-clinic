@@ -5,78 +5,41 @@ Yaşca, diş hekimliği kliniklerinin operasyonel iş akışlarını dijitalleş
 ## Kurulum ve Çalıştırma
 
 ### Gereksinimler
-- **Node.js:** v20.18.0 veya üzeri
-- **npm:** v10 veya üzeri
-- **Python:** 3.13 veya üzeri (backend için)
+- **Docker Desktop** yüklü ve çalışır durumda olmalıdır.
 
 ---
 
-### 1. Backend Kurulumu
+### 1. Sistemi Çalıştırma (Docker)
 
-Backend API servisini çalıştırmak için:
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py createsuperuser
-```
-
-`createsuperuser` komutu admin kullanıcısı oluşturur (kullanıcı adı, e-posta, şifre girin). Admin paneli için bu hesap gereklidir.
-
-**Backend çalıştırma:**
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-python manage.py runserver
-```
-- API: http://localhost:8000
-- Admin panel: http://localhost:8000/admin/
-
----
-
-### 2. Frontend Kurulumu
-
-Ana dizinden:
+Tüm sistemi (PostgreSQL veritabanı, Django backend, React frontend) tek bir komutla ayağa kaldırmak için ana dizinde şu komutu çalıştırın:
 
 ```powershell
-npm run install:all
+docker-compose up --build
 ```
 
-**Frontend çalıştırma:**
-```powershell
-npm run frontend
-```
-- Uygulama: http://localhost:5173
-
----
-
-### 3. Tam Sistem Çalıştırma
-
-Geliştirme sunucularını hızlıca ve aynı anda başlatmak için proje ana dizininde bulunan **`start-dev.ps1`** dosyasını çalıştırabilirsiniz:
+Veya ana dizindeki `start-dev.ps1` scriptini çalıştırabilirsiniz:
 
 ```powershell
 .\start-dev.ps1
 ```
 
-Bu komut, backend ve frontend servislerini kendi ayrı terminal pencerelerinde çalıştıracaktır.
-
-- **Frontend:** http://localhost:5173
+- **Frontend Uygulaması:** http://localhost:5173
 - **Backend API:** http://localhost:8000
+- **Admin Paneli:** http://localhost:8000/admin/ (Varsayılan kullanıcı: `admin` / `admin123`)
 
 ---
 
-### 4. Demo Verisi Oluşturma
+### 2. Demo Verisi Oluşturma
 
-Projeyi sunum için veya test amaçlı gerçekçi verilerle (klinik, doktor, hasta, randevular) doldurmak isterseniz ana dizinde bulunan **`run-demo.ps1`** dosyasını çalıştırabilirsiniz:
+Projeyi test amaçlı örnek verilerle doldurmak isterseniz (sistem Docker'da çalışırken) ana dizinde bulunan **`run-demo.ps1`** dosyasını çalıştırabilirsiniz:
 
 ```powershell
 .\run-demo.ps1
 ```
 
 Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcılarının giriş bilgilerini (şifre: `demo123!`) konsolda verecektir.
+
+*(Not: Bu script, Docker konteyneri içinde gerekli seed komutlarını otomatik olarak çalıştırır.)*
 
 ---
 

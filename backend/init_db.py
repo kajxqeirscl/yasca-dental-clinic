@@ -16,13 +16,10 @@ clinic, clinic_created = Clinic.objects.get_or_create(
 if clinic_created:
     print("- Created default clinic: 'Yaşca Dental Klinik'")
 
-# 2. Run seeding logic if TreatmentType table is empty
-if TreatmentType.objects.filter(clinic=clinic).count() == 0:
-    print("- Seeding treatment types...")
-    import seed_treatment_types
-    print("- Default treatment types seeded.")
-else:
-    print("- Treatment types already seeded.")
+# 2. Skip seeding by default to avoid clutter
+# If you want to seed, you can run `python manage.py seed_demo_data` manually.
+# if TreatmentType.objects.filter(clinic=clinic).count() == 0:
+#     import seed_treatment_types
 
 # 3. Ensure admin user exists and is linked to the clinic
 user, created = CustomUser.objects.get_or_create(
@@ -31,6 +28,7 @@ user, created = CustomUser.objects.get_or_create(
         "email": "admin@admin.com",
         "is_superuser": True,
         "is_staff": True,
+        "role": CustomUser.Role.ADMIN, # FIXED: Explicitly set role to Admin
         "clinic": clinic,
     }
 )
@@ -40,6 +38,12 @@ if created:
     user.save()
     print("- Admin user 'admin' created with password 'admin123'.")
 else:
+    # Update existing user role just in case they were created as assistant
+    if user.role != CustomUser.Role.ADMIN:
+        user.role = CustomUser.Role.ADMIN
+        user.save()
+        print("- Updated existing admin user role to Admin.")
+        
     if not user.clinic:
         user.clinic = clinic
         user.save()
