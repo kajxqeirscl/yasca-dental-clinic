@@ -84,10 +84,6 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = Patient.objects.filter(clinic=user.clinic)
-        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
-            qs = qs.filter(
-                Q(appointments__doctor=user) | Q(treatments__doctor=user)
-            ).distinct()
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -160,10 +156,15 @@ class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        return TreatmentType.objects.filter(clinic=self.request.user.clinic, is_active=True).order_by("name")
+        user = self.request.user
+        if user.role == CustomUser.Role.DOCTOR:
+            return TreatmentType.objects.filter(doctor=user, is_active=True).order_by("name")
+        return TreatmentType.objects.filter(doctor__clinic=user.clinic, is_active=True).order_by("name")
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
+        user = self.request.user
+        doctor = user if user.role == CustomUser.Role.DOCTOR else None
+        instance = serializer.save(doctor=doctor)
         self._log_action(AuditLog.Action.CREATE, instance)
 
 

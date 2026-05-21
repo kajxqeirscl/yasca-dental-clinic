@@ -136,12 +136,13 @@ class TreatmentType(models.Model):
         DETARTRAJ = "detartraj", "Diş Taşı Temizliği"
         OTHER = "other", "Diğer"
 
-    clinic = models.ForeignKey(
-        Clinic,
+    doctor = models.ForeignKey(
+        CustomUser,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="treatment_types",
+        verbose_name="Hekim",
     )
 
     name = models.CharField("Tedavi Türü", max_length=100)
