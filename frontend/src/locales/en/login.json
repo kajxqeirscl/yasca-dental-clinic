@@ -1,14 +1,14 @@
 {
   "title": "Yasca Dental Clinic",
   "subtitle": "Log in to your account",
-  "username_label": "Username",
-  "username_placeholder": "Your username",
+  "username_label": "Email or Username",
+  "username_placeholder": "example@clinic.com",
   "password_label": "Password",
   "password_placeholder": "••••••••",
   "login_button": "Log In",
   "login_loading": "Logging in...",
   "forgot_password": "Forgot Password?",
   "forgot_password_alert": "Please contact the admin to reset your password.",
-  "error_invalid_credentials": "Login failed. Please check your username and password.",
+  "error_invalid_credentials": "Login failed. Please check your email/username and password.",
   "error_generic": "Login failed"
 }

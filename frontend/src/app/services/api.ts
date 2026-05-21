@@ -3,7 +3,9 @@
  * JWT token ile kimlik doğrulama, 401 yönlendirme
  */
 
-const API_BASE = 'http://localhost:8000/api';
+// Tarayıcıdaki adrese göre dinamik olarak API adresini belirliyoruz (Örn: ali.localhost:8000)
+const HOSTNAME = window.location.hostname;
+const API_BASE = `http://${HOSTNAME}:8000/api`;
 
 export const setTokens = (access: string, refresh: string) => {
   localStorage.setItem('access_token', access);
@@ -483,4 +485,47 @@ export async function deleteDocument(documentId: number) {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('Doküman silinemedi');
+}
+
+
+// --- Kullanici Yonetimi ---
+export async function fetchUsers() {
+  const res = await fetchWithAuth(`${API_BASE}/users/`);
+  if (!res.ok) throw new Error('Kullanıcılar yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+export async function createUser(data: any) {
+  const res = await fetchWithAuth(`${API_BASE}/users/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı eklenemedi'));
+  }
+  return res.json();
+}
+
+export async function updateUser(id: number, data: any) {
+  const res = await fetchWithAuth(`${API_BASE}/users/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı güncellenemedi'));
+  }
+  return res.json();
+}
+
+export async function deleteUser(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/users/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı silinemedi'));
+  }
 }

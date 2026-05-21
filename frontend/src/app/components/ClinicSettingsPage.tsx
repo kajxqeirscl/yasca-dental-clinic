@@ -36,10 +36,14 @@ const generateTimeOptions = () => {
   return options;
 };
 
+import UserManagement from './UserManagement';
+
 export default function ClinicSettingsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+
+  const [activeTab, setActiveTab] = useState<'general' | 'users'>('general');
 
   const [settings, setSettings] = useState<ClinicSettingsData>({
     work_start_time: '09:00',
@@ -109,7 +113,7 @@ export default function ClinicSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-gray-600" />
         <h2 className="text-2xl text-gray-900">{t('settings:title')}</h2>
@@ -119,6 +123,30 @@ export default function ClinicSettingsPage() {
           </Badge>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'general' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Çalışma Ayarları
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'users' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Personel Yönetimi
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'general' ? (
+        <div className="space-y-6">
 
       {error && (
         <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>
@@ -234,6 +262,10 @@ export default function ClinicSettingsPage() {
             {saving ? t('settings:saving') : t('common:save')}
           </Button>
         </div>
+      )}
+        </div>
+      ) : (
+        <UserManagement />
       )}
     </div>
   );

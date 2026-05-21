@@ -10,9 +10,17 @@ import Layout from './components/Layout';
 import ClinicSettingsPage from './components/ClinicSettingsPage';
 import TreatmentTypesPage from './components/TreatmentTypesPage';
 
+import PublicApp from './public/PublicApp';
+
 export default function App() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+  const isPublicSaaS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  if (isPublicSaaS) {
+    return <PublicApp />;
+  }
 
   if (isLoading) {
     return (

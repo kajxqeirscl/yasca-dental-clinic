@@ -3,22 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from datetime import time
 
 
-class Clinic(models.Model):
-    """Klinik tanımı süper ana tablo. Multi-Tenancy."""
-
-    name = models.CharField("Klinik Adı", max_length=150)
-    address = models.TextField("Adres", blank=True)
-    phone = models.CharField("Telefon", max_length=20, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Klinik"
-        verbose_name_plural = "Klinikler"
-
-    def __str__(self):
-        return self.name
-
-
 class CustomUser(AbstractUser):
     """Klinik personeli: Admin, Hekim veya Asistan."""
 
@@ -32,14 +16,7 @@ class CustomUser(AbstractUser):
         choices=Role.choices,
         default=Role.ASSISTANT,
     )
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="users",
-        verbose_name="Klinik",
-    )
+
 
     class Meta:
         verbose_name = "Kullanıcı"
@@ -67,13 +44,7 @@ class CustomUser(AbstractUser):
 class Patient(models.Model):
     """Hasta kaydı. F-003: Ad, Soyad, Telefon zorunlu; TC ve Doğum Tarihi opsiyonel."""
     
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="patients",
-    )
+
 
     first_name = models.CharField("Ad", max_length=100)
     last_name = models.CharField("Soyad", max_length=100)
@@ -175,13 +146,7 @@ class Appointment(models.Model):
         CANCELLED = "cancelled", "İptal"
         NO_SHOW = "no_show", "Gelmedi"
         
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="appointments",
-    )
+
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="appointments"
@@ -223,13 +188,7 @@ class Treatment(models.Model):
         PLANNED = "planned", "Yapılacak"
         COMPLETED = "completed", "Tamamlanmış"
         
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="sc_treatments",
-    )
+
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="treatments"
@@ -268,13 +227,7 @@ class Treatment(models.Model):
 class ClinicSettings(models.Model):
     """Klinik ayarları. F-022."""
 
-    clinic = models.OneToOneField(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="settings",
-    )
+
     work_start_time = models.TimeField("Çalışma Başlangıç", default=time(9, 0))
     work_end_time = models.TimeField("Çalışma Bitiş", default=time(18, 0))
     work_days = models.JSONField(
@@ -292,11 +245,8 @@ class ClinicSettings(models.Model):
         return "Klinik Ayarları"
 
     @classmethod
-    def get_settings(cls, clinic=None):
-        if clinic is None:
-            obj, _ = cls.objects.get_or_create(pk=1) # Fallback for now
-            return obj
-        obj, _ = cls.objects.get_or_create(clinic=clinic)
+    def get_settings(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
 
@@ -307,7 +257,7 @@ class AuditLog(models.Model):
         DELETE = "delete", "Silme"
         SOFT_DELETE = "soft_delete", "Devre Dışı"
 
-    clinic = models.ForeignKey(Clinic, on_delete=models.CASCADE, null=True, blank=True)
+
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
     action = models.CharField(max_length=20, choices=Action.choices)
     model_name = models.CharField(max_length=100)
@@ -328,13 +278,7 @@ class AuditLog(models.Model):
 class Payment(models.Model):
     """Ödeme kaydı. F-014, F-015."""
     
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="payments",
-    )
+
 
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="payments"
@@ -361,13 +305,7 @@ def patient_directory_path(instance, filename):
 
 class Document(models.Model):
     """Hasta dosya ve dokümanları."""
-    clinic = models.ForeignKey(
-        Clinic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="documents",
-    )
+
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="documents"
     )

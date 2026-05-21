@@ -10,24 +10,20 @@ from .models import (
     TreatmentType,
     ClinicSettings,
     Payment,
-    Clinic,
 )
 
-@admin.register(Clinic)
-class ClinicAdmin(admin.ModelAdmin):
-    list_display = ('name', 'phone', 'created_at')
-    search_fields = ('name', 'phone')
+
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'clinic', 'role', 'is_staff')
-    list_filter = ('clinic', 'role', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff')
+    list_filter = ('role', 'is_staff', 'is_active')
     fieldsets = UserAdmin.fieldsets + (
-        ('Klinik & Rol', {'fields': ('clinic', 'role')}),
+        ('Rol', {'fields': ('role',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Klinik & Rol', {'fields': ('clinic', 'role')}),
+        ('Rol', {'fields': ('role',)}),
     )
 
 
@@ -86,7 +82,7 @@ class ClinicSettingsForm(forms.ModelForm):
 @admin.register(ClinicSettings)
 class ClinicSettingsAdmin(admin.ModelAdmin):
     form = ClinicSettingsForm
-    list_display = ('clinic', 'work_start_time', 'work_end_time')
+    list_display = ('work_start_time', 'work_end_time')
 
 
 @admin.register(Payment)

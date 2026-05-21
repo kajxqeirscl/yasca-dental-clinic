@@ -32,22 +32,36 @@ SECRET_KEY = 'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'localhost']
 
 
 # Application definition
 
-INSTALLED_APPS = [
+SHARED_APPS = [
+    'django_tenants',  # obligatory
+    'customers',       # tenant management
+    'corsheaders',
+    'django.contrib.contenttypes',
+    'django.contrib.staticfiles',
+]
+
+TENANT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
     'rest_framework',
-    'api',  # CustomUser burada tanımlı
+    'api',
 ]
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+TENANT_MODEL = 'customers.Client'
+TENANT_DOMAIN_MODEL = 'customers.Domain'
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
+
+# Ana site (localhost) icin gecerli URL dosyasini belirtiyoruz
+PUBLIC_SCHEMA_URLCONF = 'core.urls_public'
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
@@ -68,6 +82,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -78,14 +93,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:5175",
-]
+# Geliştirme aşamasında her türlü subdomain'den gelen isteklere izin ver
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'core.urls'
 
@@ -110,11 +119,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
+        engine='django_tenants.postgresql_backend',
     )
 }
 

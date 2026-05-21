@@ -18,10 +18,8 @@ from .serializers import (
     PaymentSerializer,
     DoctorMinimalSerializer,
     DocumentSerializer,
+    UserSerializer,
 )
-from .permissions import IsAdminUser, IsAdminOrDoctorUser
-
-
 from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
 
@@ -30,7 +28,6 @@ class AuditMixin:
         if not hasattr(instance, 'id'):
             return
         AuditLog.objects.create(
-            clinic=self.request.user.clinic,
             user=self.request.user,
             action=action,
             model_name=instance.__class__.__name__,
@@ -83,7 +80,7 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Patient.objects.filter(clinic=user.clinic)
+        qs = Patient.objects.all()
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -95,7 +92,7 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
         return qs.order_by("last_name", "first_name")
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save()
         self._log_action(AuditLog.Action.CREATE, instance)
 
 
@@ -110,7 +107,7 @@ class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Appointment.objects.filter(clinic=user.clinic).select_related("patient", "doctor")
+        qs = Appointment.objects.all().select_related("patient", "doctor")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(doctor=user)
         date = self.request.query_params.get("date")
@@ -122,7 +119,7 @@ class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
         return qs.order_by("date", "time")
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save()
         self._log_action(AuditLog.Action.CREATE, instance)
 
 
@@ -133,7 +130,7 @@ class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Treatment.objects.filter(clinic=user.clinic).select_related("patient", "doctor", "treatment_type")
+        qs = Treatment.objects.all().select_related("patient", "doctor", "treatment_type")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(doctor=user)
         patient_id = self.request.query_params.get("patient")
@@ -142,7 +139,7 @@ class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
         return qs.filter(is_active=True).order_by("-date")
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save()
         self._log_action(AuditLog.Action.CREATE, instance)
 
 
@@ -159,7 +156,7 @@ class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
         user = self.request.user
         if user.role == CustomUser.Role.DOCTOR:
             return TreatmentType.objects.filter(doctor=user, is_active=True).order_by("name")
-        return TreatmentType.objects.filter(doctor__clinic=user.clinic, is_active=True).order_by("name")
+        return TreatmentType.objects.filter(is_active=True).order_by("name")
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -177,13 +174,13 @@ class ClinicSettingsView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request):
-        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        obj = ClinicSettings.get_settings()
         if not obj:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
         return Response(ClinicSettingsSerializer(obj).data)
 
     def put(self, request):
-        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        obj = ClinicSettings.get_settings()
         if not obj:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
         serializer = ClinicSettingsSerializer(obj, data=request.data, partial=True)
@@ -199,7 +196,7 @@ class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Payment.objects.filter(clinic=user.clinic).select_related("patient")
+        qs = Payment.objects.all().select_related("patient")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(
                 Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
@@ -210,7 +207,7 @@ class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
         return qs.filter(is_active=True).order_by("-payment_date")
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
+        instance = serializer.save()
         self._log_action(AuditLog.Action.CREATE, instance)
 
 
@@ -219,7 +216,7 @@ class DoctorListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        doctors = CustomUser.objects.filter(clinic=request.user.clinic, role=CustomUser.Role.DOCTOR)
+        doctors = CustomUser.objects.filter(role=CustomUser.Role.DOCTOR)
         return Response(DoctorMinimalSerializer(doctors, many=True).data)
 
 
@@ -231,10 +228,9 @@ class DashboardView(APIView):
         user = request.user
         today = timezone.localdate()
         appointments = Appointment.objects.filter(
-            clinic=user.clinic,
             date=today
         ).exclude(status=Appointment.Status.CANCELLED)
-        patients_qs = Patient.objects.filter(clinic=user.clinic)
+        patients_qs = Patient.objects.all()
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             appointments = appointments.filter(doctor=user)
             patients_qs = patients_qs.filter(
@@ -261,7 +257,7 @@ class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Document.objects.filter(clinic=user.clinic)
+        queryset = Document.objects.all()
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             queryset = queryset.filter(
                 Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
@@ -273,7 +269,16 @@ class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save(
-            clinic=self.request.user.clinic,
             uploaded_by=self.request.user
         )
         self._log_action(AuditLog.Action.CREATE, instance)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all().order_by('id')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        return CustomUser.objects.all().order_by('id')
+
