@@ -10,6 +10,7 @@ from .models import (
     Payment,
     CustomUser,
     Document,
+    AuditLog,
 )
 
 
@@ -283,4 +284,14 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.get_full_name', read_only=True, default='Sistem')
+    user_email = serializers.CharField(source='user.email', read_only=True, default='')
+    model_name = serializers.CharField(source='content_type.model', read_only=True)
+    
+    class Meta:
+        model = AuditLog
+        fields = ['id', 'username', 'user_email', 'action', 'model_name', 'object_id', 'changes', 'ip_address', 'created_at']
 

@@ -705,11 +705,11 @@ export default function PatientProfile() {
                     {t('patients:profile.treatments.no_record')}
                   </div>
                 ) : (
-                  treatments.map((t) => (
+                  treatments.map((tr) => (
                     <div 
-                      key={t.id} 
+                      key={tr.id} 
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleTreatmentEdit(t)}
+                      onClick={() => handleTreatmentEdit(tr)}
                     >
                       <div className="flex items-center gap-4">
                         <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-lg shrink-0">
@@ -718,21 +718,21 @@ export default function PatientProfile() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-gray-900">
-                              {t.treatment_type_name || t.treatment_name}
+                              {tr.treatment_type_name || tr.treatment_name}
                             </h4>
-                            {t.tooth_number && (
+                            {tr.tooth_number && (
                               <Badge variant="outline" className="text-[10px]">
-                                {t('patients:profile.treatments.tooth')}: {t.tooth_number}
+                                {t('patients:profile.treatments.tooth')}: {tr.tooth_number}
                               </Badge>
                             )}
-                            <Badge className={`${t.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
-                              {t.status === 'completed' ? t('patients:profile.treatments.status.completed') : t('patients:profile.treatments.status.todo')}
+                            <Badge className={`${tr.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
+                              {tr.status === 'completed' ? t('patients:profile.treatments.status.completed') : t('patients:profile.treatments.status.todo')}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                            <span className="font-medium text-gray-700">{t.doctor_name}</span>
+                            <span className="font-medium text-gray-700">{tr.doctor_name}</span>
                             <span>•</span>
-                            <span>{formatDate(t.date)}</span>
+                            <span>{formatDate(tr.date)}</span>
                           </div>
                         </div>
                       </div>
@@ -766,7 +766,7 @@ export default function PatientProfile() {
                     <div className="p-4 bg-gray-50 rounded-lg border">
                       <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
                       <p className="text-xl font-bold text-gray-900 mt-1">
-                        {treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                        {treatments.reduce((sum, tr) => sum + parseFloat(tr.price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </p>
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg border border-green-100">
@@ -779,7 +779,7 @@ export default function PatientProfile() {
                       <span className="text-sm font-medium text-blue-700">{t('patients:profile.payments.balance')}</span>
                       <p className="text-xl font-bold text-blue-800 mt-1">
                         {(
-                          treatments.reduce((sum, t) => sum + parseFloat(t.price || '0'), 0) -
+                          treatments.reduce((sum, tr) => sum + parseFloat(tr.price || '0'), 0) -
                           payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)
                         ).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </p>
@@ -801,7 +801,7 @@ export default function PatientProfile() {
                           </p>
                           {pay.treatment && (
                             <p className="text-sm text-blue-600 font-medium">
-                              İlgili Tedavi: {treatments.find((t) => t.id === pay.treatment)?.treatment_type_name || 'Tedavi'}
+                              İlgili Tedavi: {treatments.find((tr) => tr.id === pay.treatment)?.treatment_type_name || 'Tedavi'}
                             </p>
                           )}
                           {pay.description && (

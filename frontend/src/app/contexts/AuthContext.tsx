@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
   login as apiLogin,
+  apiLogout,
   fetchCurrentUser,
   clearAuth,
   getAccessToken,
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const logout = useCallback(() => {
-    clearAuth();
+    apiLogout();
     setUser(null);
   }, []);
 

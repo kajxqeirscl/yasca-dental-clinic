@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
 router = DefaultRouter()
@@ -10,12 +10,14 @@ router.register(r"treatments", views.TreatmentViewSet, basename="treatment")
 router.register(r"treatment-types", views.TreatmentTypeViewSet, basename="treatment-type")
 router.register(r"payments", views.PaymentViewSet, basename="payment")
 router.register(r"documents", views.DocumentViewSet, basename="document")
+router.register(r"audit-logs", views.AuditLogViewSet, basename="audit-log")
 router.register(r"users", views.UserViewSet, basename="user")
 
 urlpatterns = [
-    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/token/", views.AuditedTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", views.CurrentUserView.as_view(), name="current_user"),
+    path("auth/logout/", views.LogoutView.as_view(), name="logout"),
     path("doctors/", views.DoctorListView.as_view(), name="doctors"),
     path("dashboard/today/", views.DashboardView.as_view(), name="dashboard_today"),
     path("settings/clinic/", views.ClinicSettingsView.as_view(), name="clinic_settings"),

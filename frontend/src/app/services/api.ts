@@ -121,6 +121,18 @@ export async function login(username: string, password: string) {
   return data;
 }
 
+export async function apiLogout() {
+  try {
+    await fetchWithAuth(`${API_BASE}/auth/logout/`, {
+      method: 'POST',
+    });
+  } catch (err) {
+    console.error('Logout request failed:', err);
+  } finally {
+    clearAuth();
+  }
+}
+
 export async function fetchCurrentUser() {
   const res = await fetchWithAuth(`${API_BASE}/auth/me/`);
   if (!res.ok) throw new Error('Oturum bilgisi alınamadı');
@@ -529,3 +541,11 @@ export async function deleteUser(id: number) {
     throw new Error(parseApiError(err, 'Kullanıcı silinemedi'));
   }
 }
+
+// ── Audit Logs ──
+export async function getAuditLogs(page = 1) {
+  const res = await fetchWithAuth(`${API_BASE}/audit-logs/?page=${page}`);
+  if (!res.ok) throw new Error('İşlem geçmişi yüklenemedi');
+  return res.json();
+}
+

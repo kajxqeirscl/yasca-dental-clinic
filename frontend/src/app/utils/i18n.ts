@@ -10,6 +10,7 @@ import trTreatments from '../../locales/tr/treatments.json';
 import trPayments from '../../locales/tr/payments.json';
 import trDashboard from '../../locales/tr/dashboard.json';
 import trSettings from '../../locales/tr/settings.json';
+import trLanding from '../../locales/tr/landing.json';
 
 // EN Locales
 import enCommon from '../../locales/en/common.json';
@@ -20,6 +21,7 @@ import enTreatments from '../../locales/en/treatments.json';
 import enPayments from '../../locales/en/payments.json';
 import enDashboard from '../../locales/en/dashboard.json';
 import enSettings from '../../locales/en/settings.json';
+import enLanding from '../../locales/en/landing.json';
 
 const resources = {
   tr: {
@@ -31,6 +33,7 @@ const resources = {
     payments: trPayments,
     dashboard: trDashboard,
     settings: trSettings,
+    landing: trLanding,
   },
   en: {
     common: enCommon,
@@ -41,6 +44,7 @@ const resources = {
     payments: enPayments,
     dashboard: enDashboard,
     settings: enSettings,
+    landing: enLanding,
   },
 };
 

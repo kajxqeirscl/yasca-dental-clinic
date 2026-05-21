@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import time
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 
 class CustomUser(AbstractUser):
@@ -250,30 +252,6 @@ class ClinicSettings(models.Model):
         return obj
 
 
-class AuditLog(models.Model):
-    class Action(models.TextChoices):
-        CREATE = "create", "Oluşturma"
-        UPDATE = "update", "Güncelleme"
-        DELETE = "delete", "Silme"
-        SOFT_DELETE = "soft_delete", "Devre Dışı"
-
-
-    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
-    action = models.CharField(max_length=20, choices=Action.choices)
-    model_name = models.CharField(max_length=100)
-    object_id = models.IntegerField()
-    object_repr = models.CharField(max_length=255)
-    changes = models.JSONField(default=dict, blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Audit Log"
-        verbose_name_plural = "Audit Loglar"
-        ordering = ["-timestamp"]
-
-    def __str__(self):
-        return f"{self.user} - {self.action} - {self.model_name} ({self.timestamp})"
-
 
 class Payment(models.Model):
     """Ödeme kaydı. F-014, F-015."""
@@ -324,4 +302,35 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.patient.full_name})"
+
+
+class AuditLog(models.Model):
+    """Kullanıcı işlem geçmişini (Audit Trail) tutan model. KVKK ve güvenlik için kritik."""
+
+    class Action(models.TextChoices):
+        CREATE = "CREATE", "Oluşturma"
+        UPDATE = "UPDATE", "Güncelleme"
+        DELETE = "DELETE", "Silme"
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kullanıcı")
+    action = models.CharField("İşlem Tipi", max_length=10, choices=Action.choices)
+    
+    # Hangi model üzerinde işlem yapıldı (Hasta, Randevu, vs.)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+    
+    # Değişiklik detayları (Eski değer -> Yeni değer)
+    changes = models.JSONField("Değişiklikler", null=True, blank=True)
+    ip_address = models.GenericIPAddressField("IP Adresi", null=True, blank=True)
+    created_at = models.DateTimeField("İşlem Tarihi", auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "İşlem Logu"
+        verbose_name_plural = "İşlem Logları"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        username = self.user.get_full_name() or self.user.username if self.user else "Sistem"
+        return f"{username} | {self.get_action_display()} | {self.content_type.model} #{self.object_id} | {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 

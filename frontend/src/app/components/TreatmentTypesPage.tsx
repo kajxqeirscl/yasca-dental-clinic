@@ -49,6 +49,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   const [types, setTypes] = useState<TreatmentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingType, setEditingType] = useState<TreatmentType | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -72,7 +73,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   useEffect(() => {
     loadData();
   }, []);
-
+  
   const handleOpenDialog = (type?: TreatmentType) => {
     if (type) {
       setEditingType(type);
@@ -100,15 +101,20 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm(t('treatments:page.confirm_delete'))) return;
+  const confirmDelete = async (id: number) => {
     try {
       await deleteTreatmentType(id);
       toast.success(t('treatments:page.success_delete'));
+      setDeletingId(null);
       loadData();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t('treatments:page.error_delete'));
+      setDeletingId(null);
     }
+  };
+
+  const handleDelete = (id: number) => {
+    setDeletingId(id);
   };
 
   const filteredTypes = types.filter((type) => {
@@ -245,6 +251,35 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             </Button>
             <Button onClick={handleSave} disabled={!formData.name || !formData.default_price}>
               {t('treatments:page.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modern Pop-up Onay Modalı */}
+      <Dialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600 font-semibold text-lg">
+              <Trash2 className="w-5 h-5 animate-pulse" />
+              Tedavi Türünü Sil
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Bu tedavi türünü veritabanından tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeletingId(null)}>
+              Vazgeç
+            </Button>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 active:bg-red-800"
+              onClick={() => deletingId !== null && confirmDelete(deletingId)}
+            >
+              Sil
             </Button>
           </DialogFooter>
         </DialogContent>

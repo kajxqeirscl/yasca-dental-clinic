@@ -10,5 +10,13 @@
   "forgot_password": "Forgot Password?",
   "forgot_password_alert": "Please contact the admin to reset your password.",
   "error_invalid_credentials": "Login failed. Please check your email/username and password.",
-  "error_generic": "Login failed"
+  "error_generic": "Login failed",
+  "greeting": "Have a Good Day,",
+  "welcome_back": "Welcome Back.",
+  "welcome_desc": "Log in to your secure, clinic-specific panel to manage your appointments, patient records, and financial transactions today.",
+  "secure_cloud": "Secure Cloud Infrastructure",
+  "copyright": "© Yasca Dental SaaS",
+  "back_to_home": "← Back to Home",
+  "panel_login_desc": "Log in to the management panel",
+  "not_admin_info": "If you are not a System Administrator, please request your login credentials from your clinic manager."
 }

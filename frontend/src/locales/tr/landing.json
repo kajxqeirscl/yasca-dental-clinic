@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "home": "Ana Sayfa",
+    "features": "Özellikler",
+    "pricing": "Fiyatlandırma",
+    "login": "Müşteri Girişi",
+    "start": "Hemen Başla"
+  },
+  "hero": {
+    "badge": "Yasca SaaS V2.0 Yayında",
+    "title_1": "Diş Kliniğinizi",
+    "title_2": "Geleceğe Taşıyın",
+    "subtitle": "Hastalarınızın randevularını, tedavilerini ve ödemelerini tek bir ekrandan, tamamen kliniğinize özel izole bir bulut altyapısıyla yönetin.",
+    "cta_primary": "Ücretsiz Denemeye Başla",
+    "cta_secondary": "Özellikleri Keşfet"
+  },
+  "features": {
+    "title": "Neden Yasca Dental?",
+    "subtitle": "Eski usul masaüstü yazılımları unutun. İhtiyacınız olan her şey modern, hızlı ve her yerden erişilebilir.",
+    "cloud": { "title": "Bulut Tabanlı Mimari", "desc": "Her yerden, her cihazdan kliniğinize kesintisiz erişim sağlayın. Verileriniz güvende." },
+    "security": { "title": "KVKK & GDPR Uyumu", "desc": "Her klinik için %100 izole veritabanı yapısıyla hasta gizliliğini maksimum seviyede tutun." },
+    "calendar": { "title": "Akıllı Randevu", "desc": "Gelişmiş takvim ile hekimlerinizin ve asistanlarınızın günlük akışını tek tıkla organize edin." },
+    "staff": { "title": "Çoklu Personel", "desc": "Sınırsız sayıda doktor ve asistan ekleyin, yetkileri klinikler arası karışmadan yönetin." },
+    "fast": { "title": "Hızlı Tedavi Planlaması", "desc": "Hastalarınıza saniyeler içinde yeni tedaviler ve ödemeler ekleyip anında tahsilat yapın." },
+    "metrics": { "title": "Gerçek Zamanlı Metrikler", "desc": "Kliniğinizin günlük performansını, ödemelerini ve hasta trafiğini anlık takip edin." }
+  },
+  "pricing": {
+    "title": "Şeffaf Fiyatlandırma",
+    "subtitle": "Gizli ücret yok, sürpriz yok. Kliniğinizin büyüklüğüne en uygun paketi seçin.",
+    "popular": "En Çok Tercih Edilen",
+    "per_month": "/ay",
+    "select": "Planı Seç",
+    "custom": "Özel",
+    "standard": { "title": "Standart", "desc": "Yeni başlayan küçük klinikler için temel özellikler.", "f1": "Tek Hekim Desteği", "f2": "Bulut Veritabanı", "f3": "Randevu Takibi", "f4": "E-Posta Desteği" },
+    "pro": { "title": "Profesyonel", "desc": "Büyüyen poliklinikler için tam donanımlı paket.", "f1": "5 Hekime Kadar", "f2": "Gelişmiş Anamnez", "f3": "Finans ve Muhasebe", "f4": "7/24 Öncelikli Destek" },
+    "enterprise": { "title": "Kurumsal", "desc": "Büyük hastaneler için sınırsız erişim ve özellik.", "f1": "Sınırsız Personel", "f2": "Özel Domain", "f3": "Özel API Erişimi", "f4": "Birebir Müşteri Temsilcisi" }
+  },
+  "cta": {
+    "title_1": "Klinik Yönetimini",
+    "title_2": "Kolaylaştırmanın Tam Zamanı",
+    "subtitle": "Kredi kartı gerektirmeden 14 gün boyunca tüm özellikleri ücretsiz deneyin. Sisteminizi saniyeler içinde kurun.",
+    "button": "Kliniğimi Oluştur"
+  },
+  "register": {
+    "title": "Hesabınızı Oluşturun",
+    "subtitle": "Bilgilerinizi girerek saniyeler içinde başlayın.",
+    "first_name": "Adınız",
+    "last_name": "Soyadınız",
+    "clinic_name": "Klinik Adı",
+    "subdomain": "Sistem Adresi (Subdomain)",
+    "subdomain_hint": "Sadece İngilizce küçük harf ve rakam kullanın.",
+    "email": "E-Posta Adresi",
+    "password": "Şifre",
+    "submit": "Ücretsiz Kayıt Ol",
+    "submitting": "Kurulum Yapılıyor...",
+    "have_account": "Zaten bir kliniğiniz var mı?",
+    "login_link": "Giriş Yapın",
+    "success_title": "Harika! Kliniğiniz Hazır.",
+    "success_subtitle": "Veritabanınız başarıyla oluşturuldu ve izole edildi.",
+    "success_address": "Klinik Adresiniz",
+    "success_login": "Yönetici Girişi",
+    "success_cta": "Yönetim Paneline Git",
+    "benefit_1": "Anında İzole Veritabanı Kurulumu",
+    "benefit_2": "14 Gün Ücretsiz Deneme",
+    "benefit_3": "Sınırsız Hasta ve Randevu Yönetimi",
+    "benefit_4": "Kredi Kartı Gerektirmez"
+  },
+  "tenant_login": {
+    "title": "Kliniğinize Giriş Yapın",
+    "subtitle": "Sisteme giriş yapmak için kliniğinize özel adresinizi girin.",
+    "label": "Klinik Adresi",
+    "button": "Klinik Paneline Git",
+    "no_account": "Hesabınız yok mu?",
+    "register_link": "Yeni Klinik Oluşturun"
+  },
+  "footer": {
+    "tagline": "Modern diş klinikleri için bulut tabanlı, yeni nesil yönetim platformu.",
+    "product": "Ürün",
+    "company": "Şirket",
+    "legal": "Yasal",
+    "updates": "Güncellemeler",
+    "about": "Hakkımızda",
+    "stories": "Müşteri Hikayeleri",
+    "contact": "İletişim",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Şartları",
+    "kvkk": "KVKK Aydınlatma Metni",
+    "rights": "Tüm hakları saklıdır.",
+    "made_in": "Türkiye'de ❤️ ile geliştirildi"
+  }
+}

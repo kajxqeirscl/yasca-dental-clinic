@@ -19,38 +19,65 @@ from .serializers import (
     DoctorMinimalSerializer,
     DocumentSerializer,
     UserSerializer,
+    AuditLogSerializer,
 )
 from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
 
-class AuditMixin:
-    def _log_action(self, action, instance):
-        if not hasattr(instance, 'id'):
-            return
-        AuditLog.objects.create(
-            user=self.request.user,
-            action=action,
-            model_name=instance.__class__.__name__,
-            object_id=instance.id,
-            object_repr=str(instance)[:255],
-        )
+from .mixins import AuditLogMixin
 
-    def perform_update(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.UPDATE, instance)
+from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.contenttypes.models import ContentType
+import logging
 
-    def perform_destroy(self, instance):
-        if hasattr(instance, "is_active"):
-            instance.is_active = False
-            instance.save(update_fields=['is_active'])
-            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
-        elif hasattr(instance, "status") and hasattr(instance.__class__, "Status") and hasattr(instance.__class__.Status, "CANCELLED"):
-            instance.status = instance.__class__.Status.CANCELLED
-            instance.save(update_fields=['status'])
-            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
-        else:
-            instance.delete()
-            self._log_action(AuditLog.Action.DELETE, instance)
+logger = logging.getLogger(__name__)
+
+
+class AuditedTokenObtainPairView(TokenObtainPairView):
+    """
+    JWT token alma işlemini sarmalayarak başarılı ve başarısız
+    giriş denemelerini AuditLog tablosuna kaydeder.
+    """
+
+    def _get_client_ip(self, request):
+        x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded:
+            return x_forwarded.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
+
+    def post(self, request, *args, **kwargs):
+        ip = self._get_client_ip(request)
+        username = request.data.get('username', '') or request.data.get('email', '')
+
+        try:
+            response = super().post(request, *args, **kwargs)
+        except Exception:
+            # Başarısız giriş denemesi
+            AuditLog.objects.create(
+                user=None,
+                action=AuditLog.Action.CREATE,
+                content_type=ContentType.objects.get_for_model(CustomUser),
+                object_id=0,
+                changes={"login": {"old": None, "new": f"BAŞARISIZ GİRİŞ: {username}"}},
+                ip_address=ip
+            )
+            logger.warning(f"Başarısız giriş denemesi: {username} IP: {ip}")
+            raise
+
+        # Başarılı giriş
+        user = CustomUser.objects.filter(username=username).first() or \
+               CustomUser.objects.filter(email=username).first()
+        if user:
+            AuditLog.objects.create(
+                user=user,
+                action=AuditLog.Action.CREATE,
+                content_type=ContentType.objects.get_for_model(user),
+                object_id=user.pk,
+                changes={"login": {"old": None, "new": f"BAŞARILI GİRİŞ: {user.username}"}},
+                ip_address=ip
+            )
+
+        return response
 
 
 class CurrentUserView(APIView):
@@ -69,7 +96,26 @@ class CurrentUserView(APIView):
         })
 
 
-class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
+class LogoutView(APIView):
+    """Çıkış işlemini AuditLog'a kaydeder."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+
+        AuditLog.objects.create(
+            user=user,
+            action=AuditLog.Action.DELETE,
+            content_type=ContentType.objects.get_for_model(user),
+            object_id=user.pk,
+            changes={"logout": {"old": user.username, "new": "ÇIKIŞ YAPILDI"}},
+            ip_address=ip
+        )
+        return Response({"detail": "Çıkış kaydedildi."}, status=status.HTTP_200_OK)
+
+class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
     permission_classes = [IsAuthenticated]
 
@@ -91,12 +137,10 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
             )
         return qs.order_by("last_name", "first_name")
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
+
+class AppointmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Randevu CRUD. F-006, F-007, F-008, F-009."""
     permission_classes = [IsAuthenticated]
 
@@ -118,12 +162,10 @@ class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.order_by("date", "time")
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
+
+class TreatmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Tedavi CRUD. F-010, F-011."""
     serializer_class = TreatmentSerializer
     permission_classes = [IsAuthenticated]
@@ -138,12 +180,10 @@ class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-date")
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.CREATE, instance)
 
 
-class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
+
+class TreatmentTypeViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Tedavi türleri. F-020. Hekim ve Yönetici düzenleyebilir."""
     serializer_class = TreatmentTypeSerializer
     
@@ -155,15 +195,19 @@ class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role == CustomUser.Role.DOCTOR:
-            return TreatmentType.objects.filter(doctor=user, is_active=True).order_by("name")
-        return TreatmentType.objects.filter(is_active=True).order_by("name")
+            return TreatmentType.objects.filter(doctor=user).order_by('name')
+            # return TreatmentType.objects.filter(doctor=user, is_active=True).order_by('name')
+        return TreatmentType.objects.all().order_by('name')
 
     def perform_create(self, serializer):
         user = self.request.user
         doctor = user if user.role == CustomUser.Role.DOCTOR else None
         instance = serializer.save(doctor=doctor)
-        self._log_action(AuditLog.Action.CREATE, instance)
+        self.log_action(AuditLog.Action.CREATE, instance)
 
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.delete()
 
 class ClinicSettingsView(APIView):
     """Klinik ayarları. F-022."""
@@ -183,13 +227,41 @@ class ClinicSettingsView(APIView):
         obj = ClinicSettings.get_settings()
         if not obj:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+        # Eski değerleri kaydet
+        old_data = {}
+        for key in request.data.keys():
+            if hasattr(obj, key):
+                old_data[key] = getattr(obj, key)
+
         serializer = ClinicSettingsSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Değişenleri bul ve logla
+        changes = {}
+        for key, new_val in serializer.validated_data.items():
+            old_val = old_data.get(key)
+            if old_val != new_val:
+                changes[key] = {"old": str(old_val), "new": str(new_val)}
+
+        if changes:
+            from django.contrib.contenttypes.models import ContentType
+            x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                action=AuditLog.Action.UPDATE,
+                content_type=ContentType.objects.get_for_model(obj),
+                object_id=obj.pk,
+                changes=changes,
+                ip_address=ip
+            )
+
         return Response(serializer.data)
 
 
-class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
+class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Ödeme kayıtları. F-014, F-015."""
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
@@ -206,9 +278,7 @@ class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-payment_date")
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.CREATE, instance)
+
 
 
 class DoctorListView(APIView):
@@ -249,7 +319,7 @@ class DashboardView(APIView):
             "total_patients": total_patients,
         })
 
-class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
+class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta dokümanları için API."""
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated]
@@ -271,10 +341,10 @@ class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
         instance = serializer.save(
             uploaded_by=self.request.user
         )
-        self._log_action(AuditLog.Action.CREATE, instance)
+        self.log_action(AuditLog.Action.CREATE, instance)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = CustomUser.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -282,3 +352,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return CustomUser.objects.all().order_by('id')
 
+
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """Sadece yoneticilerin erisebilecegi islem gecmisi."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AuditLogSerializer
+    queryset = AuditLog.objects.select_related("user", "content_type").order_by("-created_at")

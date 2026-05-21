@@ -10,5 +10,13 @@
   "forgot_password": "Şifremi Unuttum",
   "forgot_password_alert": "Şifrenizi sıfırlamak için lütfen admin ile iletişime geçiniz.",
   "error_invalid_credentials": "Giriş başarısız. Lütfen e-posta/kullanıcı adı ve şifrenizi kontrol ediniz.",
-  "error_generic": "Giriş başarısız"
+  "error_generic": "Giriş başarısız",
+  "greeting": "İyi Çalışmalar,",
+  "welcome_back": "Tekrar Hoş Geldiniz.",
+  "welcome_desc": "Bugünkü randevularınızı, hasta kayıtlarınızı ve finansal işlemlerinizi yönetmek için kliniğinize özel güvenli panele giriş yapın.",
+  "secure_cloud": "Güvenli Bulut Altyapısı",
+  "copyright": "© Yasca Dental SaaS",
+  "back_to_home": "← Ana Sayfaya Dön",
+  "panel_login_desc": "Yönetim paneline giriş yapın",
+  "not_admin_info": "Sistem Yöneticisi değilseniz, lütfen klinik yöneticinizden giriş bilgilerinizi talep edin."
 }

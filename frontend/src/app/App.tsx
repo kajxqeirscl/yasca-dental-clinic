@@ -9,6 +9,7 @@ import PatientProfile from './components/PatientProfile';
 import Layout from './components/Layout';
 import ClinicSettingsPage from './components/ClinicSettingsPage';
 import TreatmentTypesPage from './components/TreatmentTypesPage';
+import AuditLogPage from './components/AuditLogPage';
 
 import PublicApp from './public/PublicApp';
 
@@ -36,10 +37,11 @@ export default function App() {
 
   const userRole = getUserRoleDisplay(user.role);
   const isAdmin = user.role === 'admin';
+  const userName = `${user.first_name} ${user.last_name}`.trim() || user.username;
 
   return (
     <BrowserRouter>
-      <Layout userRole={userRole} onLogout={logout} isAdmin={isAdmin}>
+      <Layout userName={userName} userRole={userRole} onLogout={logout} isAdmin={isAdmin}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/randevular" element={<AppointmentCalendar />} />
@@ -47,6 +49,7 @@ export default function App() {
           <Route path="/hasta/:id" element={<PatientProfile />} />
           <Route path="/ayarlar" element={<ClinicSettingsPage />} />
           <Route path="/tedavi-turleri" element={<TreatmentTypesPage userRole={user.role} />} />
+          {isAdmin && <Route path="/islem-gecmisi" element={<AuditLogPage />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
