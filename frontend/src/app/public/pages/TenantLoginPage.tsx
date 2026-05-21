@@ -7,18 +7,35 @@ export default function TenantLoginPage() {
   const { t } = useTranslation('landing');
   const [subdomain, setSubdomain] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subdomain) return;
     
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const port = window.location.port ? `:${window.location.port}` : '';
-    const protocol = window.location.protocol;
-    
-    const targetHost = isLocal ? `${subdomain}.localhost` : `${subdomain}.yasca.com`;
-    const targetUrl = `${protocol}//${targetHost}${port}/`;
-    
-    window.location.href = targetUrl;
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8000/api/public/check-domain/?subdomain=${subdomain}`);
+      if (!res.ok) {
+        throw new Error('Böyle bir klinik bulunamadı. Lütfen adresi kontrol edin.');
+      }
+      
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const port = window.location.port ? `:${window.location.port}` : '';
+      const protocol = window.location.protocol;
+      
+      const targetHost = isLocal ? `${subdomain}.localhost` : `${subdomain}.yasca.com`;
+      const targetUrl = `${protocol}//${targetHost}${port}/`;
+      
+      window.location.href = targetUrl;
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +58,12 @@ export default function TenantLoginPage() {
 
         <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+            
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">{t('tenant_login.label')}</label>
               <div className="relative flex items-center shadow-sm rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 border border-gray-200 transition-all bg-gray-50">
@@ -60,11 +83,11 @@ export default function TenantLoginPage() {
 
             <button
               type="submit"
-              disabled={!subdomain}
+              disabled={!subdomain || loading}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-white font-medium text-lg bg-gray-900 hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed group shadow-md"
             >
-              {t('tenant_login.button')}
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {loading ? 'Kontrol Ediliyor...' : t('tenant_login.button')}
+              {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
         </div>

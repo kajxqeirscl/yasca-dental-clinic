@@ -11,7 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { createPatient, updatePatient } from '../services/api';
-import { DatePicker } from './ui/date-picker';
+
 import { useTranslation } from 'react-i18next';
 
 interface PatientDialogProps {
@@ -49,6 +49,7 @@ export default function PatientDialog({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -67,14 +68,24 @@ export default function PatientDialog({
         });
       }
       setError('');
+      setMissingFields([]);
     }
   }, [isOpen, initialData]);
 
   const handleSave = async () => {
-    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.phone.trim()) {
-      setError(t('patients:dialog.error_required'));
+    const newMissingFields = [];
+    if (!formData.first_name.trim()) newMissingFields.push('Ad');
+    if (!formData.last_name.trim()) newMissingFields.push('Soyad');
+    if (!formData.phone.trim()) newMissingFields.push('Telefon');
+    if (!formData.tckn.trim()) newMissingFields.push('TC Kimlik No');
+
+    if (newMissingFields.length > 0) {
+      setMissingFields(newMissingFields);
+      setError(`Lütfen eksik alanları doldurunuz: ${newMissingFields.join(', ')}`);
       return;
     }
+    
+    setMissingFields([]);
     setLoading(true);
     setError('');
     try {
@@ -105,6 +116,7 @@ export default function PatientDialog({
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setError('');
+      setMissingFields([]);
       setFormData({
         first_name: '',
         last_name: '',
@@ -139,9 +151,11 @@ export default function PatientDialog({
               <Input
                 id="name"
                 value={formData.first_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, first_name: e.target.value })
-                }
+                className={missingFields.includes('Ad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, first_name: e.target.value });
+                  if (missingFields.includes('Ad')) setMissingFields(missingFields.filter(f => f !== 'Ad'));
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -149,9 +163,11 @@ export default function PatientDialog({
               <Input
                 id="surname"
                 value={formData.last_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, last_name: e.target.value })
-                }
+                className={missingFields.includes('Soyad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, last_name: e.target.value });
+                  if (missingFields.includes('Soyad')) setMissingFields(missingFields.filter(f => f !== 'Soyad'));
+                }}
               />
             </div>
           </div>
@@ -164,9 +180,11 @@ export default function PatientDialog({
                 type="tel"
                 placeholder={t('patients:dialog.fields.phone_placeholder')}
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                className={missingFields.includes('Telefon') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  if (missingFields.includes('Telefon')) setMissingFields(missingFields.filter(f => f !== 'Telefon'));
+                }}
                 required
               />
             </div>
@@ -178,19 +196,59 @@ export default function PatientDialog({
                 placeholder={t('patients:dialog.fields.tckn_placeholder')}
                 maxLength={11}
                 value={formData.tckn}
-                onChange={(e) =>
-                  setFormData({ ...formData, tckn: e.target.value })
-                }
+                className={missingFields.includes('TC Kimlik No') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, tckn: e.target.value });
+                  if (missingFields.includes('TC Kimlik No')) setMissingFields(missingFields.filter(f => f !== 'TC Kimlik No'));
+                }}
+                required
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="birthDate">{t('patients:dialog.fields.birth_date')}</Label>
-            <DatePicker
-              date={formData.birth_date}
-              onDateChange={(val) => setFormData({ ...formData, birth_date: val })}
-            />
+            <div className="flex gap-2">
+              <select
+                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
+                value={formData.birth_date ? formData.birth_date.split('-')[2] : ''}
+                onChange={(e) => {
+                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
+                  setFormData({ ...formData, birth_date: `${parts[0]}-${parts[1]}-${e.target.value.padStart(2, '0')}` });
+                }}
+              >
+                <option value="" disabled>Gün</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              <select
+                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
+                value={formData.birth_date ? formData.birth_date.split('-')[1] : ''}
+                onChange={(e) => {
+                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
+                  setFormData({ ...formData, birth_date: `${parts[0]}-${e.target.value.padStart(2, '0')}-${parts[2]}` });
+                }}
+              >
+                <option value="" disabled>Ay</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select
+                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
+                value={formData.birth_date ? formData.birth_date.split('-')[0] : ''}
+                onChange={(e) => {
+                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
+                  setFormData({ ...formData, birth_date: `${e.target.value}-${parts[1]}-${parts[2]}` });
+                }}
+              >
+                <option value="" disabled>Yıl</option>
+                {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">

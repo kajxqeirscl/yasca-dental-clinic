@@ -162,6 +162,8 @@ export default function PatientProfile() {
   const [selectedCategory, setSelectedCategory] = useState<import('./TreatmentTypesPage').TreatmentCategory | undefined>(undefined);
   const [treatmentToEdit, setTreatmentToEdit] = useState<any>(null);
   const [paymentToEdit, setPaymentToEdit] = useState<any>(null);
+  const [defaultPaymentTreatmentId, setDefaultPaymentTreatmentId] = useState<number | undefined>();
+  const [defaultPaymentAmount, setDefaultPaymentAmount] = useState<number | undefined>();
 
   const loadData = () => {
     if (!id) return;
@@ -393,6 +395,15 @@ export default function PatientProfile() {
 
   const handleNewPayment = () => {
     setPaymentToEdit(null);
+    setDefaultPaymentTreatmentId(undefined);
+    setDefaultPaymentAmount(undefined);
+    setIsPaymentAddOpen(true);
+  };
+
+  const handleNewPaymentWithDefaults = (trId: number, amount: number) => {
+    setPaymentToEdit(null);
+    setDefaultPaymentTreatmentId(trId);
+    setDefaultPaymentAmount(amount);
     setIsPaymentAddOpen(true);
   };
 
@@ -756,66 +767,155 @@ export default function PatientProfile() {
               </div>
             </CardHeader>
             <CardContent>
-              {payments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {t('patients:profile.payments.no_record')}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {treatments.filter(tr => tr.status === 'completed').reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="p-4 bg-gray-50 rounded-lg border">
-                      <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
-                      <p className="text-xl font-bold text-gray-900 mt-1">
-                        {treatments.reduce((sum, tr) => sum + parseFloat(tr.price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                      <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
-                      <p className="text-xl font-bold text-green-800 mt-1">
-                        {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </p>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <span className="text-sm font-medium text-blue-700">{t('patients:profile.payments.balance')}</span>
-                      <p className="text-xl font-bold text-blue-800 mt-1">
-                        {(
-                          treatments.reduce((sum, tr) => sum + parseFloat(tr.price || '0'), 0) -
-                          payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)
-                        ).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </p>
-                    </div>
-                  </div>
-                  {payments.map((pay) => (
-                    <div 
-                      key={pay.id} 
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handlePaymentEdit(pay)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg shrink-0">
-                          <CreditCard className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                          </p>
-                          {pay.treatment && (
-                            <p className="text-sm text-blue-600 font-medium">
-                              İlgili Tedavi: {treatments.find((tr) => tr.id === pay.treatment)?.treatment_type_name || 'Tedavi'}
-                            </p>
-                          )}
-                          {pay.description && (
-                            <p className="text-sm text-gray-500">{pay.description}</p>
-                          )}
-                        </div>
+                <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+                  <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
+                  <p className="text-xl font-bold text-green-800 mt-1">
+                    {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  </p>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <span className="text-sm font-medium text-blue-700">{t('patients:profile.payments.balance')}</span>
+                  <p className="text-xl font-bold text-blue-800 mt-1">
+                    {(
+                      treatments.filter(tr => tr.status === 'completed').reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0) -
+                      payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)
+                    ).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  </p>
+                </div>
+              </div>
+              {(() => {
+                const completedTreatments = treatments.filter(tr => tr.status === 'completed');
+                
+                // Bağımsız ödemeler: Herhangi bir tedaviye bağlı olmayan ödemeler
+                const standalonePayments = payments.filter(p => !p.treatment);
+
+                return (
+                  <div className="space-y-6">
+                    {/* Tedavi Bazlı Ödemeler */}
+                    {completedTreatments.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-gray-800 text-lg">{t('patients:profile.payments.treatment_payments', 'Tedavi Bazlı Ödemeler')}</h3>
+                        {completedTreatments.map((tr) => {
+                          const trPrice = parseFloat((tr as any).price || '0');
+                          const trPayments = payments.filter(p => p.treatment === tr.id);
+                          const totalPaidForTr = trPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                          const remaining = trPrice - totalPaidForTr;
+                          const isPaid = remaining <= 0 && trPrice > 0;
+
+                          return (
+                            <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
+                              <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
+                                    {isPaid && (
+                                      <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    {tr.tooth_number && <span>Diş: {tr.tooth_number} • </span>}
+                                    {formatDate(tr.date)}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-lg font-bold text-gray-900">{trPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</div>
+                                  <div className="text-sm text-gray-500">Toplam Tutar</div>
+                                </div>
+                              </div>
+                              <div className="p-4 flex items-center justify-between">
+                                <div className="flex gap-6">
+                                  <div>
+                                    <div className="text-sm font-medium text-green-700">Ödenen</div>
+                                    <div className="font-semibold text-gray-900">{totalPaidForTr.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-sm font-medium text-red-600">Kalan Borç</div>
+                                    <div className="font-semibold text-gray-900">{remaining > 0 ? remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : '0,00'} ₺</div>
+                                  </div>
+                                </div>
+                                {remaining > 0 && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => {
+                                      setPaymentToEdit(null);
+                                      setSelectedToothForTreatment(tr.id); // Hack: Using a state or we can just pass it to PaymentDialog directly. Wait, we need new states for defaultTreatmentId and defaultAmount.
+                                      // Actually, I can just use handleNewPaymentWithDefaults
+                                      handleNewPaymentWithDefaults(tr.id, remaining);
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-1" /> Tahsilat Ekle
+                                  </Button>
+                                )}
+                              </div>
+                              {/* Bu tedaviye ait alt ödemeler */}
+                              {trPayments.length > 0 && (
+                                <div className="bg-gray-50/50 p-4 border-t space-y-2">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Yapılan Ödemeler</p>
+                                  {trPayments.map(pay => (
+                                    <div key={pay.id} className="flex items-center justify-between bg-white p-2 px-3 rounded border text-sm hover:shadow-sm transition-shadow cursor-pointer" onClick={() => handlePaymentEdit(pay)}>
+                                      <div className="flex items-center gap-2">
+                                        <CreditCard className="w-4 h-4 text-green-600" />
+                                        <span className="font-medium text-gray-900">{parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
+                                        {pay.description && <span className="text-gray-500 text-xs ml-2">- {pay.description}</span>}
+                                      </div>
+                                      <span className="text-gray-400 text-xs">{formatDate(pay.payment_date)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <span className="text-sm text-gray-400">
-                        {formatDate(pay.payment_date)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    )}
+
+                    {/* Bağımsız Ödemeler */}
+                    {standalonePayments.length > 0 && (
+                      <div className="space-y-3 pt-6 border-t">
+                        <h3 className="font-semibold text-gray-800 text-lg">Genel / Bağımsız Ödemeler</h3>
+                        {standalonePayments.map((pay) => (
+                          <div 
+                            key={pay.id} 
+                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => handlePaymentEdit(pay)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg shrink-0">
+                                <CreditCard className="w-5 h-5 text-gray-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                </p>
+                                {pay.description && (
+                                  <p className="text-sm text-gray-500">{pay.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-sm text-gray-400">
+                              {formatDate(pay.payment_date)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {completedTreatments.length === 0 && standalonePayments.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        {t('patients:profile.payments.no_record')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -990,19 +1090,25 @@ export default function PatientProfile() {
         treatmentToEdit={treatmentToEdit}
       />
 
-      <PaymentDialog
-        isOpen={isPaymentAddOpen}
-        onClose={() => {
-          setIsPaymentAddOpen(false);
-          setPaymentToEdit(null);
-        }}
-        patientId={Number(patient.id)}
-        onSuccess={() => {
-          loadData();
-          setPaymentToEdit(null);
-        }}
-        paymentToEdit={paymentToEdit}
-      />
+      {isPaymentAddOpen && (
+        <PaymentDialog
+          isOpen={isPaymentAddOpen}
+          onClose={() => {
+            setIsPaymentAddOpen(false);
+            setPaymentToEdit(null);
+            setDefaultPaymentTreatmentId(undefined);
+            setDefaultPaymentAmount(undefined);
+          }}
+          patientId={Number(patient.id)}
+          onSuccess={() => {
+            loadData();
+            setPaymentToEdit(null);
+          }}
+          paymentToEdit={paymentToEdit}
+          defaultTreatmentId={defaultPaymentTreatmentId}
+          defaultAmount={defaultPaymentAmount}
+        />
+      )}
 
       {/* Modern Silme Onayı Diyaloğu */}
       <Dialog open={!!isDeletingDoc} onOpenChange={(open) => !open && setIsDeletingDoc(null)}>

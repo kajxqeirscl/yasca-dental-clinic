@@ -130,13 +130,15 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """F-008: Aynı hekime aynı saatte randevu çakışması kontrolü."""
-        doctor = data.get("doctor")
-        date = data.get("date")
-        time = data.get("time")
+        doctor = data.get("doctor", getattr(self.instance, "doctor", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada geçmiş tarih kontrolü
-        if not self.instance and date and date < timezone.localdate():
-            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
+        if date and date < timezone.localdate():
+            # Ancak eski randevunun tarihi zaten geçmişteyse, sadece status falan güncelleniyorsa buna izin vermeliyiz
+            if not self.instance or (self.instance and self.instance.date != date):
+                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
@@ -144,6 +146,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
+                is_active=True
             )
             if self.instance:
                 existing = existing.exclude(pk=self.instance.pk)
@@ -171,13 +174,14 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        doctor = data.get("doctor")
-        date = data.get("date")
-        time = data.get("time")
+        doctor = data.get("doctor", getattr(self.instance, "doctor", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada geçmiş tarih kontrolü
-        if not self.instance and date and date < timezone.localdate():
-            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
+        if date and date < timezone.localdate():
+            if not self.instance or (self.instance and self.instance.date != date):
+                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
@@ -185,6 +189,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
+                is_active=True
             )
             if self.instance:
                 existing = existing.exclude(pk=self.instance.pk)

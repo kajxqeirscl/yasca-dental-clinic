@@ -61,6 +61,9 @@ export function DatePicker({ date, onDateChange, className, minDate }: DatePicke
           initialFocus
           locale={i18n.language.startsWith('tr') ? tr : enUS}
           disabled={parsedMinDate ? (d) => d < parsedMinDate : undefined}
+          captionLayout="dropdown-buttons"
+          fromYear={1900}
+          toYear={new Date().getFullYear() + 5}
         />
       </PopoverContent>
     </Popover>

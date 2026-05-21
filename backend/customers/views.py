@@ -26,8 +26,8 @@ class RegisterClinicView(APIView):
         domain_url = f"{subdomain.lower()}.localhost"
         
         # Alan adi musait mi kontrolu
-        if Domain.objects.filter(domain=domain_url).exists():
-            return Response({"error": "Bu alan adı (subdomain) zaten başka bir klinik tarafından kullanılıyor."}, status=status.HTTP_400_BAD_REQUEST)
+        if Client.objects.filter(schema_name=subdomain.lower()).exists() or Domain.objects.filter(domain=domain_url).exists():
+            return Response({"error": "Bu klinik adresi (subdomain) zaten kullanılıyor. Lütfen başka bir isim deneyin."}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
             # 1. Yeni Kiraci (Tenant) Veritabanini Olustur
@@ -58,3 +58,29 @@ class RegisterClinicView(APIView):
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CheckDomainView(APIView):
+    """
+    Girilen domainin sistemde var olup olmadığını kontrol eder.
+    """
+    permission_classes = []
+
+    def get(self, request):
+        subdomain = request.query_params.get('subdomain')
+        if not subdomain:
+            return Response({"error": "Subdomain gerekli."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        domain_url = f"{subdomain.lower()}.localhost"
+        
+        # Domain modelinde bu domain var mı?
+        exists = Domain.objects.filter(domain=domain_url).exists()
+        
+        if not exists:
+            # Belki production için .yasca.com kontrolü de eklenebilir, şimdilik .localhost
+            domain_url_prod = f"{subdomain.lower()}.yasca.com"
+            exists = Domain.objects.filter(domain=domain_url_prod).exists()
+            
+        if exists:
+            return Response({"message": "Domain geçerli", "exists": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Böyle bir klinik bulunamadı. Lütfen adresi kontrol edin.", "exists": False}, status=status.HTTP_404_NOT_FOUND)

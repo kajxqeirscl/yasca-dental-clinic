@@ -54,14 +54,11 @@ const statusColors: Record<ToothStatus, string> = {
   other:     'bg-orange-100 border-orange-300',
 };
 
-// Map from TreatmentCategory to human-readable label (for the dropdown menu)
-const categoryToLabel: Record<TreatmentCategory, string> = Object.fromEntries(
-  CATEGORY_OPTIONS.map((c) => [c.value, c.label])
-) as Record<TreatmentCategory, string>;
+
 
 const STATUS_DISPLAY = (t: any): { status: ToothStatus; label: string }[] => [
   { status: 'healthy',   label: t('treatments:chart.status.healthy') },
-  ...CATEGORY_OPTIONS.map((c) => ({ status: c.value as ToothStatus, label: c.label })),
+  ...CATEGORY_OPTIONS.map((c) => ({ status: c.value as ToothStatus, label: t(c.labelKey) })),
 ];
 
 interface Treatment {
@@ -132,7 +129,7 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
               key={cat.value}
               onClick={() => onToothSelect?.(number, cat.value as TreatmentCategory)}
             >
-              {cat.label}
+              {t(cat.labelKey)}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

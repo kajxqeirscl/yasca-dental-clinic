@@ -27,6 +27,8 @@ interface PaymentDialogProps {
   patientId: number;
   onSuccess?: () => void;
   paymentToEdit?: Payment | null;
+  defaultTreatmentId?: number;
+  defaultAmount?: string | number;
 }
 
 export default function PaymentDialog({
@@ -35,6 +37,8 @@ export default function PaymentDialog({
   patientId,
   onSuccess,
   paymentToEdit,
+  defaultTreatmentId,
+  defaultAmount,
 }: PaymentDialogProps) {
   const { t } = useTranslation();
   const [amount, setAmount] = useState('');
@@ -57,9 +61,9 @@ export default function PaymentDialog({
   }, [isOpen, patientId]);
 
   const resetForm = () => {
-    setAmount('');
+    setAmount(defaultAmount ? defaultAmount.toString() : '');
     setDescription('');
-    setTreatmentId('');
+    setTreatmentId(defaultTreatmentId || '');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setError('');
     setConfirmDelete(false);
@@ -73,7 +77,7 @@ export default function PaymentDialog({
     } else if (isOpen) {
       resetForm();
     }
-  }, [isOpen, paymentToEdit]);
+  }, [isOpen, paymentToEdit, defaultTreatmentId, defaultAmount]);
 
   const handleSave = async () => {
     const parsedAmount = parseFloat(amount.toString().replace(',', '.'));
@@ -147,9 +151,10 @@ export default function PaymentDialog({
             <Label htmlFor="pay-treatment">{t('payments:dialog.treatment')}</Label>
             <select
               id="pay-treatment"
-              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
               value={treatmentId}
               onChange={(e) => setTreatmentId(Number(e.target.value) || '')}
+              disabled={!!defaultTreatmentId}
             >
               <option value="">{t('payments:dialog.select_treatment')}</option>
               {treatments.map((t) => (
@@ -175,9 +180,13 @@ export default function PaymentDialog({
 
           <div className="space-y-2">
             <Label htmlFor="pay-date">{t('payments:dialog.date')}</Label>
-            <DatePicker
-              date={paymentDate}
-              onDateChange={setPaymentDate}
+            <input
+              type="date"
+              id="pay-date"
+              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              required
             />
           </div>
 

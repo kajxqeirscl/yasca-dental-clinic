@@ -151,7 +151,7 @@ class AppointmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Appointment.objects.all().select_related("patient", "doctor")
+        qs = Appointment.objects.filter(is_active=True).select_related("patient", "doctor")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(doctor=user)
         date = self.request.query_params.get("date")

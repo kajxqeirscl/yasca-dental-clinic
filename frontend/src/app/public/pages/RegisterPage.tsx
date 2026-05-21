@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function RegisterPage() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const { t } = useTranslation('landing');
   const [formData, setFormData] = useState({
     clinic_name: '',
@@ -155,7 +158,7 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">{t('register.subdomain')}</label>
                   <div className="relative flex items-center">
-                    <input name="subdomain" value={formData.subdomain} required className="w-full pl-4 pr-24 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-mono text-sm" onChange={handleChange} />
+                    <input name="subdomain" value={formData.subdomain} required className={`w-full pl-4 pr-24 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all font-mono text-sm ${error && (error.includes('subdomain') || error.includes('adres')) ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : 'border-gray-200 focus:ring-indigo-500/20 focus:border-indigo-500'}`} onChange={handleChange} />
                     <span className="absolute right-4 text-gray-400 select-none text-sm font-medium">.yasca.com</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">{t('register.subdomain_hint')}</p>
