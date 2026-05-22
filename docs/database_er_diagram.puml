@@ -92,7 +92,7 @@ package "Tenant Schema (api app)" {
     --
     * patient_id : integer <<FK>>
     * doctor_id : integer <<FK>>
-    treatment_type_id : integer <<FK>>
+    treatment_id : integer <<FK>>
     * date : date
     * time : time
     * status : varchar(20)
@@ -167,7 +167,7 @@ Patient ||--|| Anamnesis : "1:1 has"
 User ||--o{ TreatmentType : "1:N creates"
 Patient ||--o{ Appointment : "1:N books"
 User ||--o{ Appointment : "1:N assigned to"
-TreatmentType ||--o{ Appointment : "1:N planned"
+Treatment ||--o{ Appointment : "1:N planned"
 Patient ||--o{ Treatment : "1:N receives"
 User ||--o{ Treatment : "1:N performs"
 TreatmentType ||--o{ Treatment : "1:N is of type"
