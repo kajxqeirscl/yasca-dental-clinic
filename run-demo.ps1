@@ -1,5 +1,6 @@
-Write-Host "Veritabanı sıfırlanıyor ve örnek veriler oluşturuluyor..." -ForegroundColor Yellow
+Write-Host "Generating multi-tenant SaaS demo data..." -ForegroundColor Yellow
 
-docker-compose run --rm backend sh -c "python manage.py flush --no-input && python manage.py seed_demo_data"
+docker-compose run --rm backend sh -c "python manage.py seed_demo_data"
 
-Write-Host "Demo verisi oluşturma işlemi tamamlandı." -ForegroundColor Green
+Write-Host "Demo data generation completed successfully." -ForegroundColor Green
+Write-Host "Check the README.md for the list of generated clinics and users." -ForegroundColor Cyan

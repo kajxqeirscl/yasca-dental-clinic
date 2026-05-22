@@ -1,158 +1,130 @@
-# Yaşca: Diş Kliniği Yönetim Sistemi
+# Yaşca: Multi-Tenant Dental Clinic Management SaaS
 
-Yaşca, diş hekimliği kliniklerinin operasyonel iş akışlarını dijitalleştirmek, veri güvenliğini sağlamak ve klinik verimliliğini artırmak amacıyla geliştirilmiş, açık kaynaklı (FOSS) ve modern bir web uygulamasıdır.
+Yaşca is an open-source, multi-tenant SaaS application designed to digitize operational workflows, ensure data security, and increase clinic efficiency for dental practices.
 
-## Kurulum ve Çalıştırma
+## System Architecture
 
-### Gereksinimler
-- **Docker Desktop** yüklü ve çalışır durumda olmalıdır.
+Yaşca operates as a **SaaS platform** using **schema-based multi-tenancy** (powered by `django-tenants`). 
+- Every registered clinic is a **Tenant** with its own isolated database schema.
+- Clinics are accessed via **dynamic subdomains** (e.g., `premium.localhost` or `premium.yasca.com`).
+- A `public` schema handles global SaaS routing, landing pages, and tenant management.
 
 ---
 
-### 1. Sistemi Çalıştırma (Hybrid Development)
+## Installation & Running Locally (Hybrid Development)
 
-Proje geliştirme ortamında **PostgreSQL** ve **Django Backend** servislerini Docker üzerinde, **React Frontend** uygulamasını ise yerel makinenizde Node.js ile çalıştırır.
+### Prerequisites
+- **Docker Desktop** installed and running.
+- **Node.js** (v18+) for local frontend development.
+- Add `premium.localhost` and `ali.localhost` to your OS `hosts` file to resolve local subdomains:
+  - **Windows**: `C:\Windows\System32\drivers\etc\hosts`
+  - **macOS/Linux**: `/etc/hosts`
+  - Add line: `127.0.0.1 premium.localhost standard.localhost localhost`
 
-Sistemi ayağa kaldırmak için ana dizinde şu komutu çalıştırın:
+### 1. Starting the Services
+
+The project uses Docker for the PostgreSQL database and Django Backend, while the React Frontend runs locally via Node.
+
+Run the development startup script from the root directory:
 
 ```powershell
+# Using npm
 npm run dev
-```
 
-Veya ana dizindeki `start-dev.ps1` scriptini çalıştırabilirsiniz:
-
-```powershell
+# OR using the PowerShell script
 .\start-dev.ps1
 ```
 
-- **Frontend Uygulaması:** http://localhost:5173
+**Services will be available at:**
+- **Frontend SaaS Landing:** http://localhost:5173
 - **Backend API:** http://localhost:8000
-- **Admin Paneli:** http://localhost:8000/admin/ (Varsayılan kullanıcı: `admin` / `admin123`)
 
 ---
 
-### 2. Demo Verisi Oluşturma
+## Demo Data Generation
 
-Projeyi test amaçlı örnek verilerle doldurmak isterseniz (sistem Docker'da çalışırken) ana dizinde bulunan **`run-demo.ps1`** dosyasını çalıştırabilirsiniz:
+To fully evaluate the platform without manually creating clinics, patients, and treatments, we provide a robust demo seeding script. 
+
+Run the following command while the Docker backend is running:
 
 ```powershell
 .\run-demo.ps1
 ```
 
-Bu komut size `admin`, `dr_ahmet`, ve `asistan_ayse` adlı test kullanıcılarının giriş bilgilerini (şifre: `demo123!`) konsolda verecektir.
+This script will intelligently seed the database by:
+1. Creating the Public SaaS Tenant.
+2. Generating two isolated clinic tenants (Premium & Standard).
+3. Seeding each clinic with its own staff, randomized patients, treatments, and payments.
 
-*(Not: Bu script, Docker konteyneri içinde gerekli seed komutlarını otomatik olarak çalıştırır. Docker arkaplanda çalışmıyorsa bile DB'yi otomatik başlatır.)*
+### 🌟 Demo Environment Map
+
+Use the following credentials to explore the multi-tenant system. All generated users share the same password.
+
+**Universal Password:** `demo123!`
+
+| Clinic Name | Subdomain Access | Users (Username) | Roles |
+| :--- | :--- | :--- | :--- |
+| **Yıldız Premium Kliniği** | `http://premium.localhost:5173` | `kemal` <br> `dr_ahmet` <br> `asistan_ayse` | System Admin <br> Doctor <br> Assistant |
+| **Stark Standard Clinic** | `http://standard.localhost:5173` | `tony` <br> `dr_steve` <br> `asistan_peter` | System Admin <br> Doctor <br> Assistant |
+
+*(Note: The login process will automatically route requests based on the subdomain you are accessing).*
 
 ---
 
-### Teknik Notlar
-- Stil yönetimi: Tailwind CSS v4 (Vite Engine)
-- Path Aliasing: `src` klasörü için `@/` alias yapısı tanımlıdır.
-- İkon kütüphanesi: Lucide-React
+## Testing Setup
 
----
+### Backend Tests
 
-## Test
-
-### Backend Testleri
-
-Test bağımlılıklarını Docker üzerinden yükleyin ve çalıştırın:
+Test dependencies should be run within the Docker container.
 
 ```powershell
-# Sadece bağımlılıkları testler için kurup çalıştırma (eğer dev komutu ile çalışıyorsanız backend servisine bash ile girip çalıştırabilirsiniz):
+# Run basic tests
 docker-compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest api/tests/ -v"
 
-# Kapsam raporu ile
+# Run tests with coverage report
 docker-compose run --rm backend sh -c "pip install -r requirements-dev.txt && pytest api/tests/ --cov=api --cov-report=term-missing"
 ```
 
-**Test yapısı:**
-
-| Dosya | Kapsam |
-|---|---|
-| `api/tests/test_models.py` | Model özellikleri, `__str__`, `ClinicSettings.get_settings` |
-| `api/tests/test_permissions.py` | RBAC izin sınıfları (`IsAdminUser`, `IsAdminOrDoctorUser`) |
-| `api/tests/test_serializers.py` | İç içe hasta/anamnez oluşturma, F-008 randevu çakışma kontrolü |
-| `api/tests/test_views.py` | Auth, multi-tenancy izolasyonu, tüm CRUD, dashboard |
-| `api/tests/test_signals.py` | Grup atama ve `is_staff` sinyal tetikleyicileri |
-
-### Frontend Testleri
+### Frontend Tests
 
 ```powershell
 cd frontend
 
-# Tek seferlik çalıştırma
+# Run once
 npm test
 
-# İzleme modunda (geliştirme sırasında)
+# Watch mode (during development)
 npm run test:watch
 
-# Kapsam raporu ile
+# Coverage report
 npm run test:coverage
 ```
 
-**Test yapısı:**
+### E2E Tests (Playwright)
 
-| Dosya | Kapsam |
-|---|---|
-| `src/app/services/api.test.ts` | JWT saklama, token yenileme, sayfalama yönetimi |
-| `src/app/contexts/AuthContext.test.tsx` | Auth durumu, giriş/çıkış, olay dinleyicisi |
-
-> Mock API'ler için [MSW (Mock Service Worker)](https://mswjs.io/) kullanılmaktadır. `src/mocks/` dizininde tüm endpoint handler'ları tanımlıdır.
-
-### E2E Testleri (Playwright)
-
-Tüm sistemin uçtan uca testini yapmak için:
+To test the entire system end-to-end (including multi-tenant routing):
 
 ```powershell
 cd frontend
-# Sadece ilk kullanımda tarayıcıları kurmak için:
+
+# Install browsers (first time only)
 npx playwright install
 
-# Testleri çalıştırmak için (geliştirme sunucuları açık olmalıdır)
+# Run tests (ensure dev servers are running!)
 npx playwright test
 ```
 
 ---
 
-## CI/CD
+## Tech Stack Overview
 
-Proje, GitHub Actions üzerinde otomatik bir CI pipeline'ı ile yapılandırılmıştır (`.github/workflows/ci.yml`).
-
-Her `push` ve `pull_request` işleminde paralel olarak çalışır:
-
-```
-Push / PR
-    ├── [backend] pytest --cov=api --cov-fail-under=80
-    ├── [frontend] tsc --noEmit → eslint → vitest run --coverage
-    └── [e2e] Playwright / Chromium  ← yalnızca backend + frontend geçerse
-```
-
----
-
-## Google Drive
-Projenin analiz, tasarım ve raporlama süreçlerine ait tüm yaşayan dokümanlar Google Drive üzerinde tutulmaktadır:
-- [Proje Ortak Drive Klasörü](https://drive.google.com/drive/folders/1MIkAUt22XlOlq_ApWenSi2XKufBu_92k)
-
----
-
-## Proje Hakkında
-Bu proje, yüksek lisans/abonelik maliyetleri ve karmaşık arayüzler gibi sektörel sorunlara "Radikal Basitlik" felsefesiyle çözüm sunmayı hedefler. Sadece klinik personeli (Hekim, Asistan, Yönetici) tarafından kullanılır.
-
-### Kullanılan Teknolojiler (Tech Stack)
-- **Frontend:** React.js, TypeScript, Vite
-- **Backend:** Python 3.12, Django REST Framework
-- **Database:** PostgreSQL
-- **Test (Backend):** pytest, pytest-django, factory-boy
-- **Test (Frontend):** Vitest, Testing Library, MSW
+- **Frontend:** React.js, TypeScript, Vite, Tailwind CSS v4, Lucide-React
+- **Backend:** Python 3.12, Django REST Framework, django-tenants
+- **Database:** PostgreSQL (Schema-based isolation)
+- **Testing:** pytest, factory-boy, Vitest, MSW, Playwright
 - **CI/CD:** GitHub Actions
 
-## Proje Yapısı (Monorepo)
-- `/frontend`: React.js tabanlı kullanıcı arayüzü (SPA).
-- `/backend`: Django tabanlı RESTful API servisleri.
-- `/docs`: Dokümantasyon bilgilendirmeleri.
-
-## Katılımcılar
+## Participants
 - **Yaman Halloum**
 - **Ali Üre**
 - **Cihan Kurtbey**
