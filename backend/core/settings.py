@@ -90,6 +90,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware.ThreadLocalMiddleware',
+    'api.middleware.RequestLoggingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -176,42 +177,105 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ---------------------------------------------------------------------------
+# Log dizinini oluştur
+# ---------------------------------------------------------------------------
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        # Tenant-Aware profesyonel formatter
+        'tenant_aware': {
+            '()': 'api.middleware.TenantAwareFormatter',
+            'format': '[{asctime}] {levelname} [Tenant: {tenant}] [User: {user_id}] [Path: {request_path}] {name} - {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {message}',
             'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
         },
     },
     'handlers': {
+        # Konsol — geliştirme sırasında okunabilir çıktı
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
+        # Django genel logları (framework hataları, DB sorguları vs.)
+        'django_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'django.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
+        },
+        # API uygulama logları (business logic, CRUD, audit)
+        'api_file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django.log',
-            'formatter': 'verbose',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'api.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
+        },
+        # Güvenlik logları (giriş/çıkış, yetki hataları)
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'security.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 10,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
         },
     },
     'loggers': {
+        # Django framework logları
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'django_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
+        # Django güvenlik logları
+        'django.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # API uygulama logları
         'api': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'api_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
+        },
+        # API istek logları (RequestLoggingMiddleware tarafından kullanılır)
+        'api.request': {
+            'handlers': ['console', 'api_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Güvenlik logları (giriş/çıkış/yetki hataları)
+        'api.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
