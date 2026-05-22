@@ -17,6 +17,7 @@ urlpatterns = [
     path("auth/token/", views.AuditedTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", views.CurrentUserView.as_view(), name="current_user"),
+    path("public/clinic-info/", views.PublicClinicInfoView.as_view(), name="public_clinic_info"),
     path("auth/logout/", views.LogoutView.as_view(), name="logout"),
     path("doctors/", views.DoctorListView.as_view(), name="doctors"),
     path("dashboard/today/", views.DashboardView.as_view(), name="dashboard_today"),

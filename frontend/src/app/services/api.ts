@@ -139,6 +139,12 @@ export async function fetchCurrentUser() {
   return res.json();
 }
 
+export async function fetchPublicClinicInfo() {
+  const res = await fetch(`${API_BASE}/public/clinic-info/`);
+  if (!res.ok) throw new Error('Klinik bilgisi alınamadı');
+  return res.json();
+}
+
 // --- Patients ---
 export async function fetchPatients(search = '') {
   const params = search ? `?search=${encodeURIComponent(search)}` : '';

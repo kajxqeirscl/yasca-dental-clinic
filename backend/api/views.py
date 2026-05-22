@@ -80,12 +80,26 @@ class AuditedTokenObtainPairView(TokenObtainPairView):
         return response
 
 
+class PublicClinicInfoView(APIView):
+    """Giriş yapılmadan kliniğin genel bilgilerini (adını vb.) döner."""
+    permission_classes = []
+
+    def get(self, request):
+        from django.db import connection
+        tenant_name = connection.tenant.name if hasattr(connection, 'tenant') and connection.tenant else 'Yaşca'
+        return Response({
+            "clinic_name": tenant_name,
+        })
+
+
 class CurrentUserView(APIView):
     """Giriş yapmış kullanıcının bilgilerini döner."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from django.db import connection
         user = request.user
+        tenant_name = connection.tenant.name if hasattr(connection, 'tenant') and connection.tenant else 'Yaşca'
         return Response({
             "id": user.id,
             "username": user.username,
@@ -93,6 +107,7 @@ class CurrentUserView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "role": user.role,
+            "clinic_name": tenant_name,
         })
 
 

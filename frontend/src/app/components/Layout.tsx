@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope, Globe, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchPublicClinicInfo } from '../services/api';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,17 +17,28 @@ interface LayoutProps {
 export default function Layout({ children, userName, userRole, onLogout, isAdmin }: LayoutProps) {
   const location = useLocation();
   const { t, i18n } = useTranslation('common');
-  const [clinicName, setClinicName] = useState('Yasca');
+  const { user } = useAuth();
+  const [clinicName, setClinicName] = useState('Yaşca');
 
   useEffect(() => {
-    const hostname = window.location.hostname;
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const subdomain = hostname.split('.')[0];
-      if (subdomain) {
-        setClinicName(subdomain.charAt(0).toUpperCase() + subdomain.slice(1));
-      }
+    if (user?.clinic_name) {
+      setClinicName(user.clinic_name);
+      document.title = `${user.clinic_name} - Yaşca`;
+      return;
     }
-  }, []);
+
+    const loadClinicName = async () => {
+      try {
+        const data = await fetchPublicClinicInfo();
+        setClinicName(data.clinic_name);
+        document.title = `${data.clinic_name} - Yaşca`;
+      } catch (err) {
+        setClinicName('Yaşca Dental');
+        document.title = 'Yaşca Dental - Yaşca';
+      }
+    };
+    loadClinicName();
+  }, [user?.clinic_name]);
 
   const navItems = [
     { path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
@@ -52,7 +65,7 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
                 <span className="text-white font-bold">{clinicName.charAt(0).toUpperCase()}</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{clinicName} Dental</h1>
+                <h1 className="text-xl font-bold text-gray-900">{clinicName}</h1>
                 <p className="text-sm text-gray-500 capitalize">{userName} <span className="opacity-75">({userRole})</span></p>
               </div>
             </div>

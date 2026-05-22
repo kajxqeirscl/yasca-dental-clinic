@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Loader2, ArrowRight, Globe } from 'lucide-react';
+import { fetchPublicClinicInfo } from '../services/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -10,17 +11,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [clinicName, setClinicName] = useState('Kliniğinize');
+  const [clinicName, setClinicName] = useState('Yaşca');
 
   useEffect(() => {
-    // URL'den kliniğin adını çekip göstermek için (örn: yildiz.localhost -> YILDIZ)
-    const hostname = window.location.hostname;
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const subdomain = hostname.split('.')[0];
-      if (subdomain) {
-        setClinicName(subdomain.charAt(0).toUpperCase() + subdomain.slice(1));
+    const loadClinicName = async () => {
+      try {
+        const data = await fetchPublicClinicInfo();
+        setClinicName(data.clinic_name);
+        document.title = `${data.clinic_name} - Yaşca`;
+      } catch (err) {
+        setClinicName('Yaşca Dental');
+        document.title = 'Yaşca Dental - Yaşca';
       }
-    }
+    };
+    loadClinicName();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +63,7 @@ export default function LoginPage() {
               {clinicName.charAt(0).toUpperCase()}
             </div>
             <span className="text-2xl font-bold text-white tracking-wide">
-              {clinicName} Dental
+              {clinicName}
             </span>
           </div>
           
@@ -111,11 +115,11 @@ export default function LoginPage() {
              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg mb-4">
               {clinicName.charAt(0).toUpperCase()}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">{clinicName} Dental</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{clinicName}</h2>
           </div>
 
           <div className="text-center lg:text-left mb-10">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">{clinicName} Dental</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">{clinicName}</h2>
             <p className="text-gray-500 text-lg">{t('panel_login_desc')}</p>
           </div>
 
