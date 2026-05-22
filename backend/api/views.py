@@ -31,6 +31,7 @@ from django.contrib.contenttypes.models import ContentType
 import logging
 
 logger = logging.getLogger(__name__)
+security_logger = logging.getLogger('api.security')
 
 
 class AuditedTokenObtainPairView(TokenObtainPairView):
@@ -61,7 +62,7 @@ class AuditedTokenObtainPairView(TokenObtainPairView):
                 changes={"login": {"old": None, "new": f"BAŞARISIZ GİRİŞ: {username}"}},
                 ip_address=ip
             )
-            logger.warning(f"Başarısız giriş denemesi: {username} IP: {ip}")
+            security_logger.warning('BAŞARISIZ GİRİŞ: kullanıcı=%s IP=%s', username, ip)
             raise
 
         # Başarılı giriş
@@ -76,6 +77,7 @@ class AuditedTokenObtainPairView(TokenObtainPairView):
                 changes={"login": {"old": None, "new": f"BAŞARILI GİRİŞ: {user.username}"}},
                 ip_address=ip
             )
+            security_logger.info('BAŞARILI GİRİŞ: kullanıcı=%s (id=%d) IP=%s', user.username, user.pk, ip)
 
         return response
 
@@ -113,6 +115,7 @@ class LogoutView(APIView):
             changes={"logout": {"old": user.username, "new": "ÇIKIŞ YAPILDI"}},
             ip_address=ip
         )
+        security_logger.info('ÇIKIŞ: kullanıcı=%s (id=%d) IP=%s', user.username, user.pk, ip)
         return Response({"detail": "Çıkış kaydedildi."}, status=status.HTTP_200_OK)
 
 class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
@@ -195,9 +198,8 @@ class TreatmentTypeViewSet(AuditLogMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role == CustomUser.Role.DOCTOR:
-            return TreatmentType.objects.filter(doctor=user).order_by('name')
-            # return TreatmentType.objects.filter(doctor=user, is_active=True).order_by('name')
-        return TreatmentType.objects.all().order_by('name')
+            return TreatmentType.objects.filter(doctor=user, is_active=True).order_by('name')
+        return TreatmentType.objects.filter(is_active=True).order_by('name')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -207,7 +209,8 @@ class TreatmentTypeViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         self.log_action(AuditLog.Action.DELETE, instance)
-        instance.delete()
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 class ClinicSettingsView(APIView):
     """Klinik ayarları. F-022."""

@@ -1,0 +1,180 @@
+@startuml YascaDental_ERD
+!theme plain
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 50
+
+title Yasca Dental Clinic - Database ER Diagram
+
+package "Shared Schema (Public)" {
+  entity "customers_client (Tenant)" as Client {
+    * id : integer
+    --
+    * schema_name : varchar(63)
+    * name : varchar(100)
+    * created_on : date
+    * is_active : boolean
+  }
+
+  entity "customers_domain" as Domain {
+    * id : integer
+    --
+    * domain : varchar(253)
+    * tenant_id : integer <<FK>>
+    * is_primary : boolean
+  }
+
+  Client ||--o{ Domain : "has domains"
+}
+
+package "Tenant Schema (api app)" {
+  
+  entity "api_customuser" as User {
+    * id : integer
+    --
+    * username : varchar(150)
+    * password : varchar(128)
+    first_name : varchar(150)
+    last_name : varchar(150)
+    email : varchar(254)
+    * is_staff : boolean
+    * is_active : boolean
+    * is_superuser : boolean
+    last_login : datetime
+    date_joined : datetime
+    * role : varchar(20)  [admin, doctor, assistant]
+  }
+
+  entity "api_patient" as Patient {
+    * id : integer
+    --
+    * first_name : varchar(100)
+    * last_name : varchar(100)
+    * phone : varchar(20)
+    * tckn : varchar(11)
+    birth_date : date
+    address : text
+    notes : text
+    * is_active : boolean
+    * created_at : datetime
+    * updated_at : datetime
+  }
+
+  entity "api_anamnesis" as Anamnesis {
+    * id : integer
+    --
+    * patient_id : integer <<FK, UNIQUE>>
+    medical_history : text
+    allergies : text
+    medications : text
+    chronic_diseases : text
+    surgical_history : text
+    family_history : text
+    smoking : varchar(100)
+    alcohol : varchar(100)
+    pregnancy_status : varchar(100)
+    other_notes : text
+  }
+
+  entity "api_treatmenttype" as TreatmentType {
+    * id : integer
+    --
+    doctor_id : integer <<FK>>
+    * name : varchar(100)
+    * category : varchar(20)
+    * default_price : numeric(10, 2)
+    * is_active : boolean
+  }
+
+  entity "api_appointment" as Appointment {
+    * id : integer
+    --
+    * patient_id : integer <<FK>>
+    * doctor_id : integer <<FK>>
+    treatment_type_id : integer <<FK>>
+    * date : date
+    * time : time
+    * status : varchar(20)
+    notes : text
+    * is_active : boolean
+    * created_at : datetime
+    * updated_at : datetime
+  }
+
+  entity "api_treatment" as Treatment {
+    * id : integer
+    --
+    * patient_id : integer <<FK>>
+    * doctor_id : integer <<FK>>
+    treatment_type_id : integer <<FK>>
+    treatment_name : varchar(200)
+    tooth_number : varchar(10)
+    * status : varchar(20)
+    notes : text
+    * date : date
+    * price : numeric(10, 2)
+    * is_active : boolean
+    * created_at : datetime
+  }
+
+  entity "api_payment" as Payment {
+    * id : integer
+    --
+    * patient_id : integer <<FK>>
+    treatment_id : integer <<FK>>
+    * amount : numeric(10, 2)
+    description : varchar(255)
+    * payment_date : date
+    * is_active : boolean
+    * created_at : datetime
+  }
+
+  entity "api_document" as Document {
+    * id : integer
+    --
+    * patient_id : integer <<FK>>
+    * name : varchar(255)
+    * file : varchar(100)
+    uploaded_by_id : integer <<FK>>
+    * is_active : boolean
+    * created_at : datetime
+  }
+
+  entity "api_auditlog" as AuditLog {
+    * id : integer
+    --
+    user_id : integer <<FK>>
+    * action : varchar(10)
+    content_type_id : integer <<FK>>
+    object_id : integer
+    changes : json
+    ip_address : inet
+    * created_at : datetime
+  }
+  
+  entity "api_clinicsettings" as ClinicSettings {
+    * id : integer
+    --
+    * work_start_time : time
+    * work_end_time : time
+    * work_days : json
+  }
+}
+
+' Relationships
+Patient ||--|| Anamnesis : "1:1 has"
+User ||--o{ TreatmentType : "1:N creates"
+Patient ||--o{ Appointment : "1:N books"
+User ||--o{ Appointment : "1:N assigned to"
+TreatmentType ||--o{ Appointment : "1:N planned"
+Patient ||--o{ Treatment : "1:N receives"
+User ||--o{ Treatment : "1:N performs"
+TreatmentType ||--o{ Treatment : "1:N is of type"
+Patient ||--o{ Payment : "1:N makes"
+Treatment ||--o{ Payment : "1:N paid for"
+Patient ||--o{ Document : "1:N has"
+User ||--o{ Document : "1:N uploads"
+User ||--o{ AuditLog : "1:N performs action"
+
+@enduml
