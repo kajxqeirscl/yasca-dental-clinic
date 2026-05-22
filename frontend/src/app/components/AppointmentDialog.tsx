@@ -114,6 +114,7 @@ export default function AppointmentDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showPastWarning, setShowPastWarning] = useState(false);
   const [workHours, setWorkHours] = useState({ start: 9, end: 18 });
 
   const debouncedSearch = useDebounce(patientSearch, 300);
@@ -256,7 +257,7 @@ export default function AppointmentDialog({
     setValidationErrors([]);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const missing: string[] = [];
     if (!selectedPatient) missing.push('patient');
     if (!selectedDoctorId) missing.push('doctor');
@@ -285,6 +286,39 @@ export default function AppointmentDialog({
       }
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDateObj = new Date(date);
+    selectedDateObj.setHours(0, 0, 0, 0);
+
+    const isNewDate = !appointmentToEdit || appointmentToEdit.date !== date;
+    const isNewTime = !appointmentToEdit || appointmentToEdit.time !== time;
+
+    let isPast = false;
+    
+    if (isNewDate || isNewTime) {
+      if (selectedDateObj < today) {
+        isPast = true;
+      } else if (selectedDateObj.getTime() === today.getTime() && time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        if (hours < now.getHours() || (hours === now.getHours() && minutes < now.getMinutes())) {
+          isPast = true;
+        }
+      }
+    }
+
+    if (isPast) {
+      setShowPastWarning(true);
+      return;
+    }
+
+    proceedSave();
+  };
+
+  const proceedSave = async () => {
+    setShowPastWarning(false);
     setLoading(true);
     setError('');
     try {
@@ -332,6 +366,7 @@ const handleOpenChange = (open: boolean) => {
 };
 
 return (
+  <>
   <Dialog open={isOpen} onOpenChange={handleOpenChange}>
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
@@ -514,5 +549,26 @@ return (
       </div>
     </DialogContent>
   </Dialog>
+
+  {/* Geçmiş Tarih/Saat Uyarı Dialogu */}
+  <Dialog open={showPastWarning} onOpenChange={setShowPastWarning}>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{t('appointments:dialog.past_warning_title', 'Geçmiş Tarih/Saat Uyarısı')}</DialogTitle>
+        <DialogDescription>
+          {t('appointments:dialog.past_warning_desc', 'Geçmiş bir tarihe veya saate randevu oluşturuyorsunuz. Yine de devam etmek istiyor musunuz?')}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={() => setShowPastWarning(false)}>
+          {t('common:cancel', 'İptal')}
+        </Button>
+        <Button onClick={proceedSave} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700">
+          {loading ? t('appointments:dialog.saving', 'Kaydediliyor...') : t('common:continue', 'Devam Et')}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+  </>
 );
 }

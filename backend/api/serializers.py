@@ -139,12 +139,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
         date = data.get("date", getattr(self.instance, "date", None))
         time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
-        if date and date < timezone.localdate():
-            # Ancak eski randevunun tarihi zaten geçmişteyse, sadece status falan güncelleniyorsa buna izin vermeliyiz
-            if not self.instance or (self.instance and self.instance.date != date):
-                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
-
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
+        
         treatment = data.get("treatment", getattr(self.instance, "treatment", None))
         if treatment and treatment.status == "completed":
             if not self.instance or getattr(self.instance, "treatment", None) != treatment:
@@ -188,10 +185,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         date = data.get("date", getattr(self.instance, "date", None))
         time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
-        if date and date < timezone.localdate():
-            if not self.instance or (self.instance and self.instance.date != date):
-                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
 
         treatment = data.get("treatment", getattr(self.instance, "treatment", None))
         if treatment and treatment.status == "completed":
