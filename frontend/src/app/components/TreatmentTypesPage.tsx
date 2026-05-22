@@ -5,12 +5,20 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '.
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { SearchInput } from './ui/search-input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedSearch } from '../hooks/useLocalizedSearch';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from './ui/pagination';
 
 // Category definitions — must mirror backend TreatmentType.Category choices
 export const CATEGORY_OPTIONS = [
@@ -50,12 +58,15 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [editingType, setEditingType] = useState<TreatmentType | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category: 'other' as TreatmentCategory,
     default_price: '',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const canEdit = userRole === 'admin' || userRole === 'doctor';
 
@@ -103,17 +114,20 @@ export default function TreatmentTypesPage({ userRole }: Props) {
 
   const confirmDelete = async (id: number) => {
     try {
+      setDeleteError('');
       await deleteTreatmentType(id);
       toast.success(t('treatments:page.success_delete'));
       setDeletingId(null);
       loadData();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t('treatments:page.error_delete'));
-      setDeletingId(null);
+      const msg = err instanceof Error ? err.message : t('treatments:page.error_delete');
+      setDeleteError(msg);
+      toast.error(msg);
     }
   };
 
   const handleDelete = (id: number) => {
+    setDeleteError('');
     setDeletingId(id);
   };
 
@@ -121,6 +135,16 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     const catLabel = getCategoryLabel(type.category, t);
     return match(type.name, searchQuery) || match(catLabel, searchQuery);
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredTypes.length / itemsPerPage);
+  const paginatedTypes = filteredTypes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="space-y-6">
@@ -168,7 +192,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTypes.map((type) => {
+                paginatedTypes.map((type) => {
                   const catLabel = getCategoryLabel(type.category, t);
                   return (
                     <TableRow key={type.id}>
@@ -195,6 +219,55 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && !loading && (
+            <div className="mt-4 pt-4 border-t">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => {
+                    if (
+                      pageNum === 1 || 
+                      pageNum === totalPages || 
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            isActive={currentPage === pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                      return (
+                        <PaginationItem key={`ellipsis-${pageNum}`}>
+                          <span className="px-2">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -204,6 +277,9 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             <DialogTitle>
               {editingType ? t('treatments:page.dialog_title_edit') : t('treatments:page.dialog_title_add')}
             </DialogTitle>
+            <DialogDescription>
+              {editingType ? 'Tedavi türü bilgilerini güncelleyin.' : 'Yeni tedavi türü eklemek için bilgileri doldurun.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -257,21 +333,29 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       </Dialog>
 
       {/* Modern Pop-up Onay Modalı */}
-      <Dialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <Dialog open={deletingId !== null} onOpenChange={(open) => { if (!open) { setDeletingId(null); setDeleteError(''); } }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600 font-semibold text-lg">
               <Trash2 className="w-5 h-5 animate-pulse" />
               Tedavi Türünü Sil
             </DialogTitle>
+            <DialogDescription>
+              Bu işlem geri alınamaz.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-500 leading-relaxed">
-              Bu tedavi türünü veritabanından tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              Bu tedavi türünü pasif hale getirmek istediğinize emin misiniz?
             </p>
+            {deleteError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                {deleteError}
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setDeletingId(null)}>
+            <Button variant="outline" onClick={() => { setDeletingId(null); setDeleteError(''); }}>
               Vazgeç
             </Button>
             <Button

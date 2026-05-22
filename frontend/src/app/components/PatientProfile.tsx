@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -225,7 +226,7 @@ export default function PatientProfile() {
       await deleteDocument(isDeletingDoc);
       loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Silinemedi');
+      toast.error(err instanceof Error ? err.message : 'Doküman silinemedi');
     } finally {
       setIsDeletingDoc(null);
     }
@@ -666,7 +667,8 @@ export default function PatientProfile() {
             </CardHeader>
             <CardContent>
               {(() => {
-                const standaloneAppointments = appointments.filter(a => !a.treatment);
+                const activeTreatmentIds = new Set(treatments.map(t => t.id));
+                const standaloneAppointments = appointments.filter(a => !a.treatment || !activeTreatmentIds.has(a.treatment));
                 
                 return (
                   <div className="space-y-6">
@@ -826,9 +828,6 @@ export default function PatientProfile() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{t('patients:profile.payments.title')}</CardTitle>
-                <Button size="sm" onClick={handleNewPayment}>
-                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.payments.new')}
-                </Button>
               </div>
             </CardHeader>
             <CardContent>

@@ -120,7 +120,7 @@ export default function PaymentDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(t('payments:dialog.error_delete'));
+      setError(err instanceof Error ? err.message : t('payments:dialog.error_delete'));
     } finally {
       setLoading(false);
     }

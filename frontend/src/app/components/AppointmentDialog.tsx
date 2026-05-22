@@ -169,6 +169,9 @@ export default function AppointmentDialog({
     } else if (selectedSlot) {
       setDate(selectedSlot.date);
       setTime(selectedSlot.time);
+    } else {
+      setDate(new Date().toLocaleDateString('en-CA'));
+      setTime('');
     }
     
     if (defaultTreatmentId && !appointmentToEdit) {
@@ -246,7 +249,7 @@ export default function AppointmentDialog({
     setPatientResults([]);
     setPatientDropdownOpen(false);
     setSelectedTreatment(defaultTreatmentId || '');
-    setDate(appointmentToEdit?.date || selectedSlot?.date || '');
+    setDate(appointmentToEdit?.date || selectedSlot?.date || new Date().toLocaleDateString('en-CA'));
     setTime(appointmentToEdit?.time || selectedSlot?.time || '');
     setNotes('');
     setError('');

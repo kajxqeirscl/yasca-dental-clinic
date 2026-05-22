@@ -1,9 +1,22 @@
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Zap, Users, Calendar, Cloud, Activity, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function HomePage() {
   const { t } = useTranslation('landing');
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      }
+    }
+  }, []);
 
   const features = [
     { icon: <Cloud className="w-6 h-6 text-indigo-500" />, title: t('features.cloud.title'), desc: t('features.cloud.desc') },

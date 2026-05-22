@@ -139,7 +139,7 @@ export default function AppointmentCalendar() {
   const handleSlotClick = (date: Date, hour: number) => {
     setSelectedSlot({
       date: formatApiDate(date),
-      time: formatTimeFromHour(hour),
+      time: `${hour.toString().padStart(2, '0')}:00:00`,
     });
     setIsDialogOpen(true);
   };

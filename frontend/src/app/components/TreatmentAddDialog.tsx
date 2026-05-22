@@ -196,7 +196,7 @@ export default function TreatmentAddDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(t('treatments:dialog.error_delete'));
+      setError(err instanceof Error ? err.message : t('treatments:dialog.error_delete'));
     } finally {
       setLoading(false);
     }

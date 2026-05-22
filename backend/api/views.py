@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
 
 from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document, AuditLog
 from .serializers import (
@@ -155,6 +156,29 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
             )
         return qs.order_by("last_name", "first_name")
 
+    def perform_destroy(self, instance):
+        # Kontrol: Aktif (planlanmış) randevu var mı?
+        active_appointments = instance.appointments.filter(
+            is_active=True, status='scheduled'
+        ).count()
+        if active_appointments:
+            raise ValidationError(
+                f"Bu hastanın {active_appointments} aktif randevusu var. Önce randevuları iptal edin."
+            )
+        # Kontrol: Ödenmemiş tedavi var mı?
+        completed_treatments = instance.treatments.filter(is_active=True, status='completed')
+        total_treatment_cost = sum(float(t.price) for t in completed_treatments)
+        total_paid = sum(
+            float(p.amount) for p in instance.payments.filter(is_active=True)
+        )
+        if total_treatment_cost > total_paid:
+            raise ValidationError(
+                "Bu hastanın ödenmemiş tedavi bakiyesi var. Önce ödemeleri tamamlayın."
+            )
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
 
 
 
@@ -180,6 +204,11 @@ class AppointmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.order_by("date", "time")
 
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
 
 
 
@@ -197,6 +226,24 @@ class TreatmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-date")
+
+    def perform_destroy(self, instance):
+        # Kontrol: Bağlı aktif randevu var mı?
+        linked_appointments = instance.appointments.filter(is_active=True).count()
+        if linked_appointments:
+            raise ValidationError(
+                f"Bu tedaviye bağlı {linked_appointments} adet randevu var. Önce randevuyu iptal edin veya silin."
+            )
+
+        # Kontrol: Bağlı ödeme var mı?
+        linked_payments = instance.payments.filter(is_active=True).count()
+        if linked_payments:
+            raise ValidationError(
+                f"Bu tedaviye bağlı {linked_payments} ödeme kaydı var. Önce ödemeleri silin."
+            )
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
 
@@ -223,6 +270,12 @@ class TreatmentTypeViewSet(AuditLogMixin, viewsets.ModelViewSet):
         self.log_action(AuditLog.Action.CREATE, instance)
 
     def perform_destroy(self, instance):
+        # Kontrol: Bu türü kullanan aktif tedavi var mı?
+        active_treatments = instance.treatments.filter(is_active=True).count()
+        if active_treatments:
+            raise ValidationError(
+                f"Bu tedavi türünü kullanan {active_treatments} aktif tedavi var. Önce tedavileri silin veya türünü değiştirin."
+            )
         self.log_action(AuditLog.Action.DELETE, instance)
         instance.is_active = False
         instance.save(update_fields=['is_active'])
@@ -296,6 +349,11 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-payment_date")
 
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
 
 
 
@@ -360,6 +418,11 @@ class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             uploaded_by=self.request.user
         )
         self.log_action(AuditLog.Action.CREATE, instance)
+
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
 class UserViewSet(AuditLogMixin, viewsets.ModelViewSet):

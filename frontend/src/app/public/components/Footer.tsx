@@ -1,8 +1,24 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
   const { t } = useTranslation('landing');
+  const location = useLocation();
+
+  const getNavLinkHref = (path: string) => {
+    return location.pathname === '/' ? path : `/${path}`;
+  };
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      const targetId = path.substring(1);
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
     <footer className="bg-white border-t border-gray-200 pt-16 pb-8">
@@ -19,8 +35,24 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-4">{t('footer.product')}</h4>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li><a href="#features" className="hover:text-indigo-600 transition-colors">{t('nav.features')}</a></li>
-              <li><a href="#pricing" className="hover:text-indigo-600 transition-colors">{t('nav.pricing')}</a></li>
+              <li>
+                <a
+                  href={getNavLinkHref('#features')}
+                  onClick={(e) => handleNavClick(e, '#features')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  {t('nav.features')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={getNavLinkHref('#pricing')}
+                  onClick={(e) => handleNavClick(e, '#pricing')}
+                  className="hover:text-indigo-600 transition-colors"
+                >
+                  {t('nav.pricing')}
+                </a>
+              </li>
               <li><Link to="#" className="hover:text-indigo-600 transition-colors">{t('footer.updates')}</Link></li>
             </ul>
           </div>
