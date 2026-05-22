@@ -178,15 +178,6 @@ class Command(BaseCommand):
         for t, status in times:
             p = random.choice(patients)
             tt = random.choice(treatment_types)
-            AppointmentFactory(
-                patient=p,
-                doctor=doctor,
-                date=today,
-                time=t,
-                status=status,
-                treatment_type=tt
-            )
-            
             # Treatments are generated for both scheduled and completed appointments
             treatment_status = Treatment.Status.COMPLETED if status == Appointment.Status.COMPLETED else Treatment.Status.PLANNED
             treatment = TreatmentFactory(
@@ -198,6 +189,15 @@ class Command(BaseCommand):
                 status=treatment_status,
                 price=tt.default_price,
                 date=today
+            )
+            
+            AppointmentFactory(
+                patient=p,
+                doctor=doctor,
+                date=today,
+                time=t,
+                status=status,
+                treatment=treatment
             )
             
             # Payments are only for completed treatments
@@ -216,14 +216,6 @@ class Command(BaseCommand):
             p = random.choice(patients)
             tt = random.choice(treatment_types)
             
-            AppointmentFactory(
-                patient=p,
-                doctor=doctor,
-                date=past_date,
-                time=time(random.randint(9, 17), random.choice([0, 30])),
-                status=Appointment.Status.COMPLETED,
-                treatment_type=tt
-            )
             treatment = TreatmentFactory(
                 patient=p,
                 doctor=doctor,
@@ -233,6 +225,15 @@ class Command(BaseCommand):
                 status=Treatment.Status.COMPLETED,
                 price=tt.default_price,
                 date=past_date
+            )
+
+            AppointmentFactory(
+                patient=p,
+                doctor=doctor,
+                date=past_date,
+                time=time(random.randint(9, 17), random.choice([0, 30])),
+                status=Appointment.Status.COMPLETED,
+                treatment=treatment
             )
             
             rand = random.random()

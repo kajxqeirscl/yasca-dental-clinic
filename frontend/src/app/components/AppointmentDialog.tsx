@@ -16,7 +16,7 @@ import {
   updateAppointment,
   fetchPatients,
   fetchDoctors,
-  fetchTreatmentTypes,
+  fetchTreatments,
   fetchClinicSettings,
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,8 +34,8 @@ interface Appointment {
   doctor_name?: string;
   status: string;
   notes?: string;
-  treatment_type?: number;
-  treatment_type_name?: string;
+  treatment?: number;
+  treatment_name?: string;
 }
 
 interface AppointmentDialogProps {
@@ -43,6 +43,8 @@ interface AppointmentDialogProps {
   onClose: () => void;
   selectedSlot: { date: string; time: string } | null;
   appointmentToEdit?: Appointment | null;
+  defaultTreatmentId?: number;
+  defaultPatient?: PatientOption | null;
   onSuccess?: () => void;
 }
 
@@ -59,10 +61,12 @@ interface DoctorOption {
   full_name: string;
 }
 
-interface TreatmentTypeOption {
+interface TreatmentOption {
   id: number;
-  name: string;
-  default_price: string;
+  treatment_name: string;
+  treatment_type_name: string;
+  tooth_number?: string;
+  status: string;
 }
 
 // Debounce hook
@@ -80,6 +84,8 @@ export default function AppointmentDialog({
   onClose,
   selectedSlot,
   appointmentToEdit,
+  defaultTreatmentId,
+  defaultPatient,
   onSuccess,
 }: AppointmentDialogProps) {
   const { t } = useTranslation();
@@ -97,9 +103,9 @@ export default function AppointmentDialog({
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
 
-  // --- Treatment type state ---
-  const [treatmentTypes, setTreatmentTypes] = useState<TreatmentTypeOption[]>([]);
-  const [selectedTreatment, setSelectedTreatment] = useState('');
+  // --- Treatment state ---
+  const [patientTreatments, setPatientTreatments] = useState<TreatmentOption[]>([]);
+  const [selectedTreatment, setSelectedTreatment] = useState<number | ''>('');
 
   // --- Other ---
   const [date, setDate] = useState('');
@@ -132,10 +138,6 @@ export default function AppointmentDialog({
       })
       .catch(() => setDoctors([]));
 
-    fetchTreatmentTypes()
-      .then((list: TreatmentTypeOption[]) => setTreatmentTypes(list))
-      .catch(() => setTreatmentTypes([]));
-
     fetchClinicSettings()
       .then((settings) => {
         if (settings.work_start_time) {
@@ -161,14 +163,34 @@ export default function AppointmentDialog({
       setSelectedDoctorId(appointmentToEdit.doctor);
       setNotes(appointmentToEdit.notes || '');
 
-      if (appointmentToEdit.treatment_type) {
-        setSelectedTreatment(appointmentToEdit.treatment_type);
+      if (appointmentToEdit.treatment) {
+        setSelectedTreatment(appointmentToEdit.treatment);
       }
     } else if (selectedSlot) {
       setDate(selectedSlot.date);
       setTime(selectedSlot.time);
     }
-  }, [appointmentToEdit, selectedSlot, treatmentTypes]);
+    
+    if (defaultTreatmentId && !appointmentToEdit) {
+      setSelectedTreatment(defaultTreatmentId);
+    }
+
+    if (defaultPatient && !appointmentToEdit) {
+      setSelectedPatient(defaultPatient);
+      setPatientSearch(defaultPatient.full_name);
+    }
+  }, [appointmentToEdit, selectedSlot, defaultTreatmentId, defaultPatient]);
+
+  // Fetch treatments when patient changes
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchTreatments(selectedPatient.id.toString())
+        .then((list: TreatmentOption[]) => setPatientTreatments(list))
+        .catch(() => setPatientTreatments([]));
+    } else {
+      setPatientTreatments([]);
+    }
+  }, [selectedPatient]);
 
   // Search patients with debounce
   useEffect(() => {
@@ -214,11 +236,16 @@ export default function AppointmentDialog({
   };
 
   const resetForm = () => {
-    setPatientSearch('');
-    setSelectedPatient(null);
+    if (defaultPatient) {
+      setPatientSearch(defaultPatient.full_name);
+      setSelectedPatient(defaultPatient);
+    } else {
+      setPatientSearch('');
+      setSelectedPatient(null);
+    }
     setPatientResults([]);
     setPatientDropdownOpen(false);
-    setSelectedTreatment('');
+    setSelectedTreatment(defaultTreatmentId || '');
     setDate(appointmentToEdit?.date || selectedSlot?.date || '');
     setTime(appointmentToEdit?.time || selectedSlot?.time || '');
     setNotes('');
@@ -264,7 +291,7 @@ export default function AppointmentDialog({
         date: date,
         time: time,
         notes: notes || undefined,
-        treatment_type: selectedTreatment ? Number(selectedTreatment) : undefined,
+        treatment: selectedTreatment ? Number(selectedTreatment) : null,
         status: appointmentToEdit ? appointmentToEdit.status : 'scheduled',
       };
 
@@ -431,25 +458,32 @@ return (
           )}
         </div>
 
-        {/* Treatment Type Dropdown */}
+        {/* Treatment Dropdown */}
         <div className="space-y-2">
-          <Label htmlFor="treatment">{t('appointments:dialog.fields.treatment')}</Label>
+          <Label htmlFor="treatment">{t('appointments:dialog.fields.treatment', 'İşlem (Tedavi)')}</Label>
           <select
             id="treatment"
-            className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             value={selectedTreatment}
-            onChange={(e) => setSelectedTreatment(e.target.value)}
+            onChange={(e) => setSelectedTreatment(e.target.value ? Number(e.target.value) : '')}
+            disabled={!selectedPatient}
           >
-            <option value="">{t('appointments:dialog.fields.select_treatment')}</option>
-            {treatmentTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">{t('appointments:dialog.fields.select_treatment', 'Tedavi Seçin (İsteğe Bağlı)')}</option>
+            {patientTreatments.map((tr) => (
+              <option key={tr.id} value={tr.id} disabled={tr.status === 'completed'}>
+                {tr.treatment_type_name || tr.treatment_name} {tr.tooth_number ? `(Diş: ${tr.tooth_number})` : ''}
+                {tr.status === 'completed' ? ` - ${t('patients:profile.treatments.status.completed', 'Tamamlandı')}` : ''}
               </option>
             ))}
           </select>
-          {treatmentTypes.length === 0 && (
+          {!selectedPatient && (
+             <p className="text-xs text-gray-400 mt-1">
+               {t('appointments:dialog.fields.treatment_need_patient', 'Tedavi seçmek için önce hasta seçmelisiniz.')}
+             </p>
+          )}
+          {selectedPatient && patientTreatments.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">
-              {t('appointments:dialog.fields.treatment_empty')}
+              {t('appointments:dialog.fields.treatment_empty', 'Bu hastanın kayıtlı tedavisi yok.')}
             </p>
           )}
         </div>

@@ -226,7 +226,7 @@ export async function createAppointment(data: {
   date: string;
   time: string;
   notes?: string;
-  treatment_type?: string;
+  treatment?: number | null;
   status?: string;
 }) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/`, {
@@ -237,7 +237,7 @@ export async function createAppointment(data: {
       date: data.date,
       time: data.time,
       notes: data.notes,
-      treatment_type: data.treatment_type,
+      treatment: data.treatment,
       status: data.status ?? 'scheduled',
     }),
   });
@@ -250,7 +250,7 @@ export async function createAppointment(data: {
 
 export async function updateAppointment(
   id: number,
-  data: Partial<{ status: string; notes: string; treatment_type: string; date: string; time: string }>
+  data: Partial<{ status: string; notes: string; treatment: number | null; date: string; time: string }>
 ) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
     method: 'PATCH',

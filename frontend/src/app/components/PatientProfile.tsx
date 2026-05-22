@@ -164,6 +164,7 @@ export default function PatientProfile() {
   const [paymentToEdit, setPaymentToEdit] = useState<any>(null);
   const [defaultPaymentTreatmentId, setDefaultPaymentTreatmentId] = useState<number | undefined>();
   const [defaultPaymentAmount, setDefaultPaymentAmount] = useState<number | undefined>();
+  const [defaultAppointmentTreatmentId, setDefaultAppointmentTreatmentId] = useState<number | undefined>();
 
   const loadData = () => {
     if (!id) return;
@@ -380,6 +381,13 @@ export default function PatientProfile() {
 
   const handleNewAppointment = () => {
     setAppointmentToEdit(null);
+    setDefaultAppointmentTreatmentId(undefined);
+    setIsAppointmentDialogOpen(true);
+  };
+
+  const handleNewAppointmentWithTreatment = (trId: number) => {
+    setAppointmentToEdit(null);
+    setDefaultAppointmentTreatmentId(trId);
     setIsAppointmentDialogOpen(true);
   };
 
@@ -465,10 +473,9 @@ export default function PatientProfile() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="bilgiler">{t('patients:profile.tabs.info')}</TabsTrigger>
           <TabsTrigger value="anamnez">{t('patients:profile.tabs.anamnesis')}</TabsTrigger>
-          <TabsTrigger value="randevular">{t('patients:profile.tabs.appointments')}</TabsTrigger>
           <TabsTrigger value="gecmis">{t('patients:profile.tabs.history')}</TabsTrigger>
           <TabsTrigger value="odeme">{t('patients:profile.tabs.payments')}</TabsTrigger>
           <TabsTrigger value="dokumanlar">{t('patients:profile.tabs.documents')}</TabsTrigger>
@@ -644,113 +651,171 @@ export default function PatientProfile() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="randevular" className="space-y-6">
+        {/* Yeni Birleştirilmiş Geçmiş Tab (Tedaviler ve Randevular) */}
+        <TabsContent value="gecmis" className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{t('patients:profile.appointments.title')}</CardTitle>
-                <Button size="sm" onClick={handleNewAppointment}>
-                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.new')}
-                </Button>
+                <CardTitle>{t('patients:profile.treatments.title', 'Tedavi Bazlı Geçmiş')}</CardTitle>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.treatments.new', 'Yeni Tedavi Ekle')}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {appointments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    {t('patients:profile.appointments.no_record')}
-                  </div>
-                ) : (
-                  appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="flex gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleAppointmentClick(appointment)}
-                    >
-                      <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
-                        <Clock className="w-6 h-6 text-blue-600" />
+              {(() => {
+                const standaloneAppointments = appointments.filter(a => !a.treatment);
+                
+                return (
+                  <div className="space-y-6">
+                    {treatments.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        {t('patients:profile.treatments.no_record')}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-gray-900 font-semibold">
-                                {formatDate(appointment.date)}
-                              </h4>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-blue-600 text-sm font-medium">
-                                {formatTimeStr(appointment.time)}
-                              </span>
+                    ) : (
+                      <div className="space-y-4">
+                        {treatments.map((tr) => {
+                          const trAppointments = appointments.filter(a => a.treatment === tr.id);
+                          
+                          return (
+                            <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
+                              {/* Treatment Header */}
+                              <div className="flex items-center justify-between p-4 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleTreatmentEdit(tr)}>
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
+                                    <Stethoscope className="w-6 h-6 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-semibold text-gray-900">
+                                        {tr.treatment_type_name || tr.treatment_name}
+                                      </h4>
+                                      {tr.tooth_number && (
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {t('patients:profile.treatments.tooth')}: {tr.tooth_number}
+                                        </Badge>
+                                      )}
+                                      <Badge className={`${tr.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
+                                        {tr.status === 'completed' ? t('patients:profile.treatments.status.completed') : t('patients:profile.treatments.status.todo')}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                                      <span className="font-medium text-gray-700">{tr.doctor_name}</span>
+                                      <span>•</span>
+                                      <span>{formatDate(tr.date)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Appointments List for this Treatment */}
+                              <div className="p-4 bg-white">
+                                <h5 className="text-sm font-semibold text-gray-700 mb-3 ml-1">{t('patients:profile.tabs.appointments', 'Randevular')}</h5>
+                                {trAppointments.length === 0 ? (
+                                  <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
+                                    <span className="text-sm text-gray-500 italic ml-2">Bu tedavi için randevu bulunmuyor.</span>
+                                    {tr.status !== 'completed' && (
+                                      <Button size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)} className="bg-blue-600 hover:bg-blue-700">
+                                        <Plus className="w-4 h-4 mr-1" /> Randevu Ekle
+                                      </Button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {trAppointments.map(appointment => (
+                                      <div
+                                        key={appointment.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                                        onClick={() => handleAppointmentClick(appointment)}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="flex items-center justify-center w-8 h-8 bg-blue-50 rounded-md shrink-0">
+                                            <Clock className="w-4 h-4 text-blue-600" />
+                                          </div>
+                                          <div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-gray-900 font-medium text-sm">
+                                                {formatDate(appointment.date)} • {formatTimeStr(appointment.time)}
+                                              </span>
+                                            </div>
+                                            {appointment.notes && (
+                                              <p className="text-xs text-gray-500 mt-0.5 truncate max-w-sm">
+                                                {appointment.notes}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          {getStatusBadge(appointment.status)}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div className="mt-2 flex justify-end">
+                                      {tr.status !== 'completed' && (
+                                        <Button variant="outline" size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)}>
+                                          <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {(appointment.treatment_type_name || appointment.notes) && (
-                              <p className="text-sm text-gray-500 mt-1 truncate max-w-sm">
-                                {appointment.treatment_type_name || appointment.notes}
-                              </p>
-                            )}
-                          </div>
-                          {getStatusBadge(appointment.status)}
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Bağımsız Randevular */}
+                    {standaloneAppointments.length > 0 && (
+                      <div className="mt-8">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-800 text-lg">{t('patients:profile.appointments.standalone', 'Bağımsız Randevular')}</h3>
+                          <Button size="sm" variant="outline" onClick={handleNewAppointment}>
+                            <Plus className="w-4 h-4 mr-1" /> Yeni Bağımsız Randevu
+                          </Button>
+                        </div>
+                        <div className="space-y-3">
+                          {standaloneAppointments.map(appointment => (
+                            <div
+                              key={appointment.id}
+                              className="flex gap-4 p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={() => handleAppointmentClick(appointment)}
+                            >
+                              <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0">
+                                <Clock className="w-6 h-6 text-gray-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-1">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-gray-900 font-semibold">
+                                        {formatDate(appointment.date)}
+                                      </h4>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-gray-600 text-sm font-medium">
+                                        {formatTimeStr(appointment.time)}
+                                      </span>
+                                    </div>
+                                    {appointment.notes && (
+                                      <p className="text-sm text-gray-500 mt-1 truncate max-w-sm">
+                                        {appointment.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {getStatusBadge(appointment.status)}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="gecmis">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{t('patients:profile.treatments.title')}</CardTitle>
-                <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.treatments.new')}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {treatments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    {t('patients:profile.treatments.no_record')}
+                    )}
                   </div>
-                ) : (
-                  treatments.map((tr) => (
-                    <div 
-                      key={tr.id} 
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleTreatmentEdit(tr)}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-lg shrink-0">
-                          <Stethoscope className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-gray-900">
-                              {tr.treatment_type_name || tr.treatment_name}
-                            </h4>
-                            {tr.tooth_number && (
-                              <Badge variant="outline" className="text-[10px]">
-                                {t('patients:profile.treatments.tooth')}: {tr.tooth_number}
-                              </Badge>
-                            )}
-                            <Badge className={`${tr.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
-                              {tr.status === 'completed' ? t('patients:profile.treatments.status.completed') : t('patients:profile.treatments.status.todo')}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                            <span className="font-medium text-gray-700">{tr.doctor_name}</span>
-                            <span>•</span>
-                            <span>{formatDate(tr.date)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1060,16 +1125,17 @@ export default function PatientProfile() {
         onEdit={handleEditAppointment}
       />
 
-      <AppointmentDialog 
-        isOpen={isAppointmentDialogOpen}
-        onClose={() => {
-          setIsAppointmentDialogOpen(false);
-          setAppointmentToEdit(null);
-        }}
-        onSuccess={loadData}
-        appointmentToEdit={appointmentToEdit}
-        selectedSlot={appointmentToEdit ? null : { date: new Date().toLocaleDateString('en-CA'), time: '09:00' }}
-      />
+      {isAppointmentDialogOpen && (
+        <AppointmentDialog 
+          isOpen={isAppointmentDialogOpen}
+          onClose={() => setIsAppointmentDialogOpen(false)}
+          selectedSlot={null}
+          appointmentToEdit={appointmentToEdit}
+          defaultTreatmentId={defaultAppointmentTreatmentId}
+          defaultPatient={patient ? { id: patient.id, full_name: patient.full_name, phone: patient.phone, tckn: patient.tckn } : null}
+          onSuccess={loadData}
+        />
+      )}
 
       <TreatmentAddDialog
         isOpen={isTreatmentAddOpen}

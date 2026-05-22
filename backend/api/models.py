@@ -162,13 +162,13 @@ class Appointment(models.Model):
         max_length=20, choices=Status.choices, default=Status.SCHEDULED
     )
     notes = models.TextField("Notlar", blank=True)
-    treatment_type = models.ForeignKey(
-        TreatmentType,
+    treatment = models.ForeignKey(
+        'Treatment',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="appointments",
-        verbose_name="İşlem Türü"
+        verbose_name="İşlem"
     )
     is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)

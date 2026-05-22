@@ -104,7 +104,7 @@ class DoctorMinimalSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.full_name", read_only=True)
     patient_phone = serializers.CharField(source="patient.phone", read_only=True)
-    treatment_type_name = serializers.CharField(source="treatment_type.name", read_only=True)
+    treatment_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -120,13 +120,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "time",
             "status",
             "notes",
-            "treatment_type",
-            "treatment_type_name",
+            "treatment",
+            "treatment_name",
             "created_at",
         ]
 
     def get_doctor_name(self, obj):
         return obj.doctor.get_full_name() or obj.doctor.username
+
+    def get_treatment_name(self, obj):
+        if not obj.treatment:
+            return None
+        return obj.treatment.treatment_type.name if obj.treatment.treatment_type else obj.treatment.treatment_name
 
     def validate(self, data):
         """F-008: Aynı hekime aynı saatte randevu çakışması kontrolü."""
@@ -139,6 +144,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
             # Ancak eski randevunun tarihi zaten geçmişteyse, sadece status falan güncelleniyorsa buna izin vermeliyiz
             if not self.instance or (self.instance and self.instance.date != date):
                 raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        if treatment and treatment.status == "completed":
+            if not self.instance or getattr(self.instance, "treatment", None) != treatment:
+                raise serializers.ValidationError({"treatment": "Tamamlanmış bir tedaviye yeni randevu eklenemez."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
@@ -170,7 +180,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             "time",
             "status",
             "notes",
-            "treatment_type",
+            "treatment",
         ]
 
     def validate(self, data):
@@ -182,6 +192,11 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         if date and date < timezone.localdate():
             if not self.instance or (self.instance and self.instance.date != date):
                 raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        if treatment and treatment.status == "completed":
+            if not self.instance or getattr(self.instance, "treatment", None) != treatment:
+                raise serializers.ValidationError({"treatment": "Tamamlanmış bir tedaviye yeni randevu eklenemez."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
