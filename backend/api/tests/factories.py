@@ -102,7 +102,7 @@ class AppointmentFactory(DjangoModelFactory):
     time = "10:00:00"
     status = Appointment.Status.SCHEDULED
     notes = ""
-    treatment_type = None
+    treatment = None
 
 
 class TreatmentFactory(DjangoModelFactory):
