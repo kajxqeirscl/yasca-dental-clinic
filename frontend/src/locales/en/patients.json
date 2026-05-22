@@ -102,7 +102,7 @@
       "no_record": "No payment records found.",
       "total_treatment": "Total Treatment Cost",
       "total_paid": "Total Paid",
-      "balance": "Remaining Balance"
+      "balance": "Remaining Debt"
     },
     "documents": {
       "title": "Patient Documents",

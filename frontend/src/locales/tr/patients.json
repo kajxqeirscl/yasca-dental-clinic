@@ -102,7 +102,7 @@
       "no_record": "Henüz ödeme kaydı bulunmuyor.",
       "total_treatment": "Toplam Tedavi Tutarı",
       "total_paid": "Toplam Ödenen",
-      "balance": "Kalan Bakiye"
+      "balance": "Kalan Borç"
     },
     "documents": {
       "title": "Hasta Dokümanları",

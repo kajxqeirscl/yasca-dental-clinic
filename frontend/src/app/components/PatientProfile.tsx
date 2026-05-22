@@ -780,9 +780,9 @@ export default function PatientProfile() {
                     {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                   </p>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                  <span className="text-sm font-medium text-blue-700">{t('patients:profile.payments.balance')}</span>
-                  <p className="text-xl font-bold text-blue-800 mt-1">
+                <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+                  <span className="text-sm font-medium text-red-600">{t('patients:profile.payments.balance')}</span>
+                  <p className="text-xl font-bold text-red-700 mt-1">
                     {(
                       treatments.filter(tr => tr.status === 'completed').reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0) -
                       payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)

@@ -153,7 +153,16 @@ export default function PaymentDialog({
               id="pay-treatment"
               className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
               value={treatmentId}
-              onChange={(e) => setTreatmentId(Number(e.target.value) || '')}
+              onChange={(e) => {
+                const val = Number(e.target.value) || '';
+                setTreatmentId(val);
+                if (val && !paymentToEdit && !defaultAmount) {
+                  const selectedTr = treatments.find((t) => t.id === val);
+                  if (selectedTr && selectedTr.price) {
+                    setAmount(selectedTr.price.toString());
+                  }
+                }
+              }}
               disabled={!!defaultTreatmentId}
             >
               <option value="">{t('payments:dialog.select_treatment')}</option>
