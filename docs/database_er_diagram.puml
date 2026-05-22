@@ -8,7 +8,7 @@ skinparam ranksep 50
 title Yasca Dental Clinic - Database ER Diagram
 
 package "Shared Schema (Public)" {
-  entity "customers_client (Tenant)" as Client {
+  entity "client (Tenant)" as Client {
     * id : integer
     --
     * schema_name : varchar(63)
@@ -17,7 +17,7 @@ package "Shared Schema (Public)" {
     * is_active : boolean
   }
 
-  entity "customers_domain" as Domain {
+  entity "domain" as Domain {
     * id : integer
     --
     * domain : varchar(253)
@@ -30,7 +30,7 @@ package "Shared Schema (Public)" {
 
 package "Tenant Schema (api app)" {
   
-  entity "api_customuser" as User {
+  entity "customuser" as User {
     * id : integer
     --
     * username : varchar(150)
@@ -46,7 +46,7 @@ package "Tenant Schema (api app)" {
     * role : varchar(20)  [admin, doctor, assistant]
   }
 
-  entity "api_patient" as Patient {
+  entity "patient" as Patient {
     * id : integer
     --
     * first_name : varchar(100)
@@ -61,7 +61,7 @@ package "Tenant Schema (api app)" {
     * updated_at : datetime
   }
 
-  entity "api_anamnesis" as Anamnesis {
+  entity "anamnesis" as Anamnesis {
     * id : integer
     --
     * patient_id : integer <<FK, UNIQUE>>
@@ -77,7 +77,7 @@ package "Tenant Schema (api app)" {
     other_notes : text
   }
 
-  entity "api_treatmenttype" as TreatmentType {
+  entity "treatmenttype" as TreatmentType {
     * id : integer
     --
     doctor_id : integer <<FK>>
@@ -87,7 +87,7 @@ package "Tenant Schema (api app)" {
     * is_active : boolean
   }
 
-  entity "api_appointment" as Appointment {
+  entity "appointment" as Appointment {
     * id : integer
     --
     * patient_id : integer <<FK>>
@@ -102,7 +102,7 @@ package "Tenant Schema (api app)" {
     * updated_at : datetime
   }
 
-  entity "api_treatment" as Treatment {
+  entity "treatment" as Treatment {
     * id : integer
     --
     * patient_id : integer <<FK>>
@@ -118,7 +118,7 @@ package "Tenant Schema (api app)" {
     * created_at : datetime
   }
 
-  entity "api_payment" as Payment {
+  entity "payment" as Payment {
     * id : integer
     --
     * patient_id : integer <<FK>>
@@ -130,7 +130,7 @@ package "Tenant Schema (api app)" {
     * created_at : datetime
   }
 
-  entity "api_document" as Document {
+  entity "document" as Document {
     * id : integer
     --
     * patient_id : integer <<FK>>
@@ -141,7 +141,7 @@ package "Tenant Schema (api app)" {
     * created_at : datetime
   }
 
-  entity "api_auditlog" as AuditLog {
+  entity "auditlog" as AuditLog {
     * id : integer
     --
     user_id : integer <<FK>>
@@ -153,7 +153,7 @@ package "Tenant Schema (api app)" {
     * created_at : datetime
   }
   
-  entity "api_clinicsettings" as ClinicSettings {
+  entity "clinicsettings" as ClinicSettings {
     * id : integer
     --
     * work_start_time : time
