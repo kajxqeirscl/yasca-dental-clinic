@@ -158,7 +158,7 @@ class Command(BaseCommand):
             patients.append(patient)
 
         # Demo specific patient
-        demo_patient = PatientFactory(first_name="Mustafa", last_name="Öztürk", phone="05559998877")
+        demo_patient = PatientFactory(first_name="Mustafa", last_name="Öztürk", phone="+905559998877")
         AnamnesisFactory(patient=demo_patient, allergies="Penisilin", smoking="Günde 1 paket")
         patients.append(demo_patient)
 
