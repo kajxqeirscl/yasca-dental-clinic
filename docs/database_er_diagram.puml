@@ -159,6 +159,8 @@ package "Tenant Schema (api app)" {
     * work_start_time : time
     * work_end_time : time
     * work_days : json
+    * allow_international_numbers : boolean
+    * default_country : varchar(2)
   }
 }
 

@@ -46,6 +46,8 @@ import AppointmentDialog from './AppointmentDialog';
 import TreatmentAddDialog from './TreatmentAddDialog';
 import PaymentDialog from './PaymentDialog';
 import { DatePicker } from './ui/date-picker';
+import { PhoneInput } from './ui/phone-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 import { formatDate, formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
 
@@ -286,14 +288,14 @@ export default function PatientProfile() {
       setSaveError('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.');
     }
 
-    // Phone Validation (Turkish format: 05xx...)
-    const phoneClean = (editedPatient.phone || '').replace(/\s/g, '');
+    // Phone Validation
+    const phoneClean = editedPatient.phone || '';
     if (!phoneClean) {
       errors.push('phone');
       if (!saveError) setSaveError('Telefon numarası zorunludur.');
-    } else if (!/^05[0-9]{9}$/.test(phoneClean)) {
+    } else if (!isValidPhoneNumber(phoneClean)) {
       errors.push('phone');
-      if (!saveError) setSaveError('Telefon numarası 05xx xxx xx xx formatında olmalıdır.');
+      if (!saveError) setSaveError('Lütfen geçerli bir telefon numarası giriniz.');
     }
 
     if (!editedPatient.first_name || !editedPatient.last_name) {
@@ -522,11 +524,10 @@ export default function PatientProfile() {
                     <Label className="text-xs text-gray-500 flex items-center gap-1">
                       <Phone className="w-3 h-3" /> {t('patients:profile.info.phone')}
                     </Label>
-                    <Input 
+                    <PhoneInput 
                       value={editedPatient?.phone || ''} 
-                      onChange={(e) => handleFieldChange('phone', e.target.value)}
-                      placeholder="05xx xxx xx xx"
-                      className={validationErrors.includes('phone') ? 'border-red-500 ring-red-500' : ''}
+                      onChange={(val) => handleFieldChange('phone', val || '')}
+                      className={validationErrors.includes('phone') ? 'border-red-500 focus-within:ring-red-500' : ''}
                     />
                   </div>
                   <div className="space-y-1">

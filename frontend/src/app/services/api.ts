@@ -456,6 +456,8 @@ export async function updateClinicSettings(data: {
   work_start_time?: string;
   work_end_time?: string;
   work_days?: number[];
+  allow_international_numbers?: boolean;
+  default_country?: string;
 }) {
   const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`, {
     method: 'PUT',

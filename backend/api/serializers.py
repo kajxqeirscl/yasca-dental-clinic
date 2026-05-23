@@ -297,7 +297,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
 class ClinicSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClinicSettings
-        fields = ["id", "work_start_time", "work_end_time", "work_days"]
+        fields = ["id", "work_start_time", "work_end_time", "work_days", "allow_international_numbers", "default_country"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):

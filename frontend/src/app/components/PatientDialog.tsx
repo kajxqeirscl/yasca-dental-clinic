@@ -11,6 +11,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { DatePicker } from './ui/date-picker';
+import { PhoneInput } from './ui/phone-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 import { createPatient, updatePatient } from '../services/api';
 
 import { useTranslation } from 'react-i18next';
@@ -80,11 +82,11 @@ export default function PatientDialog({
     if (!formData.last_name.trim()) newMissingFields.push('Soyad');
     
     // Phone validation
-    const phoneClean = formData.phone.replace(/\s/g, '');
+    const phoneClean = formData.phone || '';
     if (!phoneClean) {
       newMissingFields.push('Telefon');
-    } else if (!/^05[0-9]{9}$/.test(phoneClean)) {
-      setError('Telefon numarası 05xx xxx xx xx formatında olmalıdır.');
+    } else if (!isValidPhoneNumber(phoneClean)) {
+      setError('Lütfen geçerli bir telefon numarası giriniz.');
       setMissingFields(['Telefon']);
       return;
     }
@@ -215,17 +217,14 @@ export default function PatientDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="phone">{t('patients:dialog.fields.phone')}</Label>
-              <Input
+              <PhoneInput
                 id="phone"
-                type="tel"
-                placeholder={t('patients:dialog.fields.phone_placeholder')}
                 value={formData.phone}
-                className={missingFields.includes('Telefon') ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                onChange={(e) => {
-                  setFormData({ ...formData, phone: e.target.value });
+                className={missingFields.includes('Telefon') ? 'border-red-500 focus-within:ring-red-500' : ''}
+                onChange={(val) => {
+                  setFormData({ ...formData, phone: val || '' });
                   if (missingFields.includes('Telefon')) setMissingFields(missingFields.filter(f => f !== 'Telefon'));
                 }}
-                required
               />
             </div>
             <div className="space-y-2">

@@ -238,6 +238,13 @@ class ClinicSettings(models.Model):
         blank=True,
         help_text="Örn: 1,2,3,4,5,6 (1=Pzt, 0=Paz)"
     )
+    allow_international_numbers = models.BooleanField("Uluslararası Numaralara İzin Ver", default=False)
+    default_country = models.CharField(
+        "Varsayılan Ülke", 
+        max_length=2, 
+        choices=[('TR', 'Türkiye')], 
+        default='TR'
+    )
 
     class Meta:
         verbose_name = "Klinik Ayarı"
