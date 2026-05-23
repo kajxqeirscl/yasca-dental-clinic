@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { DatePicker } from './ui/date-picker';
 import { createPatient, updatePatient } from '../services/api';
 
 import { useTranslation } from 'react-i18next';
@@ -50,6 +51,7 @@ export default function PatientDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [showFutureWarning, setShowFutureWarning] = useState(false);
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -76,8 +78,23 @@ export default function PatientDialog({
     const newMissingFields = [];
     if (!formData.first_name.trim()) newMissingFields.push('Ad');
     if (!formData.last_name.trim()) newMissingFields.push('Soyad');
-    if (!formData.phone.trim()) newMissingFields.push('Telefon');
-    if (!formData.tckn.trim()) newMissingFields.push('TC Kimlik No');
+    
+    // Phone validation
+    const phoneClean = formData.phone.replace(/\s/g, '');
+    if (!phoneClean) {
+      newMissingFields.push('Telefon');
+    } else if (!/^05[0-9]{9}$/.test(phoneClean)) {
+      setError('Telefon numarası 05xx xxx xx xx formatında olmalıdır.');
+      setMissingFields(['Telefon']);
+      return;
+    }
+
+    // TCKN validation (optional, but must be 11 digits if provided)
+    if (formData.tckn.trim() && !/^[0-9]{11}$/.test(formData.tckn.trim())) {
+      setError('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.');
+      setMissingFields(['TC Kimlik No']);
+      return;
+    }
 
     if (newMissingFields.length > 0) {
       setMissingFields(newMissingFields);
@@ -86,6 +103,28 @@ export default function PatientDialog({
     }
     
     setMissingFields([]);
+
+    let isFuture = false;
+    if (formData.birth_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const bDate = new Date(formData.birth_date);
+      bDate.setHours(0, 0, 0, 0);
+      if (bDate > today) {
+        isFuture = true;
+      }
+    }
+
+    if (isFuture) {
+      setShowFutureWarning(true);
+      return;
+    }
+
+    proceedSave();
+  };
+
+  const proceedSave = async () => {
+    setShowFutureWarning(false);
     setLoading(true);
     setError('');
     try {
@@ -131,6 +170,7 @@ export default function PatientDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -201,54 +241,17 @@ export default function PatientDialog({
                   setFormData({ ...formData, tckn: e.target.value });
                   if (missingFields.includes('TC Kimlik No')) setMissingFields(missingFields.filter(f => f !== 'TC Kimlik No'));
                 }}
-                required
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="birthDate">{t('patients:dialog.fields.birth_date')}</Label>
-            <div className="flex gap-2">
-              <select
-                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
-                value={formData.birth_date ? formData.birth_date.split('-')[2] : ''}
-                onChange={(e) => {
-                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
-                  setFormData({ ...formData, birth_date: `${parts[0]}-${parts[1]}-${e.target.value.padStart(2, '0')}` });
-                }}
-              >
-                <option value="" disabled>Gün</option>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-              <select
-                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
-                value={formData.birth_date ? formData.birth_date.split('-')[1] : ''}
-                onChange={(e) => {
-                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
-                  setFormData({ ...formData, birth_date: `${parts[0]}-${e.target.value.padStart(2, '0')}-${parts[2]}` });
-                }}
-              >
-                <option value="" disabled>Ay</option>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-              <select
-                className="w-1/3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm"
-                value={formData.birth_date ? formData.birth_date.split('-')[0] : ''}
-                onChange={(e) => {
-                  const parts = formData.birth_date ? formData.birth_date.split('-') : ['1990', '01', '01'];
-                  setFormData({ ...formData, birth_date: `${e.target.value}-${parts[1]}-${parts[2]}` });
-                }}
-              >
-                <option value="" disabled>Yıl</option>
-                {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+            <DatePicker
+              date={formData.birth_date}
+              onDateChange={(d) => setFormData({ ...formData, birth_date: d })}
+              maxDate={new Date().toLocaleDateString('en-CA')}
+            />
           </div>
 
           <div className="space-y-2">
@@ -286,5 +289,25 @@ export default function PatientDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={showFutureWarning} onOpenChange={setShowFutureWarning}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('patients:dialog.future_warning_title', 'Gelecek Tarih Uyarısı')}</DialogTitle>
+          <DialogDescription>
+            {t('patients:dialog.future_warning_desc', 'Doğum tarihi olarak gelecekteki bir tarihi seçtiniz. Yine de devam etmek istiyor musunuz?')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={() => setShowFutureWarning(false)}>
+            {t('common:cancel', 'İptal')}
+          </Button>
+          <Button onClick={proceedSave} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700">
+            {loading ? t('patients:dialog.saving', 'Kaydediliyor...') : t('common:continue', 'Devam Et')}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

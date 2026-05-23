@@ -189,12 +189,9 @@ export default function PaymentDialog({
 
           <div className="space-y-2">
             <Label htmlFor="pay-date">{t('payments:dialog.date')}</Label>
-            <input
-              type="date"
-              id="pay-date"
-              className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+            <DatePicker
+              date={paymentDate}
+              onDateChange={setPaymentDate}
               required
             />
           </div>

@@ -51,7 +51,7 @@ class Patient(models.Model):
     first_name = models.CharField("Ad", max_length=100)
     last_name = models.CharField("Soyad", max_length=100)
     phone = models.CharField("Telefon", max_length=20)
-    tckn = models.CharField("TC Kimlik No", max_length=11)
+    tckn = models.CharField("TC Kimlik No", max_length=11, null=True, blank=True)
     birth_date = models.DateField("Doğum Tarihi", null=True, blank=True)
     address = models.TextField("Adres", blank=True)
     notes = models.TextField("Notlar", blank=True)

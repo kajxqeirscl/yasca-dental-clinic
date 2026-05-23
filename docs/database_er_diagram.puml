@@ -52,7 +52,7 @@ package "Tenant Schema (api app)" {
     * first_name : varchar(100)
     * last_name : varchar(100)
     * phone : varchar(20)
-    * tckn : varchar(11)
+    tckn : varchar(11)
     birth_date : date
     address : text
     notes : text

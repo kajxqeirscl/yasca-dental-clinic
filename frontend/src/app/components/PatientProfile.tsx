@@ -139,6 +139,7 @@ export default function PatientProfile() {
   const [patient, setPatient] = useState<PatientData | null>(null);
   const [editedPatient, setEditedPatient] = useState<PatientData | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [showFutureWarning, setShowFutureWarning] = useState(false);
 
   const handleTabChange = (val: string) => {
     setActiveTab(val);
@@ -286,7 +287,11 @@ export default function PatientProfile() {
     }
 
     // Phone Validation (Turkish format: 05xx...)
-    if (editedPatient.phone && !/^05[0-9]{9}$/.test(editedPatient.phone.replace(/\s/g, ''))) {
+    const phoneClean = (editedPatient.phone || '').replace(/\s/g, '');
+    if (!phoneClean) {
+      errors.push('phone');
+      if (!saveError) setSaveError('Telefon numarası zorunludur.');
+    } else if (!/^05[0-9]{9}$/.test(phoneClean)) {
       errors.push('phone');
       if (!saveError) setSaveError('Telefon numarası 05xx xxx xx xx formatında olmalıdır.');
     }
@@ -305,6 +310,28 @@ export default function PatientProfile() {
     if (!editedPatient || !id) return;
     if (!validateData()) return;
 
+    let isFuture = false;
+    if (editedPatient.birth_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const bDate = new Date(editedPatient.birth_date);
+      bDate.setHours(0, 0, 0, 0);
+      if (bDate > today) {
+        isFuture = true;
+      }
+    }
+
+    if (isFuture) {
+      setShowFutureWarning(true);
+      return;
+    }
+
+    proceedSave();
+  };
+
+  const proceedSave = async () => {
+    if (!editedPatient || !id) return;
+    setShowFutureWarning(false);
     setLoading(true);
     setSaveError('');
     try {
@@ -522,6 +549,7 @@ export default function PatientProfile() {
                     <DatePicker
                       date={editedPatient?.birth_date || undefined}
                       onDateChange={(val) => handleFieldChange('birth_date', val)}
+                      maxDate={new Date().toLocaleDateString('en-CA')}
                     />
                   </div>
                   <div className="space-y-1">
@@ -1187,6 +1215,25 @@ export default function PatientProfile() {
           <div className="flex justify-end gap-3 mt-4">
             <Button variant="outline" onClick={() => setIsDeletingDoc(null)}>{t('common:cancel')}</Button>
             <Button variant="destructive" onClick={confirmFileDelete}>{t('common:delete')}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showFutureWarning} onOpenChange={setShowFutureWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('patients:dialog.future_warning_title', 'Gelecek Tarih Uyarısı')}</DialogTitle>
+            <DialogDescription>
+              {t('patients:dialog.future_warning_desc', 'Doğum tarihi olarak gelecekteki bir tarihi seçtiniz. Yine de devam etmek istiyor musunuz?')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowFutureWarning(false)}>
+              {t('common:cancel', 'İptal')}
+            </Button>
+            <Button onClick={proceedSave} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700">
+              {loading ? t('patients:profile.saving', 'Kaydediliyor...') : t('common:continue', 'Devam Et')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
