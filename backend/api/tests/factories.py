@@ -66,7 +66,7 @@ class PatientFactory(DjangoModelFactory):
 
     first_name = factory.Faker("first_name", locale="tr_TR")
     last_name = factory.Faker("last_name", locale="tr_TR")
-    phone = factory.Sequence(lambda n: f"0555{n:07d}")
+    phone = factory.Sequence(lambda n: f"+90555{n:07d}")
     tckn = ""
     birth_date = None
 
