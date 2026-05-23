@@ -876,16 +876,29 @@ export default function PatientProfile() {
                           return (
                             <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
                               <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
-                                    {isPaid && (
-                                      <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
-                                    )}
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
+                                    <Stethoscope className="w-6 h-6 text-blue-600" />
                                   </div>
-                                  <div className="text-sm text-gray-500 mt-1">
-                                    {tr.tooth_number && <span>Diş: {tr.tooth_number} • </span>}
-                                    {formatDate(tr.date)}
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
+                                      {tr.tooth_number && (
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {t('patients:profile.treatments.tooth', 'Diş')}: {tr.tooth_number}
+                                        </Badge>
+                                      )}
+                                      {isPaid ? (
+                                        <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
+                                      ) : (
+                                        <Badge className="bg-yellow-100 text-yellow-800 border-none">Bekliyor</Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                                      <span className="font-medium text-gray-700">{tr.doctor_name}</span>
+                                      <span>•</span>
+                                      <span>{formatDate(tr.date)}</span>
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="text-right">
