@@ -30,10 +30,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # ── standard.localhost subdomain'ini CI ortamında çözümle ──
+    - name: Add tenant subdomain to /etc/hosts
+      run: echo "127.0.0.1 standard.localhost" | sudo tee -a /etc/hosts
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
         cache: 'pip'
 
     - name: Install Backend Dependencies
@@ -82,18 +86,20 @@ jobs:
       
     - name: Wait for services to be ready
       run: |
-        # Wait for backend
-        until curl -s http://localhost:8000/api/public/clinic-info/ > /dev/null; do
+        # Wait for backend (standard.localhost subdomain üzerinden)
+        until curl -s http://standard.localhost:8000/api/public/clinic-info/ > /dev/null; do
           echo "Waiting for backend..."
           sleep 2
         done
-        # Wait for frontend
-        until curl -s http://localhost:5173/ > /dev/null; do
+        # Wait for frontend (standard.localhost subdomain üzerinden)
+        until curl -s http://standard.localhost:5173/ > /dev/null; do
           echo "Waiting for frontend..."
           sleep 2
         done
 
     - name: Run Playwright Tests
+      env:
+        PLAYWRIGHT_BASE_URL: http://standard.localhost:5173
       run: |
         cd frontend
         npx playwright test --reporter=html
