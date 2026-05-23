@@ -8,6 +8,14 @@ import { useTranslation } from 'react-i18next';
 import { fetchDashboardToday } from '../services/api';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
 import AppointmentDialog from './AppointmentDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from './ui/pagination';
 
 interface TodayAppointment {
   id: number;
@@ -46,13 +54,16 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<FilterStatus>(() => {
     return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleFilterChange = (newFilter: FilterStatus) => {
     setFilter(newFilter);
     localStorage.setItem('dashboardAppointmentFilter', newFilter);
+    setCurrentPage(1);
   };
 
-  const loadData = () => {
+  const loadData = async () => {
     setLoading(true);
     fetchDashboardToday()
       .then(setData)
@@ -92,10 +103,17 @@ export default function Dashboard() {
   const totalPatients = data?.total_patients ?? 0;
 
   // Filter logic
-  const filteredAppointments = appointments.filter(apt => {
-    if (filter === 'all') return true;
-    return apt.status === filter;
+  const filteredAppointments = (data?.today_appointments || []).filter((app) => {
+    if (filter === 'completed') return app.status === 'completed';
+    if (filter === 'scheduled') return app.status === 'scheduled';
+    return true;
   });
+
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const paginatedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -217,32 +235,68 @@ export default function Dashboard() {
                 {t('dashboard:no_appointments')}
               </div>
             ) : (
-              filteredAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border-l-4 cursor-pointer transition-colors ${getStatusBg(appointment.status)}`}
-                  onClick={() => handleAppointmentClick(appointment)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white rounded-lg shadow-sm">
-                      <Clock className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">{formatTimeStr(appointment.time)}</span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-gray-900">{appointment.patient_name}</span>
+              <>
+                {paginatedAppointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border-l-4 cursor-pointer transition-colors ${getStatusBg(appointment.status)}`}
+                    onClick={() => handleAppointmentClick(appointment)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-12 h-12 bg-white rounded-lg shadow-sm">
+                        <Clock className="w-5 h-5 text-gray-600" />
                       </div>
-                      {(appointment.treatment_type_name || appointment.notes) && (
-                        <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
-                          {appointment.treatment_type_name || appointment.notes}
-                        </p>
-                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">{formatTimeStr(appointment.time)}</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-900">{appointment.patient_name}</span>
+                        </div>
+                        {(appointment.treatment_type_name || appointment.notes) && (
+                          <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
+                            {appointment.treatment_type_name || appointment.notes}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    {getStatusBadge(appointment.status)}
                   </div>
-                  {getStatusBadge(appointment.status)}
-                </div>
-              ))
+                ))}
+                
+                {totalPages > 1 && (
+                  <div className="mt-4 border-t pt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              isActive={currentPage === pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </CardContent>

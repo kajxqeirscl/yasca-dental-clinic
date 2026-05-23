@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -83,8 +84,8 @@ export default function AppointmentDetailDialog({
       await deleteAppointment(appointment.id);
       onUpdated?.();
       onClose();
-    } catch {
-      // silently fail
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Randevu silinemedi');
     } finally {
       setLoading(false);
       setConfirmDelete(false);

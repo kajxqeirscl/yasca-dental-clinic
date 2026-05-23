@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { Settings, Clock, Calendar, CheckCircle } from 'lucide-react';
+import { Switch } from './ui/switch';
+import { Settings, Clock, Calendar, CheckCircle, Globe } from 'lucide-react';
 import { fetchClinicSettings, updateClinicSettings } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeStr } from '../utils/date';
@@ -23,6 +24,8 @@ interface ClinicSettingsData {
   work_start_time: string;
   work_end_time: string;
   work_days: number[];
+  allow_international_numbers: boolean;
+  default_country: string;
 }
 
 const generateTimeOptions = () => {
@@ -49,6 +52,8 @@ export default function ClinicSettingsPage() {
     work_start_time: '09:00',
     work_end_time: '18:00',
     work_days: [1, 2, 3, 4, 5, 6],
+    allow_international_numbers: false,
+    default_country: 'TR',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,6 +68,8 @@ export default function ClinicSettingsPage() {
           work_start_time: data.work_start_time?.substring(0, 5) || '09:00',
           work_end_time: data.work_end_time?.substring(0, 5) || '18:00',
           work_days: data.work_days?.map(Number) || [1, 2, 3, 4, 5, 6],
+          allow_international_numbers: data.allow_international_numbers || false,
+          default_country: data.default_country || 'TR',
         });
       })
       .catch(() => setError(t('settings:error_load')))
@@ -88,11 +95,15 @@ export default function ClinicSettingsPage() {
         work_start_time: settings.work_start_time + ':00',
         work_end_time: settings.work_end_time + ':00',
         work_days: settings.work_days,
+        allow_international_numbers: settings.allow_international_numbers,
+        default_country: settings.default_country,
       });
       setSettings({
         work_start_time: data.work_start_time?.substring(0, 5) || settings.work_start_time,
         work_end_time: data.work_end_time?.substring(0, 5) || settings.work_end_time,
         work_days: data.work_days?.map(Number) || settings.work_days,
+        allow_international_numbers: data.allow_international_numbers ?? settings.allow_international_numbers,
+        default_country: data.default_country || settings.default_country,
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -239,6 +250,30 @@ export default function ClinicSettingsPage() {
           <p className="text-xs text-gray-400 mt-3">
             {t('settings:days_desc')}
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Telefon Ayarları */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Globe className="w-4 h-4" /> Telefon & Ülke Ayarları
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-2">
+              <Label>Varsayılan Ülke</Label>
+              <select
+                className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                value={settings.default_country}
+                disabled={!isAdmin}
+                onChange={(e) => setSettings((prev) => ({ ...prev, default_country: e.target.value }))}
+              >
+                <option value="TR">Türkiye (+90)</option>
+              </select>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

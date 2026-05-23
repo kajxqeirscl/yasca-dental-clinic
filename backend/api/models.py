@@ -51,7 +51,7 @@ class Patient(models.Model):
     first_name = models.CharField("Ad", max_length=100)
     last_name = models.CharField("Soyad", max_length=100)
     phone = models.CharField("Telefon", max_length=20)
-    tckn = models.CharField("TC Kimlik No", max_length=11)
+    tckn = models.CharField("TC Kimlik No", max_length=11, null=True, blank=True)
     birth_date = models.DateField("Doğum Tarihi", null=True, blank=True)
     address = models.TextField("Adres", blank=True)
     notes = models.TextField("Notlar", blank=True)
@@ -237,6 +237,13 @@ class ClinicSettings(models.Model):
         default=list,
         blank=True,
         help_text="Örn: 1,2,3,4,5,6 (1=Pzt, 0=Paz)"
+    )
+    allow_international_numbers = models.BooleanField("Uluslararası Numaralara İzin Ver", default=False)
+    default_country = models.CharField(
+        "Varsayılan Ülke", 
+        max_length=2, 
+        choices=[('TR', 'Türkiye')], 
+        default='TR'
     )
 
     class Meta:

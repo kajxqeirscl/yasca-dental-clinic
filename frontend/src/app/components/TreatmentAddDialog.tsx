@@ -196,7 +196,7 @@ export default function TreatmentAddDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(t('treatments:dialog.error_delete'));
+      setError(err instanceof Error ? err.message : t('treatments:dialog.error_delete'));
     } finally {
       setLoading(false);
     }
@@ -227,12 +227,9 @@ export default function TreatmentAddDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="treat-date">{t('treatments:dialog.date')}</Label>
-              <input
-                type="date"
-                id="treat-date"
-                className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+              <DatePicker
+                date={date}
+                onDateChange={setDate}
                 required
               />
             </div>

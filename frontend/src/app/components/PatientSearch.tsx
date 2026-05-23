@@ -17,6 +17,14 @@ import PatientDialog from './PatientDialog';
 import { fetchPatients } from '../services/api';
 import { formatDate } from '../utils/date';
 import { useTranslation } from 'react-i18next';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from './ui/pagination';
 
 export default function PatientSearch() {
   const { t } = useTranslation();
@@ -34,6 +42,8 @@ export default function PatientSearch() {
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const loadPatients = async () => {
     setLoading(true);
@@ -50,9 +60,16 @@ export default function PatientSearch() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     const timer = setTimeout(loadPatients, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  const totalPages = Math.ceil(patients.length / itemsPerPage);
+  const paginatedPatients = patients.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handlePatientCreated = () => {
     setIsDialogOpen(false);
@@ -103,7 +120,7 @@ export default function PatientSearch() {
                   </TableCell>
                 </TableRow>
               ) : (
-                patients.map((patient) => (
+                paginatedPatients.map((patient) => (
                   <TableRow key={patient.id} className="hover:bg-gray-50">
                     <TableCell>
                       <button
@@ -144,6 +161,57 @@ export default function PatientSearch() {
               )}
             </TableBody>
           </Table>
+          
+          {totalPages > 1 && !loading && (
+            <div className="mt-4 pt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => {
+                    // Sadece etraftaki sayfaları göster
+                    if (
+                      pageNum === 1 || 
+                      pageNum === totalPages || 
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            isActive={currentPage === pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                      return (
+                        <PaginationItem key={`ellipsis-${pageNum}`}>
+                          <span className="px-2">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
           {!loading && patients.length === 0 && !error && (
             <div className="text-center py-8 text-gray-500">
               {t('patients:search.not_found')}

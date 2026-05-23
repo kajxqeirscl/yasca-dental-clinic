@@ -139,12 +139,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
         date = data.get("date", getattr(self.instance, "date", None))
         time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
-        if date and date < timezone.localdate():
-            # Ancak eski randevunun tarihi zaten geçmişteyse, sadece status falan güncelleniyorsa buna izin vermeliyiz
-            if not self.instance or (self.instance and self.instance.date != date):
-                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
-
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
+        
         treatment = data.get("treatment", getattr(self.instance, "treatment", None))
         if treatment and treatment.status == "completed":
             if not self.instance or getattr(self.instance, "treatment", None) != treatment:
@@ -188,10 +185,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         date = data.get("date", getattr(self.instance, "date", None))
         time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada veya tarih güncelleniyorsa geçmiş tarih kontrolü
-        if date and date < timezone.localdate():
-            if not self.instance or (self.instance and self.instance.date != date):
-                raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
 
         treatment = data.get("treatment", getattr(self.instance, "treatment", None))
         if treatment and treatment.status == "completed":
@@ -220,6 +215,26 @@ class TreatmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TreatmentType
         fields = ["id", "name", "category", "default_price", "is_active"]
+
+    def validate(self, data):
+        name = data.get("name", getattr(self.instance, "name", None))
+        request = self.context.get("request")
+        user = request.user if request else None
+
+        if name and user:
+            # Aynı isimde başka aktif tedavi türü var mı kontrol et
+            qs = TreatmentType.objects.filter(name__iexact=name, is_active=True)
+            if user.role == CustomUser.Role.DOCTOR:
+                qs = qs.filter(doctor=user)
+            else:
+                qs = qs.filter(doctor__isnull=True)
+                
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+                
+            if qs.exists():
+                raise serializers.ValidationError({"name": "Bu isimde bir tedavi türü zaten mevcut."})
+        return data
 
 
 class TreatmentSerializer(serializers.ModelSerializer):
@@ -250,6 +265,31 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def validate(self, data):
+        patient = data.get("patient", getattr(self.instance, "patient", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        tooth_number = data.get("tooth_number", getattr(self.instance, "tooth_number", None))
+        treatment_type = data.get("treatment_type", getattr(self.instance, "treatment_type", None))
+        
+        # Aynı hastaya, aynı gün, aynı dişe, aynı tedavi türü eklenmesini engelle
+        if patient and date and treatment_type and tooth_number:
+            qs = Treatment.objects.filter(
+                patient=patient,
+                date=date,
+                tooth_number=tooth_number,
+                treatment_type=treatment_type,
+                is_active=True
+            )
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            
+            if qs.exists():
+                raise serializers.ValidationError(
+                    "Bu hastaya aynı gün aynı dişe bu tedavi zaten eklenmiş."
+                )
+                
+        return data
+
     def get_doctor_name(self, obj):
         return obj.doctor.get_full_name() or obj.doctor.username
 
@@ -257,7 +297,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
 class ClinicSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClinicSettings
-        fields = ["id", "work_start_time", "work_end_time", "work_days"]
+        fields = ["id", "work_start_time", "work_end_time", "work_days", "allow_international_numbers", "default_country"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):
