@@ -3,9 +3,25 @@
  * JWT token ile kimlik doğrulama, 401 yönlendirme
  */
 
-// Tarayıcıdaki adrese göre dinamik olarak API adresini belirliyoruz (Örn: ali.localhost:8000)
+// Tarayıcıdaki adrese göre dinamik olarak API adresini belirliyoruz (Örn: ali.localhost:8000 veya ali.yasca-dental-clinic.onrender.com)
 const HOSTNAME = window.location.hostname;
-const API_BASE = `http://${HOSTNAME}:8000/api`;
+
+let API_BASE = '';
+if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
+  API_BASE = `http://${HOSTNAME}:8000/api`;
+} else {
+  // Canlı ortam (Render + Vercel)
+  // Tarayıcı adresindeki subdomain'i ayıklıyoruz
+  // Örn: ali.yasca-dental-clinic.vercel.app -> subdomain: ali
+  const parts = HOSTNAME.split('.');
+  // Eğer en az 3 parça varsa (örn: ali.yasca-dental.vercel.app) ve ilki 'www' değilse subdomain vardır
+  if (parts.length >= 3 && parts[0] !== 'www') {
+    const subdomain = parts[0];
+    API_BASE = `https://${subdomain}.yasca-dental-clinic.onrender.com/api`;
+  } else {
+    API_BASE = `https://yasca-dental-clinic.onrender.com/api`;
+  }
+}
 
 export const setTokens = (access: string, refresh: string) => {
   localStorage.setItem('access_token', access);
