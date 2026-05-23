@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Backend: pytest + coverage (PostgreSQL)
+  # Backend: pytest + coverage (PostgreSQL + django-tenants)
   # ─────────────────────────────────────────────
   backend:
     name: Backend Tests
@@ -46,6 +46,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
+      - name: Run django-tenants migrations
+        run: |
+          python manage.py migrate_schemas --shared
+          python manage.py migrate_schemas --tenant
+
       - name: Run tests with coverage
         run: pytest --cov=api --cov-report=xml --cov-fail-under=80
 
@@ -81,7 +86,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx eslint src --max-warnings 0
+        run: npx eslint --max-warnings 0
 
       - name: Run unit tests with coverage
         run: npx vitest run --coverage

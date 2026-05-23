@@ -387,12 +387,11 @@ return (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>{t('appointments:dialog.fields.date')}</Label>
-            <input
-              type="date"
-              className={`w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.includes('date') ? 'border-red-500 focus:ring-red-500' : ''}`}
-              value={date}
-              min={new Date().toLocaleDateString('en-CA')}
-              onChange={(e) => setDate(e.target.value)}
+            <DatePicker
+              date={date}
+              onDateChange={setDate}
+              minDate={new Date().toLocaleDateString('en-CA')}
+              className={validationErrors.includes('date') ? 'border-red-500 focus-within:ring-red-500' : ''}
               required
             />
           </div>

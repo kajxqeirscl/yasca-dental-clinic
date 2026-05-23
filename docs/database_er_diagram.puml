@@ -2,8 +2,8 @@
 !theme plain
 hide circle
 skinparam linetype ortho
-skinparam nodesep 50
-skinparam ranksep 50
+skinparam nodesep 100
+skinparam ranksep 100
 
 title Yasca Dental Clinic - Database ER Diagram
 
@@ -52,7 +52,7 @@ package "Tenant Schema (api app)" {
     * first_name : varchar(100)
     * last_name : varchar(100)
     * phone : varchar(20)
-    * tckn : varchar(11)
+    tckn : varchar(11)
     birth_date : date
     address : text
     notes : text
@@ -159,22 +159,33 @@ package "Tenant Schema (api app)" {
     * work_start_time : time
     * work_end_time : time
     * work_days : json
+    * allow_international_numbers : boolean
+    * default_country : varchar(2)
   }
 }
 
-' Relationships
-Patient ||--|| Anamnesis : "1:1 has"
-User ||--o{ TreatmentType : "1:N creates"
-Patient ||--o{ Appointment : "1:N books"
-User ||--o{ Appointment : "1:N assigned to"
-Treatment ||--o{ Appointment : "1:N planned"
+' Relationships (Refactored for cleaner layout)
+
+' Core Patient relationships pushed in different directions
+Patient ||-down-|| Anamnesis : "1:1 has"
+Patient ||-right-o{ Appointment : "1:N books"
 Patient ||--o{ Treatment : "1:N receives"
+Patient ||-left-o{ Payment : "1:N makes"
+Patient ||-up-o{ Document : "1:N has"
+
+' User relationships routed to avoid crossing Patient lines
+User ||-down-o{ TreatmentType : "1:N creates"
+User ||-right--o{ Appointment : "1:N assigned to"
 User ||--o{ Treatment : "1:N performs"
-TreatmentType ||--o{ Treatment : "1:N is of type"
-Patient ||--o{ Payment : "1:N makes"
+User ||-up-o{ Document : "1:N uploads"
+User ||-left-o{ AuditLog : "1:N performs action"
+
+' Secondary routing
+TreatmentType ||-right-o{ Treatment : "1:N is of type"
+Treatment ||-up-o{ Appointment : "1:N planned"
 Treatment ||--o{ Payment : "1:N paid for"
-Patient ||--o{ Document : "1:N has"
-User ||--o{ Document : "1:N uploads"
-User ||--o{ AuditLog : "1:N performs action"
+
+' Hidden links to force vertical alignment of loose tables
+ClinicSettings -[hidden]down- AuditLog
 
 @enduml
