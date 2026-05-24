@@ -17,7 +17,11 @@ export default function App() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-  const isPublicSaaS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const hostname = window.location.hostname;
+  const isPublicSaaS = 
+    hostname === 'localhost' || 
+    hostname === '127.0.0.1' || 
+    hostname === 'yasca-dental-clinic.vercel.app';
 
   if (isPublicSaaS) {
     return <PublicApp />;
