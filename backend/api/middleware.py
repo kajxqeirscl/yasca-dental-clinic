@@ -34,6 +34,11 @@ class HeaderTenantMiddleware(TenantMainMiddleware):
                 tenant = TenantModel.objects.get(schema_name=tenant_header)
                 request.tenant = tenant
                 connection.set_tenant(tenant)
+                # URL routing'i tenant URL'lerine yönlendir (public değil!)
+                # django-tenants normalde bunu Host header'a göre yapar,
+                # ama biz X-Tenant ile override ettiğimiz için elle ayarlıyoruz.
+                from django.conf import settings
+                request.urlconf = settings.ROOT_URLCONF  # core.urls (tenant)
                 return self.get_response(request)
             except TenantModel.DoesNotExist:
                 pass  # Header'daki tenant bulunamazsa standart yönteme devam et

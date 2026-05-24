@@ -1,63 +1,59 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth, getUserRoleDisplay } from './contexts/AuthContext';
-import LoginPage from './components/LoginPage';
-import Dashboard from './components/Dashboard';
-import AppointmentCalendar from './components/AppointmentCalendar';
-import PatientSearch from './components/PatientSearch';
-import PatientProfile from './components/PatientProfile';
-import Layout from './components/Layout';
-import ClinicSettingsPage from './components/ClinicSettingsPage';
-import TreatmentTypesPage from './components/TreatmentTypesPage';
-import AuditLogPage from './components/AuditLogPage';
-
 import PublicApp from './public/PublicApp';
+import ClinicApp from './ClinicApp';
 
+/**
+ * Ana Uygulama Yönlendiricisi
+ * 
+ * - /              → Public SaaS Tanıtım Sitesi
+ * - /app/:slug/*   → Klinik Yönetim Paneli (multi-tenant)
+ * 
+ * Lokal geliştirmede subdomain yapısı (ali.localhost) hâlâ çalışır.
+ * Canlıda ise path tabanlı yapı kullanılır (vercel.app/app/ali).
+ */
 export default function App() {
-  const { t } = useTranslation();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
-
   const hostname = window.location.hostname;
-  const isPublicSaaS = 
-    hostname === 'localhost' || 
-    hostname === '127.0.0.1' || 
-    hostname === 'yasca-dental-clinic.vercel.app';
 
-  if (isPublicSaaS) {
-    return <PublicApp />;
-  }
+  // Lokal geliştirmede subdomain varsa (ali.localhost gibi) doğrudan klinik paneline git
+  const isLocalSubdomain =
+    (hostname.endsWith('.localhost') && hostname !== 'localhost') ||
+    (hostname !== '127.0.0.1' && hostname !== 'localhost' && hostname.includes('.localhost'));
 
-  if (isLoading) {
+  if (isLocalSubdomain) {
+    // Lokal subdomain: ali.localhost -> tenant bilgisi Host header ile otomatik gider
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">{t('common:loading')}</div>
-      </div>
+      <BrowserRouter>
+        <ClinicApp tenantSlug="" />
+      </BrowserRouter>
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return <LoginPage />;
-  }
-
-  const userRole = getUserRoleDisplay(user.role);
-  const isAdmin = user.role === 'admin';
-  const userName = `${user.first_name} ${user.last_name}`.trim() || user.username;
-
+  // Canlı ortam + lokal ana sayfa: path tabanlı routing
   return (
     <BrowserRouter>
-      <Layout userName={userName} userRole={userRole} onLogout={logout} isAdmin={isAdmin}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/randevular" element={<AppointmentCalendar />} />
-          <Route path="/hastalar" element={<PatientSearch />} />
-          <Route path="/hasta/:id" element={<PatientProfile />} />
-          <Route path="/ayarlar" element={<ClinicSettingsPage />} />
-          <Route path="/tedavi-turleri" element={<TreatmentTypesPage userRole={user.role} />} />
-          {isAdmin && <Route path="/islem-gecmisi" element={<AuditLogPage />} />}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <Routes>
+        {/* /app/:slug altındaki her şey klinik paneline gider */}
+        <Route path="/app/:slug/*" element={<ClinicAppWrapper />} />
+        {/* Diğer her şey PublicApp (tanıtım sitesi) */}
+        <Route path="/*" element={<PublicApp />} />
+      </Routes>
     </BrowserRouter>
   );
 }
 
+/**
+ * URL'deki :slug parametresini ClinicApp'e aktarır
+ */
+function ClinicAppWrapper() {
+  // useParams BrowserRouter içinde zaten olduğumuz için burada kullanılabilir
+  // Ama Route element içinden params almak için bir wrapper lazım
+  return <ClinicAppParamsReader />;
+}
+
+import { useParams } from 'react-router-dom';
+
+function ClinicAppParamsReader() {
+  const { slug } = useParams<{ slug: string }>();
+  if (!slug) return <Navigate to="/" replace />;
+  return <ClinicApp tenantSlug={slug} />;
+}

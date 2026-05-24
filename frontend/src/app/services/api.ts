@@ -19,13 +19,14 @@ if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
 } else {
   // Canlı ortam - Tüm istekler tek Render URL'ine gider
   API_BASE = 'https://yasca-dental-clinic.onrender.com/api';
-  
-  // Tarayıcı adresindeki subdomain'i ayıklıyoruz
-  // Örn: ali.yasca-dental-clinic.vercel.app -> parts: ['ali', 'yasca-dental-clinic', 'vercel', 'app']
-  const parts = HOSTNAME.split('.');
-  if (parts.length >= 4 && parts[0] !== 'www' && parts[0] !== 'yasca-dental-clinic') {
-    TENANT_SUBDOMAIN = parts[0]; // 'ali'
-  }
+}
+
+/**
+ * Canlı ortamda ClinicApp tarafından çağrılır.
+ * URL path'inden alınan tenant slug'ı (Örn: 'ali') API isteklerine X-Tenant header olarak eklenir.
+ */
+export function setTenantSlug(slug: string) {
+  TENANT_SUBDOMAIN = slug;
 }
 
 export { TENANT_SUBDOMAIN };

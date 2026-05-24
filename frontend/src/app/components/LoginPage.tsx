@@ -90,7 +90,7 @@ export default function LoginPage() {
         {/* Right Panel Header (Navbar-like) */}
         <div className="absolute top-0 left-0 w-full p-6 sm:p-8 flex items-center justify-between z-10">
           <a 
-            href={`http://${window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'localhost' : 'yasca.com'}${window.location.port ? ':' + window.location.port : ''}`}
+            href="/"
             className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors"
           >
             {t('back_to_home')}
