@@ -41,6 +41,7 @@ SHARED_APPS = [
     'django_tenants',  # obligatory
     'customers',       # tenant management
     'corsheaders',
+    'rest_framework',  # Public schema'da da DRF gerekli (kayıt endpointleri için)
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
 ]
