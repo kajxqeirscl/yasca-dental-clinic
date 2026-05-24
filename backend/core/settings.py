@@ -82,7 +82,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    'api.middleware.HeaderTenantMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -97,6 +97,11 @@ MIDDLEWARE = [
 
 # Geliştirme aşamasında her türlü subdomain'den gelen isteklere izin ver
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_HEADERS = [
+    'accept', 'accept-encoding', 'authorization', 'content-type',
+    'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
+    'x-tenant',  # Canlı ortamda tenant kimliğini taşıyan özel header
+]
 
 ROOT_URLCONF = 'core.urls'
 

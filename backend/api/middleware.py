@@ -1,8 +1,45 @@
 import threading
 import logging
 import time
+from django.db import connection
+from django_tenants.middleware.main import TenantMainMiddleware
+from django_tenants.utils import get_tenant_model, get_tenant_domain_model
 
 _thread_locals = threading.local()
+
+
+# ---------------------------------------------------------------------------
+# Custom Tenant Middleware: X-Tenant Header desteği (Canlı ortam için)
+# ---------------------------------------------------------------------------
+class HeaderTenantMiddleware(TenantMainMiddleware):
+    """
+    Standart django-tenants middleware'ini genişletir.
+    
+    Canlı ortamda (Render/Vercel) frontend tüm istekleri tek bir Render URL'ine
+    gönderir ve 'X-Tenant: ali' gibi bir header ile hangi kliniğe ait olduğunu
+    bildirir. Bu middleware o header'ı okuyarak doğru veritabanı şemasına
+    (schema) yönlendirir.
+    
+    Lokal geliştirmede X-Tenant header yoksa, standart Host tabanlı çözümlemeye
+    (ali.localhost gibi) geri döner.
+    """
+    
+    def __call__(self, request):
+        tenant_header = request.META.get('HTTP_X_TENANT', '').strip()
+        
+        if tenant_header:
+            # X-Tenant header geldi -> doğrudan schema'ya bağlan
+            TenantModel = get_tenant_model()
+            try:
+                tenant = TenantModel.objects.get(schema_name=tenant_header)
+                request.tenant = tenant
+                connection.set_tenant(tenant)
+                return self.get_response(request)
+            except TenantModel.DoesNotExist:
+                pass  # Header'daki tenant bulunamazsa standart yönteme devam et
+        
+        # Standart Host tabanlı çözümleme (lokal geliştirme)
+        return super().__call__(request)
 
 def get_current_request():
     """O anki aktif HTTP isteğini (request) thread bazında döner."""
