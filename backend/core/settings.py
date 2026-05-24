@@ -61,8 +61,9 @@ TENANT_MODEL = 'customers.Client'
 TENANT_DOMAIN_MODEL = 'customers.Domain'
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
 
-# Ana site (localhost) icin gecerli URL dosyasini belirtiyoruz
-PUBLIC_SCHEMA_URLCONF = 'core.urls_public'
+# PUBLIC_SCHEMA_URLCONF artık kullanılmıyor.
+# Hem public hem tenant istekleri core.urls üzerinden çalışır.
+# Public endpointler (register, check-domain) core.urls içinde api/public/ altında tanımlıdır.
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
