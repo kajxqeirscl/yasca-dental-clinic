@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useClinicNavigate } from '../hooks/useClinicNavigate';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -134,7 +135,7 @@ const defaultAnamnesis: Anamnesis = {
 export default function PatientProfile() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const navigate = useClinicNavigate();
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('patientProfileActiveTab') || 'bilgiler';
   });

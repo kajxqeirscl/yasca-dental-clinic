@@ -31,7 +31,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = () => {
-    window.location.href = '/';
+    // Klinik arayüzündeyken /app/ali gibi path'e dön, public siteye değil
+    const match = window.location.pathname.match(/^(\/app\/[^/]+)/);
+    window.location.href = match ? match[1] : '/';
   };
 
   public render() {
