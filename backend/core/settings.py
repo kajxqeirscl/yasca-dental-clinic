@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']  # django-tenants zaten domain doğrulaması yapıyor
 
 
 # Application definition
