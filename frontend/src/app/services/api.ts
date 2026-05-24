@@ -137,7 +137,10 @@ export function parseApiError(err: any, defaultMsg = 'Bir hata oluştu'): string
 export async function login(username: string, password: string) {
   const res = await fetch(`${API_BASE}/auth/token/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) {
@@ -168,7 +171,11 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchPublicClinicInfo() {
-  const res = await fetch(`${API_BASE}/public/clinic-info/`);
+  const res = await fetch(`${API_BASE}/public/clinic-info/`, {
+    headers: {
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+  });
   if (!res.ok) throw new Error('Klinik bilgisi alınamadı');
   return res.json();
 }
