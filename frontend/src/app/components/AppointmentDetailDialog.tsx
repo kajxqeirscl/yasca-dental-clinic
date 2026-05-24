@@ -10,7 +10,7 @@ import {
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Calendar, Clock, User, Stethoscope, Activity, FileText, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useClinicNavigate } from '../hooks/useClinicNavigate';
 import { updateAppointment, deleteAppointment } from '../services/api';
 import { formatDate, formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
@@ -53,7 +53,7 @@ export default function AppointmentDetailDialog({
   onEdit,
 }: AppointmentDetailDialogProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useClinicNavigate();
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 

@@ -12,9 +12,10 @@ interface LayoutProps {
   userRole: string;
   onLogout: () => void;
   isAdmin?: boolean;
+  basePath?: string; // '/app/ali' gibi path tabanlı multi-tenant prefix
 }
 
-export default function Layout({ children, userName, userRole, onLogout, isAdmin }: LayoutProps) {
+export default function Layout({ children, userName, userRole, onLogout, isAdmin, basePath = '' }: LayoutProps) {
   const location = useLocation();
   const { t, i18n } = useTranslation('common');
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
   }, [user?.clinic_name]);
 
   const navItems = [
-    { path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
+    { path: '', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
     { path: '/randevular', label: t('appointments'), icon: Calendar, adminOnly: false },
     { path: '/hastalar', label: t('patients'), icon: Users, adminOnly: false },
     { path: '/tedavi-turleri', label: t('treatments'), icon: Stethoscope, adminOnly: false },
@@ -96,14 +97,15 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
           <div className="flex gap-1">
             {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
               const Icon = item.icon;
+              const fullPath = basePath + item.path;
               const isActive =
-                item.path === '/'
-                  ? location.pathname === '/'
-                  : location.pathname.startsWith(item.path);
+                item.path === ''
+                  ? location.pathname === basePath || location.pathname === basePath + '/'
+                  : location.pathname.startsWith(fullPath);
               return (
                 <Link
                   key={item.path}
-                  to={item.path}
+                  to={fullPath || '/'}
                   className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                     isActive
                       ? 'border-blue-600 text-blue-600'

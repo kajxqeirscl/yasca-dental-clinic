@@ -52,8 +52,11 @@ export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
   const isAdmin = user.role === 'admin';
   const userName = `${user.first_name} ${user.last_name}`.trim() || user.username;
 
+  // Canlı ortamda basePath = '/app/ali', lokalde basePath = ''
+  const basePath = tenantSlug ? `/app/${tenantSlug}` : '';
+
   return (
-    <Layout userName={userName} userRole={userRole} onLogout={logout} isAdmin={isAdmin}>
+    <Layout userName={userName} userRole={userRole} onLogout={logout} isAdmin={isAdmin} basePath={basePath}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/randevular" element={<AppointmentCalendar />} />
@@ -62,7 +65,7 @@ export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
         <Route path="/ayarlar" element={<ClinicSettingsPage />} />
         <Route path="/tedavi-turleri" element={<TreatmentTypesPage userRole={user.role} />} />
         {isAdmin && <Route path="/islem-gecmisi" element={<AuditLogPage />} />}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={basePath || '/'} replace />} />
       </Routes>
     </Layout>
   );
