@@ -1093,9 +1093,11 @@ export default function PatientProfile() {
                     {documents.map((doc) => {
                       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.file_url || '');
                       const isPdf = /\.(pdf)$/i.test(doc.file_url || '');
+                      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                      const mediaBase = isLocal ? 'http://localhost:8000' : 'https://yasca-dental-clinic.onrender.com';
                       const fileUrl = doc.file_url?.startsWith('http') 
                         ? doc.file_url 
-                        : `http://localhost:8000${doc.file_url}`;
+                        : `${mediaBase}${doc.file_url}`;
 
                       return (
                         <div key={doc.id} className="group relative flex flex-col border rounded-xl overflow-hidden bg-white hover:shadow-md transition-all border-gray-100">
