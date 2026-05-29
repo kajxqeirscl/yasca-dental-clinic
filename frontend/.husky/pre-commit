@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+# Pre-commit hook — bozuk kodun commit'e bile girmesini engeller.
+#
+# Yapar:
+# 1. Frontend: lint-staged (sadece staged dosyalar için eslint + ilgili testler)
+# 2. Backend: pre-commit (varsa) — ruff/black/mypy
+#
+# Bypass için: ASLA `--no-verify` kullanma. Acil durumda maintainer'a PR'da yaz.
+
+cd "$(dirname "$0")/.."
+
+echo "🔍 Frontend lint-staged çalışıyor..."
+npx lint-staged
+LINT_EXIT=$?
+
+if [ $LINT_EXIT -ne 0 ]; then
+  echo "❌ Lint-staged başarısız oldu. Düzeltip tekrar commit'le."
+  exit $LINT_EXIT
+fi
+
+# Backend pre-commit (opsiyonel — varsa çalıştır)
+if [ -f "../backend/.pre-commit-config.yaml" ]; then
+  echo "🔍 Backend pre-commit çalışıyor..."
+  cd ../backend
+  if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit run --hook-stage commit
+  else
+    echo "⚠️  pre-commit yüklü değil. 'pip install pre-commit' ile yükle."
+  fi
+fi
+
+echo "✅ Pre-commit kontrolleri başarılı."

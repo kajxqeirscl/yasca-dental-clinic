@@ -1,26 +1,26 @@
 """
 Unit tests for api.models — properties, __str__, class-methods.
+
+NOT: Önceki ``Clinic`` modeli ve modellerdeki ``clinic`` foreign key
+django-tenants migrasyonu sırasında kaldırıldı. Çok-kiracılı izolasyon
+artık PostgreSQL schema-per-tenant ile sağlanıyor; bu birim testler
+default schema'da çalışır.
 """
 import pytest
 from django.utils import timezone
 
 from api.models import (
-    Clinic,
-    CustomUser,
     ClinicSettings,
-    Treatment,
-    TreatmentType,
+    Patient,
     patient_directory_path,
 )
 from api.tests.factories import (
-    ClinicFactory,
-    CustomUserFactory,
     AdminUserFactory,
-    DoctorUserFactory,
     AssistantUserFactory,
+    DoctorUserFactory,
     PatientFactory,
-    TreatmentTypeFactory,
     TreatmentFactory,
+    TreatmentTypeFactory,
 )
 
 
@@ -72,33 +72,23 @@ class TestPatientModel:
         assert str(patient) == "Ayşe Kaya"
 
     def test_ordering_by_last_then_first_name(self):
-        clinic = ClinicFactory()
-        PatientFactory(first_name="Zeynep", last_name="Arslan", clinic=clinic)
-        PatientFactory(first_name="Ali", last_name="Çelik", clinic=clinic)
-        from api.models import Patient
-        patients = list(Patient.objects.filter(clinic=clinic))
+        PatientFactory(first_name="Zeynep", last_name="Arslan")
+        PatientFactory(first_name="Ali", last_name="Çelik")
+        patients = list(Patient.objects.all())
         assert patients[0].last_name <= patients[1].last_name
 
 
 @pytest.mark.django_db
 class TestClinicSettingsGetSettings:
-    def test_creates_if_missing_for_clinic(self):
-        clinic = ClinicFactory()
-        settings = ClinicSettings.get_settings(clinic=clinic)
-        assert settings is not None
-        assert settings.clinic == clinic
-
-    def test_returns_same_object_on_second_call(self):
-        clinic = ClinicFactory()
-        s1 = ClinicSettings.get_settings(clinic=clinic)
-        s2 = ClinicSettings.get_settings(clinic=clinic)
-        assert s1.pk == s2.pk
-
-    def test_fallback_when_clinic_is_none(self):
-        # Should create / fetch pk=1 fallback row
-        settings = ClinicSettings.get_settings(clinic=None)
+    def test_creates_singleton_if_missing(self):
+        settings = ClinicSettings.get_settings()
         assert settings is not None
         assert settings.pk == 1
+
+    def test_returns_same_object_on_second_call(self):
+        s1 = ClinicSettings.get_settings()
+        s2 = ClinicSettings.get_settings()
+        assert s1.pk == s2.pk
 
 
 @pytest.mark.django_db
@@ -125,9 +115,10 @@ class TestTreatmentModel:
 class TestPatientDirectoryPath:
     def test_generates_correct_path(self):
         patient = PatientFactory()
-        # Create a minimal mock instance
+
         class FakeInstance:
             pass
+
         instance = FakeInstance()
         instance.patient = patient
         path = patient_directory_path(instance, "xray.png")

@@ -68,3 +68,5 @@ Desktop.ini
 
 # Gemini AI
 .gemini/
+# Husky auto-generated
+.husky/_/

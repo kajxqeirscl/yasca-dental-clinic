@@ -72,8 +72,9 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-gray-500" />
+                <Globe className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <select
+                  aria-label={t('language_select_label', 'Dil seçimi')}
                   value={i18n.language.startsWith('tr') ? 'tr' : 'en'}
                   onChange={(e) => i18n.changeLanguage(e.target.value)}
                   className="bg-white border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

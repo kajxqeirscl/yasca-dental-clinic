@@ -1,22 +1,17 @@
 /**
  * Unit tests for AuthContext — loading state, login, logout, token refresh.
  */
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
 import { AuthProvider, useAuth } from './AuthContext';
-import { setTokens, clearAuth } from '../services/api';
+import { setTokens } from '../services/api';
 
 const BASE = 'http://localhost:8000/api';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
-afterEach(() => {
-  server.resetHandlers();
-  localStorage.clear();
-});
-afterAll(() => server.close());
+// MSW setup/teardown setupTests.ts içinde global olarak yapılıyor.
 
 // Helper component to expose context values
 function AuthConsumer() {

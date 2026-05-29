@@ -1,0 +1,30 @@
+# Test-only PostgreSQL container.
+#
+# - Port 5433 ile dev DB'den (5432) izole çalışır.
+# - Ephemeral (volume yok) — her başlatma temiz state.
+# - DATABASE_URL: postgresql://postgres:postgres123@localhost:5433/yascadb_test
+#
+# Kullanım:
+#   docker compose -f docker-compose.test.yml up -d
+#   $env:DATABASE_URL = "postgresql://postgres:postgres123@localhost:5433/yascadb_test"
+#   cd backend; pytest -m requires_postgres
+#   docker compose -f docker-compose.test.yml down
+#
+# Veya helper script'leri kullan: backend/scripts/test-pg.ps1 (Windows) / test-pg.sh (Unix)
+
+services:
+  db-test:
+    image: postgres:15
+    container_name: yasca_db_test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: yascadb_test
+    ports:
+      - "5433:5432"
+    # Ephemeral — volume yok, container yeniden başlatıldığında veriler kaybolur (test için ideal).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d yascadb_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
