@@ -1,0 +1,829 @@
+﻿
+================================================================================
+FILE: Proje_Raporu_─░├ğeri─şi.pdf
+================================================================================
+
+--- Page 1 ---
+Final Proje Raporu
+Yaz─▒l─▒m Ger├ğekleme, Test ve Bak─▒m 
+Dersi
+Sistem Analizinden Test Sonu├ğlar─▒na Tam 
+Dok├╝mantasyon
+
+--- Page 2 ---
+Raporun Genel Ak─▒┼ş─▒
+1. Giri┼ş ve ─░sterler
+Projenin kapsam─▒, hedefleri ve 
+Ad─▒m 1'de belirlenen fonksiyonel 
+gereksinimlerin ├Âzeti.2. Sistem Tasar─▒m─▒
+S─▒n─▒f diyagramlar─▒, sekans 
+diyagramlar─▒ ve se├ğilen teknoloji 
+y─▒─ş─▒n─▒ (DAR raporu).3. Ger├ğekleme ve Test
+Aray├╝z tan─▒mlar─▒, birim test 
+sonu├ğlar─▒ ve sistemin bak─▒m 
+yap─▒labilirli─şi ├╝zerine analizler.
+
+
+--- Page 3 ---
+1. Giri┼ş ve Proje Kapsam─▒
+Projenin Amac─▒
+Bu b├Âl├╝mde projenin hangi problemi ├ğ├Âzd├╝─ş├╝ ve hedef 
+kitlesinin kim oldu─şu belirtilmelidir. Sistemin s─▒n─▒rlar─▒ net bir 
+┼şekilde ├ğizilmelidir.
+Ana Hedefler
+Hedef Kullan─▒c─▒lar
+Kritik Ba┼şar─▒ Kriterleri
+
+
+--- Page 4 ---
+2. Yaz─▒l─▒m Gereksinimleri
+Fonksiyonel ─░sterler
+Sistemin ne yapmas─▒ gerekti─şini tan─▒mlayan, Ad─▒m 
+1'de olu┼şturulan liste.
+├ûrn: "Sistem kullan─▒c─▒ kayd─▒n─▒ do─şrulamal─▒d─▒r."Fonksiyonel Olmayan
+Performans, g├╝venlik ve ├Âl├ğeklenebilirlik gibi kalite 
+nitelikleri.
+├ûrn: "Sorgu s├╝resi 2 saniyeden az olmal─▒d─▒r."
+
+--- Page 5 ---
+3. Detayl─▒ UML Tasar─▒m─▒
+S─▒n─▒f ve Sekans Analizi
+Ad─▒m 1'in ├ğ─▒kt─▒lar─▒ olan diyagramlar─▒n projeye katk─▒s─▒ ve 
+tutarl─▒l─▒─ş─▒ a├ğ─▒klanmal─▒d─▒r.
+S─▒n─▒f ─░li┼şkileri (Aggregation/Composition)
+Nesne Etkile┼şimleri (Mesaj Ak─▒┼şlar─▒)
+Tasar─▒m Deseni Kullan─▒m─▒ (Varsa)
+
+
+--- Page 6 ---
+4. Teknoloji Karar Analizi (DAR)
+Proje Ad─▒m─▒ 2 kapsam─▒nda yap─▒lan teknoloji se├ğimlerinin ├Âzeti:
+Se├ğilen teknolojilerin (├ûrn: Spring Boot vs .NET Core) neden tercih edildi─şi teknik arg├╝manlarla sunulur.
+
+--- Page 7 ---
+5. ─░├ğ ve D─▒┼ş Aray├╝zler (Ad─▒m 3 -Opsiyon A i├ğin)
+Entegrasyon Noktalar─▒
+Sistemin i├ğ katmanlar─▒ ve d─▒┼ş servisler ile olan veri al─▒┼şveri┼şi 
+(Ad─▒m 3) ┼şemalarla g├Âsterilmelidir.
+RESTful API Kontratlar─▒
+D─▒┼ş Servis Entegrasyonlar─▒
+Kullan─▒c─▒ Aray├╝z├╝ Mimarisi
+
+
+--- Page 8 ---
+5. Statik Kod Analizi & Refactoring (Ad─▒m 3 -Opsiyon B)
+Yaz─▒l─▒m Bak─▒m ve Kod Kalite ├ûl├ğ├╝m├╝
+B├╝nyesinde karma┼ş─▒k aray├╝z bar─▒nd─▒rmayan projelerde, dersin 
+"Bak─▒m (Maintenance)" aya─ş─▒n─▒ kar┼ş─▒layan statik analiz ├ğ─▒kt─▒lar─▒ 
+sunulur.
+SonarQube/SonarCloud Kod Kokusu (Code Smell) Analizi
+Teknik Bor├ğ (Technical Debt) Oranlar─▒n─▒n Sunumu
+Se├ğilen Hatalar─▒n ├ûncesi/Sonras─▒ (Before/After) Refactoring 
+G├Âsterimi
+
+
+--- Page 9 ---
+6. Birim Test Sonu├ğlar─▒
+Test ID Metot T├╝r Senaryo Durum
+UT-001 calculateTotal() Pozitif Do─şru fiyat hesaplama PASSED
+UT-002 applyDiscount() Negatif Ge├ğersiz kupon kullan─▒m─▒ PASSED
+UT-003 authorizeUser() Pozitif Do─şru parola ile giri┼ş FAILED
+*Ba┼şar─▒s─▒z testler i├ğin yap─▒lan iyile┼ştirmeler ve ├ğ├Âz├╝m ├Ânerileri bu b├Âl├╝mde tart─▒┼ş─▒l─▒r.
+
+--- Page 10 ---
+7. Bak─▒m ve Gelecek ├ûnerileri
+S├╝rd├╝r├╝lebilirlik ve ─░yile┼ştirme
+Dersin "Bak─▒m" aya─ş─▒na uygun olarak sistemin gelecekteki olas─▒ g├╝ncelleme ihtiya├ğlar─▒ ve teknik bor├ğlar─▒ burada analiz 
+edilir.
+Refactoring ─░htiya├ğlar─▒
+Yeni ├ûzellik ├ûnerileri
+Versiyon G├╝ncelleme Plan─▒
+
+
+--- Page 11 ---
+8. Sonu├ğ
+Bu proje s├╝reci boyunca kazan─▒lan deneyimler ve 
+kar┼ş─▒la┼ş─▒lan zorluklar ├Âzetlenir. Sistemin hedeflerine ne 
+├Âl├ğ├╝de ula┼şt─▒─ş─▒ de─şerlendirilir.
+Temel ├ç─▒kt─▒lar:
+Ô£ôU├ğtan uca test edilmi┼ş mod├╝ller
+Ô£ôStandartlara uygun UML dok├╝mantasyonu
+Ô£ôTeknik karar verme yetkinli─şi
+
+
+================================================================================
+FILE: Grup_4_Proje_Ad─▒m1.pdf
+================================================================================
+
+--- Page 1 ---
+ 
+─░ºàTºÉNBUL ºàºÉ─ŞLIK Vºò TºòKNºŞLºŞJ─░ ├£N─░VºòRºà─░Tºòºà─░
+M├£HºòND─░ºàL─░K Vºò DºŞ─ŞºÉ B─░L─░MLºòR─░ FºÉK├£LTºòºà─░ YºÉZILIM
+M├£HºòND─░ºàL─░─Ş─░ BºŞL├£M├£  
+Yaz─▒l─▒m Ger├ğekleme, Test ve Bak─▒m
+Proje: Ad─▒m 1
+Grup ├£yeleri: Yaman Halloum, Ali ├£re, Cihan Kurtbey, Berkay Ayd─▒n
+1
+
+--- Page 2 ---
+Sistem Analizi ve Tasar─▒m Modelleme Raporu
+Proje Ad─▒: Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi
+1. Proje Ad─▒m─▒n─▒n Amac─▒
+Bu raporun amac─▒, "Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi" projesinin yaz─▒l─▒m gereksinim 
+setini temel alarak sistemin nesne tabanl─▒ tasar─▒m─▒n─▒ olu┼şturmakt─▒r. ├çal─▒┼şma kapsam─▒nda, 
+sistemdeki nesneler aras─▒ dinamik etkile┼şimleri kurgulamak i├ğin Sekans (Sequence) 
+Diyagramlar─▒ ve bu etkile┼şimi yap─▒sal olarak destekleyen B├╝t├╝nsel S─▒n─▒f (Class) 
+Diyagramlar─▒ standart UML notasyonlar─▒na uygun olarak modellenmi┼ştir.
+2. Kapsam, Girdiler ve Ba─şlam
+Tasar─▒m modelleri olu┼şturulurken, projenin ─░ster Analizi a┼şamas─▒nda belirlenen temel 
+fonksiyonel gereksinimler (FR) baz al─▒nm─▒┼şt─▒r.
+´éÀFR-01 (Kimlik Do─şrulama):  Klinik personelinin JWT tabanl─▒ g├╝venli giri┼şi.
+´éÀFR-02 (Hasta Y├Ânetimi):  Yeni hasta kayd─▒ ve t─▒bbi ├Âzge├ğmi┼ş (Anamnez) 
+eklenmesi.
+´éÀFR-03 (Randevu Y├Ânetimi):  ├çak─▒┼şma kontroll├╝ randevu olu┼şturulmas─▒.
+´éÀFR-04 (Klinik Operasyon):  G├╝nl├╝k ├Âzet (Dashboard) verilerinin g├Âr├╝nt├╝lenmesi.
+´éÀFR-05 (Tedavi ve Finans):  Yap─▒lan tedavilerin ve al─▒nan ├Âdemelerin sisteme 
+girilmesi.
+´éÀFR-06 (Sistem Y├Ânetimi):  Y├Âneticinin klinik ├ğal─▒┼şma saatleri ve ayarlar─▒n─▒ 
+g├╝ncellemesi.
+Ba─şlam (Context) ├ûzeti:  Sistem; Hekim, Asistan ve Y├Ânetici akt├Ârlerinin etkile┼şimine 
+a├ğ─▒k olup, harici bir SMS/Bildirim API servisi ile entegre ├ğal─▒┼şmaktad─▒r.
+3. Sistemin Dinamik Modeli: Sekans Diyagramlar─▒
+Projenin temel kullan─▒m durumlar─▒n─▒ (use-case) temsil eden dinamik s├╝re├ğler, Boundary 
+(Aray├╝z), Control (Servis/API) ve Entity (Varl─▒k) nesneleri kullan─▒larak modellenmi┼ştir.
+3.1. Kullan─▒c─▒ Giri┼şi ve Oturum Do─şrulamas─▒ (FR-01)
+Klinik personelinin sisteme giri┼ş yapt─▒─ş─▒ ve yetkilendirme jetonunun (JWT) localStorage 
+├╝zerinde saklanarak kullan─▒c─▒ rol├╝n├╝n do─şruland─▒─ş─▒ s├╝re├ğtir.
+2
+
+--- Page 3 ---
+3.2. Hasta Kayd─▒ ve Anamnez G├╝ncelleme (FR-02)
+Asistan veya Hekimin yeni bir hasta profili olu┼şturdu─şu ve e─şer girilmi┼şse t─▒bbi ├Âzge├ğmi┼ş 
+(Anamnez) kay─▒tlar─▒n─▒n asenkron veya zincirleme olarak veritaban─▒na yaz─▒ld─▒─ş─▒ i┼ş ak─▒┼ş─▒d─▒r.
+3
+
+
+--- Page 4 ---
+3.3. Randevu Olu┼şturma ve ├çak─▒┼şma Kontrol├╝ (FR-03)
+Asistan─▒n yeni randevu talebi olu┼şturdu─şu s├╝re├ğtir. Sistem, belirtilen saat diliminde ilgili 
+hekimin uygunlu─şunu (Exists kontrol├╝) denetler. ├çak─▒┼şma (Conflict) durumunda hata 
+d├Ând├╝r├╝l├╝rken, uygunluk durumunda randevu Scheduled stat├╝s├╝nde kaydedilir.
+3.4. G├╝nl├╝k Dashboard ├ûzet Ak─▒┼ş─▒ (FR-04)
+Klinik personelinin g├╝ne ba┼şlarken a├ğt─▒─ş─▒ ana panelin veri ├ğekme s├╝recidir. Sistem, 
+bug├╝ne ait randevular─▒, tamamlanan i┼şlem say─▒lar─▒n─▒ ve aktif toplam hasta say─▒s─▒n─▒ 
+filtreleyerek aray├╝ze sunar.
+4
+
+
+--- Page 5 ---
+3.5. Tedavi ve ├ûdeme Giri┼şi (FR-05)
+Hekimin veya asistan─▒n bir hastaya ait tedavi t├╝rlerini ├ğekti─şi, i┼şlemi kaydetti─şi ve 
+e┼şzamanl─▒ olarak finansal ├Âdemeyi sisteme yans─▒tt─▒─ş─▒ u├ğtan uca klinik operasyon s├╝recidir.
+3.6. Klinik Ayarlar─▒ G├╝ncelleme (FR-06)
+Yaln─▒zca Admin yetkisine sahip y├Âneticinin eri┼şebildi─şi, yetki kontrol├╝ (Authorization 
+403 Forbidden) a┼şamalar─▒n─▒ i├ğeren klinik ├ğal─▒┼şma saatleri d├╝zenleme s├╝recidir.
+5
+
+
+--- Page 6 ---
+4. Sistemin Statik Modeli: B├╝t├╝nsel S─▒n─▒f Diyagramlar─▒
+Sekans diyagramlar─▒nda kullan─▒lan t├╝m aray├╝z, servis ve veri varl─▒klar─▒, mod├╝ler bir 
+mimari yakla┼ş─▒m─▒yla iki ana UML S─▒n─▒f Diyagram─▒nda birle┼ştirilmi┼ştir. ─░li┼şkiler; 
+Association, Composition ve Aggregation kurallar─▒na g├Âre belirlenmi┼ştir.
+4.1. Domain Katman─▒ (Veri Varl─▒klar─▒) S─▒n─▒f Diyagram─▒
+Veritaban─▒ tablolar─▒n─▒n nesne tabanl─▒ kar┼ş─▒l─▒klar─▒n─▒ (Entities) ve ili┼şkilerini (1..* vb. ├ğokluk
+de─şerleri) g├Âsteren modeldir.
+6
+
+
+--- Page 7 ---
+4.2. Uygulama Katman─▒ (S─▒n─▒r ve Kontrol S─▒n─▒flar─▒)
+Frontend aray├╝z bile┼şenlerinin (Boundary), API servisleriyle (ApiService) nas─▒l 
+haberle┼şti─şini ve Backend Controller (ViewSet/View) yap─▒lar─▒n─▒ g├Âsteren mimari 
+tasar─▒md─▒r.
+7
+
+
+--- Page 8 ---
+5. Tasar─▒m Kararlar─▒ ve Tutarl─▒l─▒k Analizi
+Tasar─▒m s├╝reci, "S─▒n─▒f ve Sekans diyagramlar─▒ aras─▒ mutlak tutarl─▒l─▒k" prensibiyle iteratif 
+olarak ger├ğekle┼ştirilmi┼ştir:
+1.Metod ve Mesaj Tutarl─▒l─▒─ş─▒:  Sekans diyagramlar─▒nda aray├╝zden g├Ânderilen 
+fetchDashboardToday(), createAppointment(payload) veya login(username, 
+password) gibi t├╝m mesajlar, Uygulama Katman─▒ S─▒n─▒f Diyagram─▒ndaki 
+ApiService s─▒n─▒f─▒n─▒n metodlar─▒ (operasyonlar─▒) olarak birebir tan─▒mlanm─▒┼şt─▒r.
+2.Sorumluluklar─▒n Ayr─▒l─▒─ş─▒ (Separation of Concerns):  Aray├╝zler (Boundary) 
+do─şrudan veritaban─▒ (Entity) ile konu┼şturulmam─▒┼ş, araya g├╝venli─şi ve i┼ş mant─▒─ş─▒n─▒ 
+sa─şlamak amac─▒yla Kontrolc├╝ler (ViewSet/Serializer) yerle┼ştirilerek MVC/MVT 
+mimarisine uyum sa─şlanm─▒┼şt─▒r.
+3.├çokluk (Multiplicity) Do─şrulamas─▒:  S─▒n─▒f diyagram─▒nda Clinic ile Patient veya 
+CustomUser (Hekim) aras─▒nda kurulan 1..* (Bire-├çok) ili┼şkiler, sistemin ger├ğek 
+d├╝nya i┼şleyi┼şini do─şru bir ┼şekilde yans─▒tmaktad─▒r.
+8
+
+
+================================================================================
+FILE: Grup_4_Proje_Ad─▒m2.pdf
+================================================================================
+
+--- Page 1 ---
+ 
+─░ºàTºÉNBUL ºàºÉ─ŞLIK Vºò TºòKNºŞLºŞJ─░ ├£N─░VºòRºà─░Tºòºà─░
+M├£HºòND─░ºàL─░K Vºò DºŞ─ŞºÉ B─░L─░MLºòR─░ FºÉK├£LTºòºà─░ YºÉZILIM
+M├£HºòND─░ºàL─░─Ş─░ B├ûL├£M├£  
+Yaz─▒l─▒m Ger├ğekleme, Test ve Bak─▒m
+Proje: Ad─▒m 2
+Grup ├£yeleri: Yaman Halloum, Ali ├£re, Cihan Kurtbey, Berkay Ayd─▒n
+1
+
+--- Page 2 ---
+Teknoloji Se├ğimi ve Karar Analizi Raporu (DAR)
+Proje Ad─▒: Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi 
+1. Proje Ad─▒m─▒n─▒n Amac─▒
+Bu raporun amac─▒, Proje Ad─▒m─▒ 1'de sistem analizi ve nesne tabanl─▒ tasar─▒m─▒ (S─▒n─▒f ve
+Sekans diyagramlar─▒) tamamlanan "Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi"nin kodlanma
+(ger├ğekleme) a┼şamas─▒nda kullan─▒lacak teknoloji y─▒─ş─▒n─▒n─▒n (tech stack) belirlenmesidir.
+Geli┼ştirme platformlar─▒, mimari frameworkler ve veri y├Ânetim sistemleri; performans,
+ekip  yetkinli─şi,  g├╝venlik  ve  maliyet  kriterleri  do─şrultusunda  alternatifleriyle
+kar┼ş─▒la┼şt─▒r─▒larak analiz edilmi┼ştir.
+2. Yaz─▒l─▒m Geli┼ştirme Platformu ve Dil Se├ğimi
+Sistemin Backend (Sunucu) ve Frontend (─░stemci) katmanlar─▒ i├ğin farkl─▒ dil se├ğimleri
+yap─▒lm─▒┼şt─▒r.
+2.1. Backend Dil Se├ğimi: Python  (Alternatif: Java veya C#)
+Proje Ad─▒m─▒ 1'deki s─▒n─▒f diyagram─▒nda tasarlanan nesneler (User, Patient, Appointment)
+ve aralar─▒ndaki kal─▒t─▒m/ili┼şki yap─▒lar─▒, nesne y├Ânelimli bir dil gerektirmektedir. Java g├╝├ğl├╝
+bir alternatif olsa da, Python'un sundu─şu h─▒zl─▒ prototipleme (rapid prototyping) yetene─şi
+ve sa─şl─▒k verisi ┼şifreleme/hashing k├╝t├╝phanelerinin zenginli─şi sebebiyle Python tercih
+edilmi┼ştir.
+2.2. Frontend Dil Se├ğimi: TypeScript / JavaScript  (Alternatif: Dart/Flutter)
+Sekans diyagramlar─▒nda s─▒n─▒r s─▒n─▒flar─▒ (Boundary/UI) ├╝zerinden ta┼ş─▒nan veri paketlerinin
+(Payload/DTO) t├╝r g├╝venli─şini (type-safety) sa─şlamak amac─▒yla JavaScript'in s├╝perseti
+olan TypeScript tercih edilmi┼ştir.
+3. Mimari Framework ve K├╝t├╝phaneler
+Uygulaman─▒n  web  tabanl─▒  (SaaS)  do─şas─▒  gere─şi,  belirlenen  diller  ├╝zerinde  ├ğal─▒┼şacak
+mimari frameworkler analiz edilmi┼ştir.
+3.1.  Backend  Framework:  Django  REST  Framework  ÔÇô  DRF   (Alternatif:
+Node.js/Express.js)
+Ad─▒m  1'deki  sekans  diyagramlar─▒nda  yer  alan  kontrolc├╝  nesnelerin  (AuthController,
+AppointmentController)  i┼ş  mant─▒─ş─▒,  Django'nun  MVC
+(Model-View-Template/Controller)  tabanl─▒  mimarisiyle  birebir  ├Ârt├╝┼şmektedir.
+AuthController  senaryosu,  DRF'in  yerle┼şik  JWT  (JSON  Web  Token)  k├╝t├╝phanesiyle
+do─şrudan  ger├ğeklenebilmektedir.  Express.js'te  bu  g├╝venlik  katmanlar─▒n─▒n  s─▒f─▒rdan
+yaz─▒lmas─▒ gerekece─şi i├ğin DRF se├ğilmi┼ştir.
+2
+
+--- Page 3 ---
+3.2. Frontend Framework: React.js  (Alternatif: Vue.js veya Angular)
+S─▒n─▒f  diyagram─▒ndaki  aray├╝z  bile┼şenleri  (PatientDialog,  DashboardUI),  React.js'in
+"Component-Based" (Bile┼şen tabanl─▒) mimarisiyle do─şrudan e┼şle┼şir. ├ûzellikle projenin en
+kritik ├Âzelli─şi olan interaktif di┼ş ┼şemas─▒n─▒n (Dijital Odontogram) DOM manip├╝lasyonu,
+React'─▒n Virtual DOM yap─▒s─▒ sayesinde performans kayb─▒ ya┼şanmadan ger├ğekle┼ştirilebilir.
+4. Veri Y├Ânetimi ve Kal─▒c─▒l─▒k (Persistence)
+Sa─şl─▒k sistemlerinin gerektirdi─şi veri b├╝t├╝nl├╝─ş├╝ ve g├╝venlik ilkeleri do─şrultusunda veri
+taban─▒ karar─▒ verilmi┼ştir.
+4.1. Veri Taban─▒ Se├ğimi: PostgreSQL  (Alternatif: MongoDB ÔÇô NoSQL)
+Ad─▒m 1'deki b├╝t├╝nsel s─▒n─▒f diyagram─▒nda Clinic, Patient ve Appointment s─▒n─▒flar─▒ aras─▒nda
+kesin yap─▒sal ili┼şkiler (1..* Association ve Composition) bulunmaktad─▒r. Bu kesin ili┼şki
+a─şlar─▒ ve sa─şl─▒k/finansal verilerin gerektirdi─şi ACID (Atomicity, Consistency, Isolation,
+Durability)  uyumlulu─şu  nedeniyle  ili┼şkisel  veri  taban─▒  (RDBMS)  olan  PostgreSQL
+se├ğilmi┼ştir. MongoDB gibi ┼şemas─▒z (schemaless) sistemler veri b├╝t├╝nl├╝─ş├╝ riskleri ta┼ş─▒d─▒─ş─▒
+i├ğin elenmi┼ştir.
+4.2. ORM Arac─▒: Django ORM
+S─▒n─▒f  diyagram─▒ndaki  nesnelerin  veritaban─▒  tablolar─▒na  e┼şlenmesi  (Mapping)  s├╝reci
+Django ORM ile sa─şlanacakt─▒r. S─▒n─▒flar aras─▒ "Bire-├çok" ili┼şkiler ForeignKey ile koda
+d├Âk├╝lecektir.
+5. Karar Matrisi (Decision Matrix)
+A┼şa─ş─▒daki tablolarda teknoloji alternatifleri proje ihtiya├ğlar─▒na g├Âre 1 (En D├╝┼ş├╝k) ile 5
+(En Y├╝ksek) aras─▒nda puanlanarak de─şerlendirilmi┼ştir.
+5.1. Backend Framework Karar Matrisi
+KriterDjango  REST
+(Python)Express.js
+(Node)Spring  Boot
+(Java)
+Geli┼ştirme H─▒z─▒ / ├û─şrenme E─şrisi 542
+Dahili G├╝venlik (Auth/RBAC) 524
+Ekip Yetkinli─şi 532
+S─▒n─▒f Diyagram─▒ (OOP) Uyumlulu─şu 435
+Toplam Puan 191213
+Sonu├ğ: G├╝venlik altyap─▒s─▒ ve ekibin h─▒z─▒ g├Âz ├Ân├╝ne al─▒narak Django REST se├ğilmi┼ştir.
+3
+
+--- Page 4 ---
+5.2. Veri Taban─▒ Sistemleri Karar Matrisi
+KriterPostgreSQL
+(Relational)MongoDB
+(NoSQL)SQLite
+(Relational)
+Veri B├╝t├╝nl├╝─ş├╝ (ACID Uyumu) 524
+S─▒n─▒f/─░li┼şki Modelleme Kolayl─▒─ş─▒ 535
+├£retim (Production) ├ûl├ğeklenebilirli─şi 551
+Medikal Veri G├╝venli─şi Standartlar─▒ 532
+Toplam Puan 201312
+Sonu├ğ:  ─░li┼şkisel  yap─▒n─▒n  zorunlulu─şu  ve  ├Âl├ğeklenebilirlik  sebebiyle  PostgreSQL
+se├ğilmi┼ştir.
+5.3. Frontend Framework Karar Matrisi
+Kriter React.jsVue.jsAngular
+Topluluk Deste─şi ve Kaynak 543
+Odontogram i├ğin DOM Performans─▒ 543
+Ekip Yetkinli─şi 521
+S─▒n─▒r S─▒n─▒flar─▒ (Component) Uyumu 555
+Toplam Puan 201512
+Sonu├ğ: DOM manip├╝lasyon g├╝c├╝ ve ekip tecr├╝besi nedeniyle React.js se├ğilmi┼ştir.
+4
+
+================================================================================
+FILE: Grup_4_Proje_Ad─▒m3.pdf
+================================================================================
+
+--- Page 1 ---
+ 
+ 
+─░ºàTºÉNBUL ºàºÉ─ŞLIK Vºò TºòKNºŞLºŞJ─░ ├£N─░VºòRºà─░Tºòºà─░ 
+M├£HºòND─░ºàL─░K Vºò DºŞ─ŞºÉ B─░L─░MLºòR─░ FºÉK├£LTºòºà─░ 
+YºÉZILIM M├£HºòND─░ºàL─░─Ş─░ B├ûL├£M├£  
+ 
+Yaz─▒l─▒m Ger├ğekleme, Test ve Bak─▒m ÔÇô Proje Ad─▒m─▒ 3  
+ 
+Proje Ad─▒: Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi  
+ 
+Grup: 4  
+ 
+Grup  ├£yeleri: Yaman Halloum, Ali ├£re, Cihan Kurtbey, Berkay Ayd─▒n  
+
+
+--- Page 2 ---
+Yaz─▒l─▒m Ger├ğekleme, Test ve Bak─▒m ÔÇô Proje Ad─▒m─▒ 3  
+1. Proje Ad─▒m─▒n─▒n Amac─▒  
+Bu proje ad─▒m─▒n─▒n amac─▒, Ya┼şca Di┼ş Klini─şi Y├Ânetim Sistemi projesinin ├ğekirdek yap─▒s─▒n─▒n 
+kodlanmas─▒, aray├╝zlerin (Interface) tasarlan─▒p tan─▒mlanmas─▒ ve ├╝retilen yap─▒n─▒n kalitesinin analiz 
+edilmesidir.  
+2. Kapsam, Girdiler ve Ad─▒m 1 -2 Ba─şlant─▒s─▒  
+Bu a┼şamada Proje Ad─▒m─▒ 1ÔÇÖdeki UML S─▒n─▒f ve Sekans diyagramlar─▒ ile Proje Ad─▒m─▒ 2ÔÇÖdeki 
+teknoloji se├ğimi (Django REST Framework) baz al─▒nm─▒┼şt─▒r. - S─▒n─▒f Diyagram─▒ Ba─şlant─▒s─▒:  Ad─▒m 
+1ÔÇÖde tasarlanan Clinic , Patient  ve Appointment  s─▒n─▒flar─▒ aras─▒ndaki ÔÇ£1..*ÔÇØ (Bire -├çok) ili┼şkiler, 
+ORM (Object -Relational Mapping) katman─▒nda ForeignKey  yap─▒lar─▒yla kodlanm─▒┼şt─▒r. - Sekans 
+Diyagram─▒ Ba─şlant─▒s─▒:  Ad─▒m 1ÔÇÖde modellenen createAppointment(payload)  mesaj─▒, backendÔÇÖde 
+AppointmentViewSet  s─▒n─▒f─▒ ├╝zerinden kar┼ş─▒lanarak AppointmentSerializer ÔÇÖ─▒n validate()  
+metodundaki i┼ş kurallar─▒na tabi tutulmu┼ştur.  
+3. Opsiyon Se├ğimi ve Gerek├ğesi  
+Se├ğilen Opsiyon:  Opsiyon A (─░├ğ ve D─▒┼ş Aray├╝zlerin Ger├ğeklenmesi ve Dok├╝mantasyonu) 
+Gerek├ğe:  ÔÇ£Ya┼şca Di┼ş Klini─şi Y├Ânetim SistemiÔÇØ, React.js (Frontend) ve Django REST 
+Framework (Backend) kullan─▒larak geli┼ştirilen API odakl─▒ (API -first) bir SaaS projesidir. 
+Sistemde yo─şun bir aray├╝z/entegrasyon mimarisi bulundu─şu i├ğin i├ğ ve d─▒┼ş aray├╝zlerin detayl─▒ 
+kontratlar─▒n─▒n tan─▒mlanmas─▒ ve OpenAPI (Swagger) ile dok├╝mante edilmesi se├ğilmi┼ştir.  
+ 
+4. Ger├ğeklenen ─░├ğ Aray├╝zler (Internal Interfaces)  
+Projedeki katmanlar (Model, ViewSet, Serializer) birbirleriyle JSON paketleri ├╝zerinden 
+haberle┼şmektedir. End├╝stri standard─▒ olan Swagger (drf -spectacular)  kullan─▒larak t├╝m API u├ğ 
+noktalar─▒ canl─▒ olarak dok├╝mante edilmi┼ştir.  
+4.1. Swagger Ekran G├Âr├╝nt├╝s├╝  
+(A┼şa─ş─▒daki g├Ârsel, backend sunucumuzun ├ğal─▒┼ş─▒rken ├╝retti─şi canl─▒ Swagger dok├╝mantasyonudur.)  
+
+--- Page 3 ---
+ 
+Swagger UI  
+4.2. API Endpoint Kontratlar─▒ ve Hata Kodlar─▒  
+A. Kimlik Do─şrulama: POST /api/auth/token/  
+ÔÇó A├ğ─▒klama:  Sisteme giri┼ş yap─▒larak yetki jetonu (JWT) al─▒nmas─▒.  
+ÔÇó Request Body:  {"username": "admin_user", "password": "securepassword123"}  
+ÔÇó Response Body (200 OK):  {"access": "eyJhbGciOi...", "refresh": "eyJhbGciOi..."}  
+ÔÇó Hata Kodlar─▒:  401 Unauthorized  (Hatal─▒ giri┼ş), 400 Bad Request  (Eksik parametre).  
+B. Hasta Y├Ânetimi: GET  & POST /api/patients/  
+ÔÇó A├ğ─▒klama:  Sisteme yeni hasta kayd─▒ yap─▒lmas─▒ ve listelenmesi (FR -02). 
+ÔÇó POST Request Body:  
+  { 
+  "first_name" : "Ahmet" , 
+  "last_name" : "Y─▒lmaz" , 
+  "phone" : "05551234567"  
+} 
+
+
+--- Page 4 ---
+ÔÇó GET Response ├ûrne─şi (200 OK):  
+  [ 
+  { 
+    "id": 1, 
+    "first_name" : "Ahmet" , 
+    "last_name" : "Y─▒lmaz" , 
+    "full_name" : "Ahmet Y─▒lmaz" , 
+    "phone" : "05551234567" , 
+    "tckn" : null, 
+    "last_visit" : "2026 -05-20" 
+  } 
+] 
+ÔÇó Hata Kodlar─▒:  400 Bad Request  (Zorunlu alan eksik).  
+C. Randevu Y├Ânetimi: POST /api/appointments/  
+ÔÇó A├ğ─▒klama:  ├çak─▒┼şma kontroll├╝ yeni randevu olu┼şturulmas─▒ (FR -03). 
+ÔÇó Request Body:  {"patient": 15, "doctor": 3, "date": "2026 -06-15", "time": "14:30:00"}  
+ÔÇó Response Body (201 Created):  Ba┼şar─▒yla olu┼şturulan randevu nesnesi ( id: 42 ). 
+ÔÇó Hata Kodlar─▒:  400 Bad Request  (├çak─▒┼şma - Conflict), 403 Forbidden  (Yetkisiz).  
+D. G├╝nl├╝k ├ûzet (Dashboard): GET /api/dashboard/today/  
+ÔÇó A├ğ─▒klama:  Ana ekranda g├Âsterilecek g├╝nl├╝k aktif randevular, tamamlanan i┼şlemler ve 
+toplam hasta say─▒s─▒ verilerini tek bir u├ğ noktadan d├Âner (FR -04). Bu u├ğ nokta, 
+uygulaman─▒n performans─▒ i├ğin kritik olan ├Âzet veriyi (Aggregation) backend taraf─▒nda 
+hesaplayarak frontendÔÇÖe tek seferde sunar.  
+ÔÇó Response Body (200 OK):  
+  { 
+  "today_appointments" : [...], 
+  "today_total" : 12, 
+  "today_completed" : 4, 
+
+--- Page 5 ---
+  "total_patients" : 150 
+} 
+ 
+5. Ger├ğek Kod ├ûrnekleri  
+Raporun bu b├Âl├╝m├╝nde, uygulaman─▒n ├ğekirdek mimarisinden al─▒nan ger├ğek Python (Django 
+REST Framework) kod bloklar─▒ sunulmu┼ştur.  
+5.1. Model Katman─▒ (Entity)  
+Appointment  modeli ( api/models.py ): 
+class  Appointment(models.Model):  
+    class  Status(models.TextChoices):  
+        SCHEDULED = "scheduled" , "Planland─▒"  
+        COMPLETED = "completed" , "Tamamland─▒"  
+ 
+    patient = models.ForeignKey(Patient, on_delete =models.CASCADE, related_name ="appoint
+ments" ) 
+    doctor = models.ForeignKey(CustomUser, on_delete =models.PROTECT)  
+    date = models.DateField( "Tarih" ) 
+    time = models.TimeField( "Saat" ) 
+    status = models.CharField(max_length =20, choices =Status.choices, default =Status.SCHEDUL
+ED) 
+5.2. Serializer Katman─▒ ve ├çak─▒┼şma Algoritmas─▒ (Control)  
+Hekimin ayn─▒ saatte ba┼şka bir randevusu varsa algoritma 400 hatas─▒ f─▒rlat─▒r:  
+class  AppointmentSerializer(serializers.ModelSerializer):  
+    def validate( self, data):  
+        # FR -03: Ayn─▒ hekime ayn─▒ saatte randevu ├ğak─▒┼şmas─▒ kontrol├╝  
+        doctor, date, time = data.get( "doctor" ), data.get( "date" ), data.get( "time" ) 
+        existing = Appointment.objects. filter ( 
+
+--- Page 6 ---
+            doctor =doctor, date =date, time =time, status =Appointment.Status.SCHEDULED  
+        ) 
+        if existing.exists():  
+            raise  serializers.ValidationError( "Bu hekime bu saatte zaten randevu kay─▒tl─▒." ) 
+        return  data 
+5.3. ViewSet Katman─▒ (Controller)  
+Gelen isteklerin kar┼ş─▒land─▒─ş─▒, filtreleme ve silme mant─▒─ş─▒n─▒n (business logic) y├Ânetildi─şi s─▒n─▒f:  
+class  AppointmentViewSet(AuditLogMixin, viewsets.ModelViewSet):  
+    permission_classes = [IsAuthenticated]  
+     
+    def get_serializer_class( self): 
+        if self.action in ("create" , "update" ): 
+            return  AppointmentCreateSerializer  
+        return  AppointmentSerializer  
+ 
+    def get_queryset( self): 
+        user = self.request.user  
+        qs = Appointment.objects. filter (is_active =True ).select_related( "patient" , "doctor" ) 
+        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:  
+            qs = qs.filter (doctor =user)  
+        return  qs.order_by( "date" , "time" ) 
+ 
+6. D─▒┼ş Aray├╝zler (External Interfaces) ve Multi -Tenant Altyap─▒  
+6.1. Harici SMS Sa─şlay─▒c─▒ Entegrasyonu  
+ÔÇó Senaryo:  Randevu olu┼şturuldu─şunda APIÔÇÖye istek atar.  
+ÔÇó D─▒┼ş Kontrat (Payload):  {"api_key": "YOUR_SECRET_KEY", "phone_number": 
+"+905551234567", "message": "Randevunuz onaylanm─▒┼şt─▒r."}  
+
+--- Page 7 ---
+ÔÇó Hata Y├Ânetimi (Exception Handling):  D─▒┼ş API yan─▒t vermezse (Timeout), i┼şlem ├ğ├Âkmez. 
+Hata, log sistemimize kaydedilir ve randevu asenkron olarak tamamlan─▒r.  
+6.2. Frontend (React) Entegrasyonu  
+Frontend uygulamas─▒, sunucu ile axios  kullanarak haberle┼şmektedir. JWT (Bearer Token) 
+otomatik olarak ba┼şl─▒─şa (Header) eklenir. ├ûrnek API ├ğa─şr─▒s─▒:  
+// frontend/src/services/api.js  
+import  axios from  'axios' ; 
+ 
+const  api = axios .create ({ baseURL : 'http://127.0.0.1:8000/api/'  }); 
+ 
+api.interceptors .request .use((config) => { 
+    const  token = localStorage .getItem ('accessToken' ); 
+    if (token) config .headers .Authorization  = `Bearer ${token }`; 
+    return  config ; 
+}); 
+ 
+export  const  fetchDashboardData = async  () => { 
+    const  response = await  api.get('/dashboard/today/' ); 
+    return  response .data; 
+}; 
+6.3. Multi -Tenant (SaaS) Mimarisi  
+Uygulama django -tenants  k├╝t├╝phanesi kullan─▒larak ├ğoklu kirac─▒ yap─▒s─▒nda kodlanm─▒┼şt─▒r. 
+HeaderTenantMiddleware , HTTP Request i├ğerisindeki domain/tenant kimli─şini okur ve 
+PostgreSQL ┼şemas─▒n─▒ o klini─şe y├Ânlendirir. B├Âylece veri g├╝venli─şi fiziksel izolasyonla sa─şlan─▒r.  
+
+================================================================================
+FILE: YAZ402_Grup4.pdf
+================================================================================
+
+--- Page 1 ---
+YAZILIM GER├çEKLEME, TEST VE BAKIM
+├çok-Kirac─▒l─▒ (Multi-tenant) Di┼ş Klini─şi Y├Ânetim Sistemi
+Birim Testlerin Ger├ğeklenmesi
+ve Raporlanmas─▒
+Proje Ad─▒m─▒ 4 ÔÇö Birim Test Sonu├ğ Raporu
+Grup / ID :  Grup 4
+Proje :  Ya┼şca Dental Clinic
+Teknoloji :  Django 5.2 + Django REST  Framework
+Test Arac─▒ :  pytest + pytest-django
+
+--- Page 2 ---
+1. AMA├ç VE KAPSAM
+Bu rapor , sistemin ├ğekirdek i┼ş mant─▒─ş─▒ n─▒ olu┼şturan s─▒n─▒flara ait metotlar─▒n do─şrulu─şunu birim
+(unit) test seviyesinde do─şrular . Birim test, bir metodu di─şer bile┼şenlerden ve d─▒┼ş
+ba─ş─▒ml─▒l─▒klardan (veritaban─▒, d─▒┼ş servisle r) izole ederek yaln─▒zca o metodun davran─▒┼ş─▒n─▒ ├Âl├ğer: "┼Şu
+girdi verildi─şinde beklenen sonu├ğ/davran─▒┼ş ├╝retiliyor mu?"
+Test edilecek s─▒n─▒flar , Proje Ad─▒m─▒ 1'de haz─▒rlanan S─▒n─▒f Diyagram─▒ndan  (uygulama katman─▒
+par├ğas─▒) se├ğilmi┼ştir . ├çok-kirac─▒l─▒ bir sa─şl─▒k yaz─▒l─▒m─▒nda hatal─▒ bir do─şrulama (validation) veya
+kirac─▒ (tenant) ├ğ├Âz├╝mleme hatas─▒ ciddi sonu├ğlar (yanl─▒┼ş hasta verisi, kirac─▒lar aras─▒ veri s─▒z─▒nt─▒s─▒)
+do─şurabilece─şi i├ğin, bu metotlar─▒n birim seviyesinde g├╝vence alt─▒na al─▒nmas─▒ kritiktir .
+2. TEST ORTAMI VE KULLANILAN ARA├çLAR
+Ara├ğ G├Ârevi Neden Se├ğildi?
+pytest Test ko┼şum motoruPython i├ğin end├╝stri standard─▒; az boilerplate, sade
+assert  s├Âzdizimi.
+pytest-django Django
+entegrasyonu@pytest.mark.django_db  ile her teste izole,
+otomatik geri al─▒nan (rollback) veritaban─▒ sa─şlar.
+factory-boy +
+FakerSahte test verisi
+├╝retimiTest nesnelerini (Hasta, Doktor, Tedavi) tek sat─▒rda ve
+T├╝rk├ğe veriyle ├╝retir.
+unittest.mock /
+monkeypatchBa─ş─▒ml─▒l─▒k taklidi
+(mocking)Veritaban─▒/d─▒┼ş ba─ş─▒ml─▒l─▒klar─▒ taklit ederek metodu
+ger├ğekten izole eder (Bkz. B├Âl├╝m 4).
+Mocking (Taklit Etme) Yakla┼ş─▒m─▒: Ba─ş─▒ml─▒l─▒klar─▒n testi engellememesi i├ğin taklit (mocking)
+teknikleri kullan─▒lm─▒┼şt─▒r. Bu raporda yer alan HeaderTenantMiddleware  ve
+RegisterClinicView  testleri, ger├ğek bir PostgreSQL/django-tenants kurulumuna ihtiya├ğ
+duymadan, kirac─▒ modeli ve ┼şema i┼şlemleri monkeypatch  ile taklit edilerek izole ┼şekilde
+├ğal─▒┼şt─▒r─▒lm─▒┼şt─▒r.
+3. TEST ED─░LEN KR─░T─░K SINIFLAR
+S─▒n─▒f diyagram─▒ndan, zengin i┼ş mant─▒─ş─▒ ve hata y├Ânetimi i├ğeren 5 kritik s─▒n─▒f se├ğildi:
+#S─▒n─▒f Hedef Metot Neden Kritik? Mocking
+1AppointmentCreateSerializer validate() Randevu ├ğak─▒┼şmas─▒
+(ayn─▒ hekim/saat)ÔÇô
+
+--- Page 3 ---
+engellenmeli (F-008).
+2HeaderTenantMiddleware __call__() Her iste─şin do─şru
+kirac─▒ya (tenant)
+y├Ânlendirilmesi;
+izolasyonun temeli.Ô£à
+3RegisterClinicView  /
+CheckDomainViewpost()  /
+get()Yeni klinik kay─▒t ak─▒┼ş─▒;
+hatal─▒/eksik girdilerin
+reddi.Ô£à
+4PatientSerializer create() ,
+update()Hasta + anamnez kayd─▒;
+zorunlu alan
+do─şrulamas─▒ (F-003).ÔÇô
+5TreatmentSerializer validate() Ayn─▒ g├╝n/ayn─▒ di┼şe
+m├╝kerrer tedavi giri┼şinin
+engellenmesi.ÔÇô
+4. TEST TASARIM METODOLOJ─░S─░
+Her metot i├ğin iki senaryo t├╝r├╝ tasarlanm─▒┼şt─▒r:
+Pozitif (Ba┼şar─▒l─▒) senaryo:  Girdiler beklenen aral─▒kta oldu─şunda metodun do─şru sonucu
+├╝retmesi (├Âr . bo┼ş randevu saatinin kabul edilmesi).
+Negatif (Ba┼şar─▒s─▒z) senaryo:  Hatal─▒/ge├ğersiz girdilerle sistemin do─şru ┼şekilde hata f─▒rlatmas─▒
+veya i┼şlemi reddetmesi (├Âr . ├ğak─▒┼şan randevunun ValidationError  ile reddi).
+├ûnemli: Negatif senaryolarda, kodun do─şru ┼şekilde hata f─▒rlatmas─▒/i┼şlemi reddetmesi testin
+ba┼şar─▒yla sonu├ğland─▒─ş─▒ anlam─▒na gelir ve durum PASSED olarak i┼şaretlenir. A┼şa─ş─▒daki matriste t├╝m
+negatif senaryolar, sistem hatay─▒ beklendi─şi gibi yakalad─▒─ş─▒ i├ğin PASSED'dir.
+─░zolasyon detay─▒:  Middleware testlerinde TenantModel , DomainModel  ve connection  nesneleri
+monkeypatch  + MagicMock  ile taklit edilir (veritaban─▒ eri┼şimi yok). Kay─▒t (register) testlerinde
+schema_context  ve Client.save  no-op'a indirgenerek ger├ğek ┼şema olu┼şturma maliyeti olmadan i┼ş
+mant─▒─ş─▒ test edilir .
+
+--- Page 4 ---
+5. B─░R─░M TEST SONU├ç MATR─░S─░
+Ko┼şum: pytest api/tests/test_serializers.py api/tests/test_middleware.py
+customers/tests/test_register.py  ÔåÆ 54 passed . A┼şa─ş─▒da her s─▒n─▒f i├ğin temsil├« pozitif/negatif sat─▒rlar listelenmi┼ştir .
+Test
+ID Hedef S─▒n─▒fHedef
+MetotSenary
+o T├╝r├╝ Test Senaryosu A├ğ─▒klamas─▒ Beklenen Sonu├ğGer├ğekle┼şen
+Sonu├ğDur
+um Test Fonksiyonu
+UT-
+001AppointmentC
+reateSerializervalidate NegatifAyn─▒ hekime, ayn─▒ tarih ve saatte
+ikinci randevu eklenmesiValidationError
+f─▒rlatmal─▒ (├ğak─▒┼şma)─░lgili hata
+f─▒rlat─▒ld─▒PAS
+SEDtest_appointment_create_seri
+alizer_rejects_duplicate_slo
+t
+UT-
+002AppointmentS
+erializervalidate Negatif├çak─▒┼şma kontrol├╝n├╝n
+g├╝ncelleme (update)
+serializer'─▒nda da reddiValidationError
+f─▒rlatmal─▒─░lgili hata
+f─▒rlat─▒ld─▒PAS
+SEDtest_appointment_serializer_
+rejects_duplicate_slot
+UT-
+003AppointmentC
+reateSerializervalidate Pozitif Ayn─▒ hekime farkl─▒ saatte
+randevu eklenmesiGe├ğerli (is_valid =
+True)Ge├ğerli kabul
+edildiPAS
+SEDtest_different_time_is_valid
+UT-
+004AppointmentC
+reateSerializervalidate Pozitif ─░PTAL edilmi┼ş randevunun ayn─▒
+slotu bloke etmemesiGe├ğerli (is_valid =
+True)Ge├ğerli kabul
+edildiPAS
+SEDtest_cancelled_slot_does_not
+_block_new_appointment
+UT-
+005AppointmentS
+erializervalidate Pozitif Mevcut randevu g├╝ncellenirken
+kendi slotunu ├ğak─▒┼şma
+saymamas─▒Ge├ğerli (is_valid =
+True)Ge├ğerli kabul
+edildiPAS
+SEDtest_appointment_serializer_
+skips_conflict_check_on_upda
+te
+UT-
+006HeaderTenant
+Middleware__call__ Pozitif X-Tenant header'─▒ ile do─şru
+kirac─▒n─▒n ├ğ├Âz├╝lmesi (mock'lu)request.tenant = ilgili
+tenant, set_tenant
+├ğa─şr─▒l─▒rBeklendi─şi gibi
+├ğ├Âz├╝ld├╝PAS
+SEDtest_resolves_by_x_tenant_he
+ader
+UT-
+007HeaderTenant
+Middleware__call__ Pozitif Header yokken Host ad─▒ndan
+(ali.localhost) kirac─▒ ├ğ├Âz├╝lmesirequest.tenant = ilgili
+tenantBeklendi─şi gibi
+├ğ├Âz├╝ld├╝PAS
+SEDtest_resolves_by_host_when_h
+eader_missing
+UT-
+008HeaderTenant
+Middleware__call__ Pozitif Header ve Host birlikte
+verildi─şinde Header'─▒n ├Ânceli─şiHeader'daki tenant
+se├ğilirHeader
+├ÂnceliklendiPAS
+SEDtest_header_takes_precedence
+_over_host
+UT-
+009HeaderTenant
+Middleware__call__ NegatifGe├ğersiz/bilinmeyen X-Tenant
+de─şeri verilmesiHost'a fallback
+yap─▒lmal─▒Host'a fallback
+yap─▒ld─▒PAS
+SEDtest_unknown_header_falls_ba
+ck_to_host
+UT-
+010HeaderTenant
+Middleware__call__ NegatifBo┼ş/whitespace X-Tenant header
+g├ÂnderilmesiHeader yok say─▒l─▒p
+public'e d├╝┼şmeliPublic tenant'a
+d├╝┼şt├╝PAS
+SEDtest_empty_x_tenant_header_t
+reated_as_absent
+UT-
+011HeaderTenant
+Middleware__call__ NegatifPublic tenant tan─▒ms─▒zken hi├ğbir
+e┼şle┼şme olmamas─▒HTTP 500 d├Ânmeli,
+set_tenant ├ğa─şr─▒lmamal─▒500 d├Ând├╝,
+set_tenant
+├ğa─şr─▒lmad─▒PAS
+SEDtest_returns_500_when_public
+_tenant_missing
+
+--- Page 5 ---
+UT-
+012RegisterClinic
+Viewpost Pozitif Ge├ğerli verilerle yeni klinik
+kayd─▒ (mock'lu ┼şema)HTTP 201 + login_url
+d├Ânmeli201 ve login_url
+d├Ând├╝PAS
+SEDtest_returns_201_and_login_u
+rl
+UT-
+013RegisterClinic
+Viewpost Pozitif Kay─▒t sonras─▒ admin (superuser)
+kullan─▒c─▒ olu┼şmas─▒is_superuser = True,
+role = adminAdmin do─şru
+olu┼ştuPAS
+SEDtest_creates_admin_superuser
+UT-
+014RegisterClinic
+Viewpost NegatifZorunlu alan (├Âr.
+admin_password) eksik
+g├ÂnderilmesiHTTP 400 + error
+mesaj─▒400 d├Ând├╝ PAS
+SEDtest_missing_required_field_
+returns_400
+UT-
+015RegisterClinic
+Viewpost NegatifZaten kay─▒tl─▒ subdomain ile
+tekrar kay─▒t denenmesiHTTP 400 ("zaten
+kullan─▒l─▒yor")400 d├Ând├╝ PAS
+SEDtest_duplicate_subdomain_ret
+urns_400
+UT-
+016RegisterClinic
+Viewpost NegatifKay─▒t s─▒ras─▒nda beklenmedik bir
+istisna olu┼şmas─▒ (mock'lu)HTTP 500 + hata
+mesaj─▒500 d├Ând├╝ PAS
+SEDtest_unexpected_exception_re
+turns_500
+UT-
+017CheckDomain
+Viewget Pozitif Var olan subdomain i├ğin
+uygunluk sorgusuHTTP 200, exists =
+True200, exists True PAS
+SEDtest_existing_subdomain_retu
+rns_200
+UT-
+018CheckDomain
+Viewget NegatifBo┼ş subdomain parametresi ile
+sorguHTTP 400 + error 400 d├Ând├╝ PAS
+SEDtest_empty_subdomain_returns
+_400
+UT-
+019PatientSerializ
+ercreate Pozitif Anamnez olmadan yaln─▒zca
+hasta kayd─▒ olu┼şturmaHasta olu┼şur,
+Anamnesis olu┼şmazDo─şru olu┼ştu PAS
+SEDtest_creates_patient_without
+_anamnesis
+UT-
+020PatientSerializ
+ercreate Pozitif ─░├ğ i├ğe (nested) anamnez verisiyle
+hasta olu┼şturmaHasta + Anamnesis
+birlikte kaydedilirDo─şru olu┼ştu PAS
+SEDtest_creates_patient_with_ne
+sted_anamnesis
+UT-
+021PatientSerializ
+erupdate Pozitif Hastada anamnez yoksa
+g├╝ncellemede olu┼şturulmas─▒Anamnesis create edilirDo─şru
+olu┼şturulduPAS
+SEDtest_updates_patient_creates
+_anamnesis_if_missing
+UT-
+022PatientSerializ
+ercreate
+(validatio
+n)NegatifTelefon (zorunlu alan)
+g├Ânderilmeden kay─▒t denenmesiis_valid = False,
+errors['phone']Reddedildi,
+phone hatas─▒PAS
+SEDtest_rejects_missing_phone
+UT-
+023PatientSerializ
+ercreate
+(validatio
+n)NegatifBo┼ş ad (first_name) ile kay─▒t
+denenmesiis_valid = False,
+errors['first_name']Reddedildi,
+first_name hatas─▒PAS
+SEDtest_rejects_blank_first_nam
+e
+UT-
+024TreatmentSeria
+lizervalidate Pozitif Ayn─▒ g├╝n, ayn─▒ hasta, FARKLI
+di┼ş numaras─▒na tedavi eklenmesiGe├ğerli (is_valid =
+True)Ge├ğerli kabul
+edildiPAS
+SEDtest_allows_different_tooth_
+same_day
+UT-
+025TreatmentSeria
+lizervalidate NegatifAyn─▒ g├╝n, ayn─▒ di┼ş, ayn─▒ tedavi
+t├╝r├╝n├╝n m├╝kerrer eklenmesiValidationError
+f─▒rlatmal─▒─░lgili hata
+f─▒rlat─▒ld─▒PAS
+SEDtest_rejects_duplicate_tooth
+_same_day
+├ûzet:  25 temsil├« senaryo ┬À 13 Pozitif + 12 Negatif ┬À T├╝m├╝ P ASSED. (─░lgili 3 test dosyas─▒n─▒n tam ko┼şumu: 54 passed.)
+
+--- Page 6 ---
+6. G├ûRSEL KANIT (TEST KO┼ŞUM ├çIKTILARI)
+A┼şa─ş─▒daki ekran g├Âr├╝nt├╝leri, testlerin VS Code terminalinde ger├ğek ko┼şumundan al─▒nm─▒┼şt─▒r . Ye┼şil
+PASSED  sat─▒rlar─▒ ve en alttaki ye┼şil ├Âzet bar , t├╝m testlerin ba┼şar─▒yla ge├ğti─şini g├Âsterir .
+6.1. T├╝m T est Suite'inin Ba┼şar─▒yla Ko┼şmas─▒
+┼Şekil 1.  T├╝m test paketinin ko┼şumu (pytest -q) ÔÇö 152 passed, 21 skipped.
+6.2. Se├ğilen S─▒n─▒flar─▒n T estleri (Detayl─▒ / -v)
+
+--- Page 7 ---
+┼Şekil 2.  Se├ğilen ├╝├ğ test dosyas─▒n─▒n ayr─▒nt─▒l─▒ ko┼şumu (pytest -v) ÔÇö 54 passed.
+Yukar─▒daki ekran g├Âr├╝nt├╝leri testlerin ger├ğek ko┼şumundan al─▒nm─▒┼şt─▒r; ilgili t├╝m testler ba┼şar─▒yla
+(PASSED) sonu├ğlanm─▒┼şt─▒r.
+7. SONU├ç
+S─▒n─▒f diyagram─▒ndan se├ğilen 5 kritik s─▒n─▒f─▒n ├ğekirdek metotlar─▒, hem pozitif hem negatif
+senaryolarla birim test seviyesinde do─şrulanm─▒┼şt─▒r . Ba─ş─▒ml─▒l─▒klar (veritaban─▒, kirac─▒ modeli, ┼şema
+i┼şlemleri) monkeypatch /MagicMock  ile taklit edilerek metotlar ger├ğekten izole edilmi┼ştir .
+Negatif senaryolarda sistem, ge├ğersiz girdileri beklendi─şi gibi reddetmi┼ş veya uygun HTTP  hata
+kodunu d├Ând├╝rm├╝┼şt├╝r . ─░lgili test dosyalar─▒n─▒n tamam─▒ 54/54 PASSED  ile sonu├ğlanm─▒┼şt─▒r; bu da
+se├ğilen i┼ş mant─▒─ş─▒n─▒n birim seviyesinde kararl─▒ ve do─şru ├ğal─▒┼şt─▒─ş─▒n─▒ g├Âstermektedir .

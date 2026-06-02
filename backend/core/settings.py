@@ -53,6 +53,7 @@ TENANT_APPS = [
     'django.contrib.messages',
     'rest_framework',
     'api',
+    'drf_spectacular',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -76,6 +77,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Yaşca Diş Kliniği API',
+    'DESCRIPTION': 'İç ve Dış Arayüzlerin Dokümantasyonu (Proje Adımı 3)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 SIMPLE_JWT = {
