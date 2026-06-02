@@ -16,7 +16,9 @@ import os
 
 _db_url = os.environ.get("DATABASE_URL")
 if _db_url:
-    DATABASES = {"default": dj_database_url.parse(_db_url)}
+    db_config = dj_database_url.parse(_db_url)
+    db_config['ENGINE'] = 'django_tenants.postgresql_backend'
+    DATABASES = {"default": db_config}
 else:
     DATABASES = {
         "default": {
