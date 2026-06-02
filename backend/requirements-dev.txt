@@ -9,3 +9,7 @@ faker>=20.0
 mutmut>=2.4
 # Pre-commit (Faz 6):
 pre-commit>=3.0
+# Load testing (Faz 9):
+locust>=2.20
+# Contract testing — provider verification (Faz 9):
+pact-python>=2.2

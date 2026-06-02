@@ -70,3 +70,12 @@ Desktop.ini
 .gemini/
 # Husky auto-generated
 .husky/_/
+
+# ── Faz 9: üretilen test çıktıları (baseline görüntüler HARİÇ — onlar commit'lenir) ──
+frontend/playwright-report-visual/
+frontend/pacts/
+frontend/reports/
+frontend/.lighthouseci/
+.stryker-tmp/
+backend/loadtests/results_*.csv
+backend/html/

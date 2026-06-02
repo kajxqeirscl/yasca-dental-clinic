@@ -1,0 +1,89 @@
+name: Load Test (Locust)
+
+# Faz 9 — Yük testi.
+# Pahalı ve ortam-bağımlı olduğu için ana CI'da DEĞİL: sadece manuel tetik.
+# Çok-tenant trafiği simüle eder ve sonuç CSV'lerini artifact olarak yükler.
+# Eşik (fail kriteri) input'larla verilir: ör. p95 yanıt süresi sınırı.
+
+on:
+  workflow_dispatch:
+    inputs:
+      users:
+        description: 'Eşzamanlı sanal kullanıcı sayısı'
+        type: string
+        default: '50'
+      spawn_rate:
+        description: 'Saniyede kullanıcı spawn hızı'
+        type: string
+        default: '5'
+      run_time:
+        description: 'Test süresi (ör. 1m, 5m)'
+        type: string
+        default: '1m'
+
+jobs:
+  load:
+    name: Locust Load Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: yascadb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres123@localhost:5432/yascadb_test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install deps + locust
+        run: pip install -r requirements-dev.txt
+
+      - name: Migrate + seed
+        run: |
+          python manage.py migrate_schemas --shared
+          python manage.py migrate_schemas --tenant
+          python manage.py seed_demo_data
+
+      - name: Start backend
+        run: |
+          python manage.py runserver 0.0.0.0:8000 &
+          for i in {1..30}; do
+            curl -sf http://localhost:8000/api/public/clinic-info/ -H "X-Tenant: standard" && break
+            sleep 1
+          done
+
+      - name: Run Locust (headless)
+        run: |
+          locust -f loadtests/locustfile.py --host http://localhost:8000 \
+            --headless \
+            -u ${{ github.event.inputs.users }} \
+            -r ${{ github.event.inputs.spawn_rate }} \
+            -t ${{ github.event.inputs.run_time }} \
+            --csv loadtests/results \
+            --only-summary
+
+      - name: Upload Locust results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: locust-results
+          path: backend/loadtests/results_*.csv

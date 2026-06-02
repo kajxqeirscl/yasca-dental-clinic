@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": [
+    "Stryker mutation testing config (Faz 9).",
+    "Mutation testing, coverage'ın yalanını ifşa eder: kodu çalıştırmak yetmez,",
+    "test SONUCU gerçekten kontrol ediyor mu? Stryker koda kasıtlı hata (mutant)",
+    "sokar; bir test patlamazsa o mutant 'hayatta kaldı' = test boşluğu.",
+    "Faz 9 hedefi: kritik modüllerde mutation score'u %85 tabanına çekmek.",
+    "Çalıştırma: npm run test:mutation"
+  ],
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/app/services/api.ts",
+    "src/app/hooks/**/*.ts",
+    "src/app/components/AppointmentDialog.tsx",
+    "src/app/components/PatientDialog.tsx",
+    "src/app/components/PaymentDialog.tsx",
+    "src/app/components/TreatmentAddDialog.tsx",
+    "src/app/components/AppointmentDetailDialog.tsx",
+    "!src/**/*.{test,spec}.{ts,tsx}"
+  ],
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "thresholds": {
+    "_comment": "high = Faz 9 hedefi (%85). low altı 'düşük' uyarısı. break = bu skorun altında job FAIL. break şimdilik 60; testler güçlendikçe kademeli olarak 85'e yükseltilecek (workflow continue-on-error olduğu için CI'ı kırmaz, raporlar).",
+    "high": 85,
+    "low": 70,
+    "break": 60
+  }
+}

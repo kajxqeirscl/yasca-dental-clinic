@@ -13,12 +13,15 @@ from api.serializers import (
     AppointmentSerializer,
     PatientListSerializer,
     PatientSerializer,
+    TreatmentSerializer,
 )
 from api.models import Anamnesis, Appointment
 from api.tests.factories import (
     AppointmentFactory,
     DoctorUserFactory,
     PatientFactory,
+    TreatmentFactory,
+    TreatmentTypeFactory,
 )
 
 
@@ -207,3 +210,72 @@ class TestAppointmentConflictValidation:
         }
         serializer = AppointmentCreateSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
+
+
+@pytest.mark.django_db
+class TestPatientSerializerValidation:
+    """Negatif senaryolar: zorunlu alanlar (Ad/Soyad/Telefon) eksik/boş ise reddedilir.
+
+    F-003: Patient modelinde first_name, last_name ve phone zorunludur.
+    DRF ModelSerializer bu alanları otomatik 'required' kabul eder.
+    """
+
+    def test_rejects_missing_phone(self):
+        data = {"first_name": "Ali", "last_name": "Yılmaz"}  # phone yok
+        serializer = PatientSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "phone" in serializer.errors
+
+    def test_rejects_blank_first_name(self):
+        data = {"first_name": "", "last_name": "Yılmaz", "phone": "05551234567"}
+        serializer = PatientSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "first_name" in serializer.errors
+
+
+@pytest.mark.django_db
+class TestTreatmentSerializerValidation:
+    """Tedavi tekrarı kontrolü (validate): aynı hasta + gün + diş + tedavi türü
+    ikinci kez eklenemez. Farklı diş numarası ise sorun yok."""
+
+    def _existing_treatment(self):
+        doctor = DoctorUserFactory()
+        patient = PatientFactory()
+        ttype = TreatmentTypeFactory()
+        treatment = TreatmentFactory(
+            patient=patient,
+            doctor=doctor,
+            treatment_type=ttype,
+            tooth_number="11",
+            date=date(2026, 6, 1),
+        )
+        return treatment, doctor, patient, ttype
+
+    def test_allows_different_tooth_same_day(self):
+        _, doctor, patient, ttype = self._existing_treatment()
+        data = {
+            "patient": patient.pk,
+            "doctor": doctor.pk,
+            "treatment_type": ttype.pk,
+            "tooth_number": "21",  # farklı diş → çakışma yok
+            "date": "2026-06-01",
+            "status": "completed",
+            "price": "150.00",
+        }
+        serializer = TreatmentSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+
+    def test_rejects_duplicate_tooth_same_day(self):
+        _, doctor, patient, ttype = self._existing_treatment()
+        data = {
+            "patient": patient.pk,
+            "doctor": doctor.pk,
+            "treatment_type": ttype.pk,
+            "tooth_number": "11",  # aynı diş + aynı gün + aynı tür → çakışma
+            "date": "2026-06-01",
+            "status": "completed",
+            "price": "150.00",
+        }
+        serializer = TreatmentSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
