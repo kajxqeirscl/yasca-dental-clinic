@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "figma-implement-design": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/figma-implement-design/SKILL.md",
+      "computedHash": "63f3d12d444547bbf68c10a12982b1f42e0f6e26fc074324564a13184d4b15ad"
+    },
     "playwright-generate-test": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
