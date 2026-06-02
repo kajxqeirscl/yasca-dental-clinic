@@ -1,0 +1,43 @@
+{
+  "//": "Lighthouse CI config (Faz 9) — sayfa hızına/kalitesine alt sınır koyar.",
+  "//1": "Zamanla eklenen kod siteyi sessizce yavaşlatır. Bu config her PR'da",
+  "//2": "Lighthouse çalıştırır; bütçe aşılırsa assertion FAIL → değişiklik bloke.",
+  "//3": "Çalıştırma:  npm run lhci   (önce build gerekir, startServerCommand halleder)",
+  "ci": {
+    "collect": {
+      "startServerCommand": "npx vite preview --port 4173 --strictPort",
+      "startServerReadyPattern": "Local:",
+      "startServerReadyTimeout": 60000,
+      "url": [
+        "http://localhost:4173/",
+        "http://localhost:4173/register",
+        "http://localhost:4173/app/standard"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop"
+      }
+    },
+    "assert": {
+      "//": "warn = raporla ama build'i kırma; error = bütçe aşılırsa FAIL.",
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.8 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
+        "categories:seo": ["warn", { "minScore": 0.9 }],
+
+        "first-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+
+        "//budget": "JS bundle boyutuna sınır — şişmeyi erken yakalar",
+        "resource-summary:script:size": ["warn", { "maxNumericValue": 600000 }],
+        "resource-summary:total:size": ["warn", { "maxNumericValue": 1600000 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

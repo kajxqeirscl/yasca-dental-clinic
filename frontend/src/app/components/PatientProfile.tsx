@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useClinicNavigate } from '../hooks/useClinicNavigate';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -134,7 +135,7 @@ const defaultAnamnesis: Anamnesis = {
 export default function PatientProfile() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const navigate = useClinicNavigate();
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('patientProfileActiveTab') || 'bilgiler';
   });
@@ -905,16 +906,29 @@ export default function PatientProfile() {
                           return (
                             <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
                               <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
-                                    {isPaid && (
-                                      <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
-                                    )}
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
+                                    <Stethoscope className="w-6 h-6 text-blue-600" />
                                   </div>
-                                  <div className="text-sm text-gray-500 mt-1">
-                                    {tr.tooth_number && <span>Diş: {tr.tooth_number} • </span>}
-                                    {formatDate(tr.date)}
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
+                                      {tr.tooth_number && (
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {t('patients:profile.treatments.tooth', 'Diş')}: {tr.tooth_number}
+                                        </Badge>
+                                      )}
+                                      {isPaid ? (
+                                        <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
+                                      ) : (
+                                        <Badge className="bg-yellow-100 text-yellow-800 border-none">Bekliyor</Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                                      <span className="font-medium text-gray-700">{tr.doctor_name}</span>
+                                      <span>•</span>
+                                      <span>{formatDate(tr.date)}</span>
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -1080,9 +1094,11 @@ export default function PatientProfile() {
                     {documents.map((doc) => {
                       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.file_url || '');
                       const isPdf = /\.(pdf)$/i.test(doc.file_url || '');
+                      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                      const mediaBase = isLocal ? 'http://localhost:8000' : 'https://yasca-dental-clinic.onrender.com';
                       const fileUrl = doc.file_url?.startsWith('http') 
                         ? doc.file_url 
-                        : `http://localhost:8000${doc.file_url}`;
+                        : `${mediaBase}${doc.file_url}`;
 
                       return (
                         <div key={doc.id} className="group relative flex flex-col border rounded-xl overflow-hidden bg-white hover:shadow-md transition-all border-gray-100">

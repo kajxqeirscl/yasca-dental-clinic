@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useClinicNavigate } from '../hooks/useClinicNavigate';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -28,7 +28,7 @@ import {
 
 export default function PatientSearch() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useClinicNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [patients, setPatients] = useState<

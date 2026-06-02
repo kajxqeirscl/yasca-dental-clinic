@@ -18,19 +18,25 @@ export default function TenantLoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:8000/api/public/check-domain/?subdomain=${subdomain}`);
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const checkUrl = isLocal
+        ? `http://${window.location.hostname}:8000/api/public/check-domain/?subdomain=${subdomain}`
+        : `https://yasca-dental-clinic.onrender.com/api/public/check-domain/?subdomain=${subdomain}`;
+      
+      const res = await fetch(checkUrl);
       if (!res.ok) {
         throw new Error('Böyle bir klinik bulunamadı. Lütfen adresi kontrol edin.');
       }
       
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const port = window.location.port ? `:${window.location.port}` : '';
-      const protocol = window.location.protocol;
-      
-      const targetHost = isLocal ? `${subdomain}.localhost` : `${subdomain}.yasca.com`;
-      const targetUrl = `${protocol}//${targetHost}${port}/`;
-      
-      window.location.href = targetUrl;
+      if (isLocal) {
+        // Lokal: subdomain tabanlı yönlendirme
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const protocol = window.location.protocol;
+        window.location.href = `${protocol}//${subdomain}.localhost${port}/`;
+      } else {
+        // Canlı: path tabanlı yönlendirme
+        window.location.href = `/app/${subdomain}`;
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

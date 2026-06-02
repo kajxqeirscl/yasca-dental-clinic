@@ -19,3 +19,9 @@ RUN pip install -r requirements-dev.txt
 
 # Proje dosyalarını kopyala
 COPY . /app/
+
+# Portu dışa aç
+EXPOSE 8000
+
+# Gunicorn ile sunucuyu başlat
+CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]

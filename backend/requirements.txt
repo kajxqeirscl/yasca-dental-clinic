@@ -9,3 +9,4 @@ Pillow>=10.0
 django-filter>=23.0
 dj-database-url>=2.1
 django-tenants>=3.7.0
+gunicorn>=21.2.0

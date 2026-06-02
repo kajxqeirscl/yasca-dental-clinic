@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path('api/public/', include('customers.urls')),  # SaaS kayıt/kontrol endpointleri (her tenant'tan erişilebilir)
 ]
 
 if settings.DEBUG:

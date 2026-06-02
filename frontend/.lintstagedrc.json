@@ -1,0 +1,9 @@
+{
+  "_comment": "Staged dosyalar için lint + test. Tam suite pre-push'ta çalışır.",
+  "*.{ts,tsx}": [
+    "eslint --max-warnings 0 --fix"
+  ],
+  "*.{js,jsx,ts,tsx,json,md}": [
+    "prettier --write --ignore-unknown"
+  ]
+}

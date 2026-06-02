@@ -1,0 +1,32 @@
+[run]
+source = api, customers
+branch = True
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    */settings*.py
+    */wsgi.py
+    */asgi.py
+    venv/*
+    .venv/*
+    create_admin.py
+    create_ci_env.py
+    create_public.py
+    create_tenant.py
+    init_db.py
+    fix_roles.py
+    migrate_phones.py
+    seed_treatment_types.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    def __repr__
+    raise AssertionError
+precision = 1
+show_missing = True
+skip_covered = False

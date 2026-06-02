@@ -1,8 +1,68 @@
 import threading
 import logging
 import time
+from django.db import connection
+from django_tenants.middleware.main import TenantMainMiddleware
+from django_tenants.utils import get_tenant_model, get_tenant_domain_model
 
 _thread_locals = threading.local()
+
+
+# ---------------------------------------------------------------------------
+# Custom Tenant Middleware: X-Tenant Header desteği (Canlı ortam için)
+# ---------------------------------------------------------------------------
+class HeaderTenantMiddleware:
+    """
+    Tüm tenant çözümleme mantığını tek bir yerde toplar:
+    
+    1. X-Tenant header varsa → o tenant'a bağlan (canlı ortam)
+    2. Host header'da bilinen subdomain varsa → o tenant'a bağlan (lokal geliştirme)
+    3. Hiçbiri değilse → public tenant'a bağlan (ana site)
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        from django.conf import settings
+        TenantModel = get_tenant_model()
+        DomainModel = get_tenant_domain_model()
+        
+        tenant = None
+        
+        # 1. X-Tenant header ile tenant çözümleme (canlı ortam)
+        tenant_header = request.META.get('HTTP_X_TENANT', '').strip()
+        if tenant_header:
+            try:
+                tenant = TenantModel.objects.get(schema_name=tenant_header)
+            except TenantModel.DoesNotExist:
+                pass
+        
+        # 2. Host header ile tenant çözümleme (lokal geliştirme)
+        if not tenant:
+            hostname = request.get_host().split(':')[0]  # Port'u çıkar
+            try:
+                domain_obj = DomainModel.objects.select_related('tenant').get(domain=hostname)
+                tenant = domain_obj.tenant
+            except DomainModel.DoesNotExist:
+                pass
+        
+        # 3. Fallback: public tenant (ana site veya bilinmeyen domain)
+        if not tenant:
+            try:
+                tenant = TenantModel.objects.get(schema_name='public')
+            except TenantModel.DoesNotExist:
+                # public tenant bile yoksa kritik hata
+                from django.http import HttpResponse
+                return HttpResponse('Sistem başlatılmadı. Public tenant bulunamadı.', status=500)
+        
+        # Tenant'ı ayarla
+        request.tenant = tenant
+        connection.set_tenant(tenant)
+        request.urlconf = settings.ROOT_URLCONF
+        
+        return self.get_response(request)
+
 
 def get_current_request():
     """O anki aktif HTTP isteğini (request) thread bazında döner."""

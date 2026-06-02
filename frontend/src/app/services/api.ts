@@ -3,9 +3,33 @@
  * JWT token ile kimlik doğrulama, 401 yönlendirme
  */
 
-// Tarayıcıdaki adrese göre dinamik olarak API adresini belirliyoruz (Örn: ali.localhost:8000)
+// ---------------------------------------------------------------------------
+// API Base URL & Tenant Detection
+// ---------------------------------------------------------------------------
+// Lokalde: ali.localhost:8000 -> django-tenants Host header ile tenant bulur
+// Canlıda: Tek Render URL kullanılır, tenant bilgisi X-Tenant header ile gönderilir
 const HOSTNAME = window.location.hostname;
-const API_BASE = `http://${HOSTNAME}:8000/api`;
+
+let API_BASE = '';
+let TENANT_SUBDOMAIN = ''; // Canlı ortamda backend'e gönderilecek tenant adı
+
+if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
+  // Lokal geliştirme - django-tenants Host header ile çalışır
+  API_BASE = `http://${HOSTNAME}:8000/api`;
+} else {
+  // Canlı ortam - Tüm istekler tek Render URL'ine gider
+  API_BASE = 'https://yasca-dental-clinic.onrender.com/api';
+}
+
+/**
+ * Canlı ortamda ClinicApp tarafından çağrılır.
+ * URL path'inden alınan tenant slug'ı (Örn: 'ali') API isteklerine X-Tenant header olarak eklenir.
+ */
+export function setTenantSlug(slug: string) {
+  TENANT_SUBDOMAIN = slug;
+}
+
+export { TENANT_SUBDOMAIN };
 
 export const setTokens = (access: string, refresh: string) => {
   localStorage.setItem('access_token', access);
@@ -26,6 +50,7 @@ const getAuthHeaders = (): HeadersInit => {
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
   };
 };
 
@@ -38,7 +63,10 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const res = await fetch(`${API_BASE}/auth/token/refresh/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+      },
       body: JSON.stringify({ refresh }),
     });
     if (!res.ok) return null;
@@ -109,7 +137,10 @@ export function parseApiError(err: any, defaultMsg = 'Bir hata oluştu'): string
 export async function login(username: string, password: string) {
   const res = await fetch(`${API_BASE}/auth/token/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) {
@@ -140,7 +171,11 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchPublicClinicInfo() {
-  const res = await fetch(`${API_BASE}/public/clinic-info/`);
+  const res = await fetch(`${API_BASE}/public/clinic-info/`, {
+    headers: {
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+  });
   if (!res.ok) throw new Error('Klinik bilgisi alınamadı');
   return res.json();
 }

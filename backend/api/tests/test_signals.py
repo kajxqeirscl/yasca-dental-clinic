@@ -1,13 +1,16 @@
 """
 Unit tests for Django signals — group assignment and is_staff promotion.
+
+NOT: Önceki ``Clinic`` modeli django-tenants'a geçişte kaldırıldı.
+Test'ler default schema'da çalışır; clinic foreign key kullanmaz.
 """
 import pytest
+
 from api.models import CustomUser
 from api.tests.factories import (
-    ClinicFactory,
     AdminUserFactory,
-    DoctorUserFactory,
     AssistantUserFactory,
+    DoctorUserFactory,
 )
 
 
@@ -40,8 +43,7 @@ class TestRoleGroupSignal:
 
     def test_role_change_updates_group(self):
         """Changing a doctor to assistant should swap their group membership."""
-        clinic = ClinicFactory()
-        user = DoctorUserFactory(clinic=clinic)
+        user = DoctorUserFactory()
         assert "Hekim" in list(user.groups.values_list("name", flat=True))
 
         user.role = CustomUser.Role.ASSISTANT

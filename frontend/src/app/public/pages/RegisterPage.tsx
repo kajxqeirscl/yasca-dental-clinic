@@ -35,7 +35,12 @@ export default function RegisterPage() {
     setError('');
     
     try {
-      const res = await fetch(`http://${window.location.hostname}:8000/api/public/register/`, {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiBase = isLocal
+        ? `http://${window.location.hostname}:8000`
+        : 'https://yasca-dental-clinic.onrender.com';
+      
+      const res = await fetch(`${apiBase}/api/public/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

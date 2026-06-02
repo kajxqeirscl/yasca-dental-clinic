@@ -13,7 +13,7 @@ class RegisterClinicView(APIView):
 
     def post(self, request):
         data = request.data
-        subdomain = data.get('subdomain')
+        subdomain = data.get('subdomain', '').lower().strip()
         clinic_name = data.get('clinic_name')
         email = data.get('admin_email')
         password = data.get('admin_password')
@@ -23,37 +23,45 @@ class RegisterClinicView(APIView):
         if not all([subdomain, clinic_name, email, password]):
             return Response({"error": "Lütfen gerekli tüm alanları doldurun."}, status=status.HTTP_400_BAD_REQUEST)
             
-        domain_url = f"{subdomain.lower()}.localhost"
-        
         # Alan adi musait mi kontrolu
-        if Client.objects.filter(schema_name=subdomain.lower()).exists() or Domain.objects.filter(domain=domain_url).exists():
+        if Client.objects.filter(schema_name=subdomain).exists():
             return Response({"error": "Bu klinik adresi (subdomain) zaten kullanılıyor. Lütfen başka bir isim deneyin."}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
             # 1. Yeni Kiraci (Tenant) Veritabanini Olustur
-            # tenant.save() komutu 'migrate' komutunu tetikleyip tablolari kopyalar
-            tenant = Client(schema_name=subdomain.lower(), name=clinic_name, is_active=True)
+            tenant = Client(schema_name=subdomain, name=clinic_name, is_active=True)
             tenant.save()
             
-            # 2. Alan Adini (Domain) Kiraciya Bagla
-            domain = Domain(domain=domain_url, tenant=tenant, is_primary=True)
-            domain.save()
+            # 2. Localhost domain (gelistirme icin)
+            Domain.objects.get_or_create(
+                domain=f"{subdomain}.localhost",
+                defaults={'tenant': tenant, 'is_primary': True}
+            )
             
-            # 3. Sadece bu klinigin veritabanina gir ve Admin hesabini olustur
+            # 3. Production domain (Render icin)
+            Domain.objects.get_or_create(
+                domain=f"{subdomain}.yasca-dental-clinic.onrender.com",
+                defaults={'tenant': tenant, 'is_primary': False}
+            )
+            
+            # 4. Sadece bu klinigin veritabanina gir ve Admin hesabini olustur
             with schema_context(tenant.schema_name):
                 CustomUser.objects.create_superuser(
-                    username=email, # Geleneksel olarak emaili username yapiyoruz
+                    username=email,
                     email=email,
                     password=password,
                     first_name=first_name,
                     last_name=last_name,
                     role='admin'
                 )
+            
+            # Canlı ortamda path tabanlı login URL döndür
+            login_url = f"/app/{subdomain}"
                 
             return Response({
                 "message": "Klinik başarıyla oluşturuldu! Lütfen yeni adresinize gidin.",
-                "domain": domain_url,
-                "login_url": f"http://{domain_url}:5173"
+                "domain": subdomain,
+                "login_url": login_url
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -66,21 +74,15 @@ class CheckDomainView(APIView):
     permission_classes = []
 
     def get(self, request):
-        subdomain = request.query_params.get('subdomain')
+        subdomain = request.query_params.get('subdomain', '').lower().strip()
         if not subdomain:
             return Response({"error": "Subdomain gerekli."}, status=status.HTTP_400_BAD_REQUEST)
         
-        domain_url = f"{subdomain.lower()}.localhost"
-        
-        # Domain modelinde bu domain var mı?
-        exists = Domain.objects.filter(domain=domain_url).exists()
-        
-        if not exists:
-            # Belki production için .yasca.com kontrolü de eklenebilir, şimdilik .localhost
-            domain_url_prod = f"{subdomain.lower()}.yasca.com"
-            exists = Domain.objects.filter(domain=domain_url_prod).exists()
+        # Schema adına göre kontrol (en güvenilir yöntem)
+        exists = Client.objects.filter(schema_name=subdomain).exists()
             
         if exists:
             return Response({"message": "Domain geçerli", "exists": True}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Böyle bir klinik bulunamadı. Lütfen adresi kontrol edin.", "exists": False}, status=status.HTTP_404_NOT_FOUND)
+

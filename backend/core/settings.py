@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']  # django-tenants zaten domain doğrulaması yapıyor
 
 
 # Application definition
@@ -41,6 +41,7 @@ SHARED_APPS = [
     'django_tenants',  # obligatory
     'customers',       # tenant management
     'corsheaders',
+    'rest_framework',  # Public schema'da da DRF gerekli (kayıt endpointleri için)
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
 ]
@@ -60,8 +61,9 @@ TENANT_MODEL = 'customers.Client'
 TENANT_DOMAIN_MODEL = 'customers.Domain'
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
 
-# Ana site (localhost) icin gecerli URL dosyasini belirtiyoruz
-PUBLIC_SCHEMA_URLCONF = 'core.urls_public'
+# PUBLIC_SCHEMA_URLCONF artık kullanılmıyor.
+# Hem public hem tenant istekleri core.urls üzerinden çalışır.
+# Public endpointler (register, check-domain) core.urls içinde api/public/ altında tanımlıdır.
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
@@ -82,8 +84,8 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',       # CORS her zaman EN BAŞTA olmalı
+    'api.middleware.HeaderTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -95,8 +97,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Geliştirme aşamasında her türlü subdomain'den gelen isteklere izin ver
+# Tüm origin'lerden gelen isteklere izin ver (CORS)
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept', 'accept-encoding', 'authorization', 'content-type',
+    'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
+    'x-tenant',  # Canlı ortamda tenant kimliğini taşıyan özel header
+]
 
 ROOT_URLCONF = 'core.urls'
 
