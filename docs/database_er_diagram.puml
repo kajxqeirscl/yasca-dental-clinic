@@ -5,7 +5,7 @@ skinparam linetype ortho
 skinparam nodesep 100
 skinparam ranksep 100
 
-title Yasca Dental Clinic - Database ER Diagram
+title Yasca Dental Clinic - Database ER Diagram - V03
 
 package "Shared Schema (Public)" {
   entity "client (Tenant)" as Client {
@@ -182,7 +182,7 @@ User ||-left-o{ AuditLog : "1:N performs action"
 
 ' Secondary routing
 TreatmentType ||-right-o{ Treatment : "1:N is of type"
-Treatment ||-up-o{ Appointment : "1:N planned"
+Treatment |o-up-o{ Appointment : "0:N planned"
 Treatment ||--o{ Payment : "1:N paid for"
 
 ' Hidden links to force vertical alignment of loose tables
