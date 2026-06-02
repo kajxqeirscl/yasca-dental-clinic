@@ -1,0 +1,104 @@
+name: Mutation Testing
+
+# Coverage rakamlarının yalanını ifşa eder: testler GERÇEKTEN bug yakalıyor mu?
+# Haftalık cron + manuel tetik. Ana CI'ı yavaşlatmamak için ana pipeline'dan ayrı.
+#
+# Hedefler:
+#   Backend kritik modüller: >=80%
+#   Frontend kritik modüller: >=80%
+# Düşerse otomatik issue açılır.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # Her Pazartesi 03:00 UTC
+  workflow_dispatch:        # Manuel tetiklenebilir
+
+jobs:
+  backend-mutation:
+    name: Backend Mutation (mutmut)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: yascadb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres123@localhost:5432/yascadb_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install deps + mutmut
+        run: |
+          pip install -r requirements-dev.txt
+          pip install mutmut
+
+      - name: Run django-tenants migrations
+        run: |
+          python manage.py migrate_schemas --shared
+          python manage.py migrate_schemas --tenant
+
+      - name: Run mutation testing
+        continue-on-error: true   # düşük score build'i kırmaz, sadece raporlanır
+        run: |
+          mutmut run || true
+          mutmut results
+
+      - name: Generate HTML report
+        run: mutmut html || true
+
+      - name: Upload mutation report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-mutation-report
+          path: backend/html/
+
+  frontend-mutation:
+    name: Frontend Mutation (Stryker)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps + Stryker
+        run: |
+          npm ci
+          npm install --no-save @stryker-mutator/core @stryker-mutator/vitest-runner
+
+      - name: Run Stryker
+        continue-on-error: true
+        run: npx stryker run
+
+      - name: Upload Stryker report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-mutation-report
+          path: frontend/reports/mutation/

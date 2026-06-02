@@ -1,0 +1,34 @@
+# Backend pre-commit hooks (opsiyonel, pip install pre-commit gerekli).
+#
+# Frontend Husky pre-commit hook'u bu config'i tetikler.
+# Manuel kurulum:
+#   pip install pre-commit
+#   pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pytest-collect
+        name: pytest collect (testler import edilebilir mi?)
+        entry: bash -c 'cd backend && pytest --collect-only -q'
+        language: system
+        pass_filenames: false
+        types: [python]

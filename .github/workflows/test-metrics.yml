@@ -1,0 +1,54 @@
+name: Test Metrics
+
+# Her main push'tan sonra docs/TEST_METRICS.md'yi güncelle.
+# Otomatik PR açılır — manuel review + merge.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  update-metrics:
+    name: Update test metrics
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend deps (pytest collect için)
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
+      - name: Generate metrics
+        run: python scripts/test-metrics.py --write
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet docs/TEST_METRICS.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR with updated metrics
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(metrics): update TEST_METRICS.md"
+          title: "chore(metrics): test metrik güncellemesi"
+          body: |
+            ## Otomatik Test Metrik Güncellemesi
+
+            `scripts/test-metrics.py` tarafından oluşturuldu.
+
+            Bkz: [TEST_METRICS.md](docs/TEST_METRICS.md)
+          branch: chore/update-test-metrics
+          delete-branch: true

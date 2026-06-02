@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation testing — coverage rakamlarının yalanını ifşa eder. Kritik modüller için >=80% mutation score hedef.",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "coverageAnalysis": "perTest",
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "mutate": [
+    "src/app/services/api.ts",
+    "src/app/hooks/useClinicNavigate.ts",
+    "src/app/hooks/useLocalizedSearch.ts",
+    "src/app/components/AppointmentDialog.tsx",
+    "src/app/components/PatientDialog.tsx",
+    "src/app/components/PaymentDialog.tsx",
+    "src/app/components/TreatmentAddDialog.tsx",
+    "src/app/components/AppointmentDetailDialog.tsx",
+    "src/app/components/ErrorBoundary.tsx",
+    "src/app/components/Layout.tsx"
+  ],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 60
+  },
+  "ignorePatterns": [
+    "src/test/**",
+    "src/mocks/**",
+    "src/**/*.test.{ts,tsx}",
+    "src/**/*.spec.{ts,tsx}",
+    "src/setupTests.ts"
+  ]
+}

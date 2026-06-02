@@ -121,8 +121,36 @@ npx playwright test
 - **Frontend:** React.js, TypeScript, Vite, Tailwind CSS v4, Lucide-React
 - **Backend:** Python 3.12, Django REST Framework, django-tenants
 - **Database:** PostgreSQL (Schema-based isolation)
-- **Testing:** pytest, factory-boy, Vitest, MSW, Playwright
+- **Testing:** pytest, factory-boy, Vitest, MSW, Playwright, vitest-axe (a11y)
 - **CI/CD:** GitHub Actions
+
+## Testing
+
+Kapsamlı test rehberi: **[docs/TESTING.md](docs/TESTING.md)**
+
+Hızlı komutlar:
+```powershell
+# Backend (SQLite, hızlı):
+cd backend; pytest
+
+# Backend (PostgreSQL, multi-tenant izolasyon):
+cd backend; .\scripts\test-pg.ps1
+
+# Frontend unit + coverage:
+cd frontend; npm run test:coverage
+
+# E2E:
+cd frontend; npx playwright test
+
+# A11y (WCAG 2.1 AA):
+cd frontend; npm test -- __a11y__
+```
+
+## Contributing
+
+PR süreci ve code review checklist: **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**
+
+Architecture decisions: **[docs/adr/](docs/adr/)**
 
 ## Participants
 - **Yaman Halloum**

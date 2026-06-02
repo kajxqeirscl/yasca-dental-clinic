@@ -97,8 +97,9 @@ export default function LoginPage() {
           </a>
           
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-gray-500" />
+            <Globe className="w-4 h-4 text-gray-500" aria-hidden="true" />
             <select
+              aria-label={t('language_select_label', 'Dil seçimi')}
               value={i18n.language.startsWith('tr') ? 'tr' : 'en'}
               onChange={(e) => i18n.changeLanguage(e.target.value)}
               className="bg-transparent border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-gray-600 hover:text-indigo-600 transition-colors"
