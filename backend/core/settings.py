@@ -131,13 +131,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 import dj_database_url
 
+db_config = dj_database_url.config(
+    default=os.environ.get('DATABASE_URL'),
+    conn_max_age=600,
+    conn_health_checks=True,
+)
+db_config['ENGINE'] = 'django_tenants.postgresql_backend'
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        engine='django_tenants.postgresql_backend',
-    )
+    'default': db_config
 }
 
 

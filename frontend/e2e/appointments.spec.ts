@@ -70,7 +70,7 @@ test.describe('Randevu Diyaloğu', () => {
   test('Randevu diyaloğunda tarih ve saat alanları görünmeli', async ({ page }) => {
     await page.click('button:has-text("Yeni Randevu")');
     await expect(page.locator('text=Yeni Randevu Ekle')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('input[type="date"]')).toBeVisible();
+    await expect(page.locator('input[placeholder="GG.AA.YYYY"], input[placeholder="MM/DD/YYYY"]')).toBeVisible();
     // Saat seçimi - select elementi
     await expect(page.locator('select').first()).toBeVisible();
   });

@@ -69,8 +69,8 @@ def main() -> int:
         )
 
     verifier = Verifier(
-        provider="yasca-api",
-        provider_base_url=PROVIDER_BASE_URL,
+        "yasca-api",
+        PROVIDER_BASE_URL,
     )
 
     # Geçerli token'ı ve X-Tenant'ı her isteğe enjekte et (sözleşmedeki sahte

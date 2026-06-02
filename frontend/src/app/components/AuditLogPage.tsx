@@ -46,10 +46,6 @@ export default function AuditLogPage() {
   const pageSize = 50;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  useEffect(() => {
-    loadLogs();
-  }, [page]);
-
   const loadLogs = async () => {
     setLoading(true);
     try {
@@ -62,6 +58,10 @@ export default function AuditLogPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadLogs();
+  }, [page]);
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
