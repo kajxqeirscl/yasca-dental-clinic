@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Loader2, ArrowRight, Globe } from 'lucide-react';
-import { fetchPublicClinicInfo } from '../services/api';
+import { Loader2, ArrowRight, Globe, X } from 'lucide-react';
+import { fetchPublicClinicInfo, requestPasswordReset } from '../services/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -12,6 +12,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [clinicName, setClinicName] = useState('Yaşca');
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
 
   useEffect(() => {
     const loadClinicName = async () => {
@@ -46,7 +51,25 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = () => {
-    alert(t('forgot_password_alert'));
+    setIsResetModalOpen(true);
+    setResetMessage('');
+    setResetError('');
+    setResetEmail(username);
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError('');
+    setResetMessage('');
+    try {
+      await requestPasswordReset(resetEmail);
+      setResetMessage(t('reset_link_sent'));
+    } catch (err: any) {
+      setResetError(err.message || t('error_generic'));
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -195,6 +218,62 @@ export default function LoginPage() {
             </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-in zoom-in-95">
+            <button
+              onClick={() => setIsResetModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('reset_password_title')}</h3>
+            <p className="text-gray-500 text-sm mb-6">{t('reset_password_desc')}</p>
+            
+            <form onSubmit={handleResetSubmit} className="space-y-4">
+              {resetError && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl">
+                  {resetError}
+                </div>
+              )}
+              {resetMessage && (
+                <div className="p-3 bg-green-50 text-green-600 text-sm rounded-xl">
+                  {resetMessage}
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700 ml-1">{t('username_label')}</label>
+                <input
+                  type="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder={t('username_placeholder')}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-gray-900"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsResetModalOpen(false)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+                >
+                  {t('reset_cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading || !!resetMessage}
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                >
+                  {resetLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('send_reset_link')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

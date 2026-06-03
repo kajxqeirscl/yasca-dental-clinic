@@ -18,5 +18,15 @@
   "copyright": "© Yasca Dental SaaS",
   "back_to_home": "← Ana Sayfaya Dön",
   "panel_login_desc": "Yönetim paneline giriş yapın",
-  "not_admin_info": "Sistem Yöneticisi değilseniz, lütfen klinik yöneticinizden giriş bilgilerinizi talep edin."
+  "not_admin_info": "Sistem Yöneticisi değilseniz, lütfen klinik yöneticinizden giriş bilgilerinizi talep edin.",
+  "reset_password_title": "Şifrenizi Sıfırlayın",
+  "reset_password_desc": "E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.",
+  "send_reset_link": "Bağlantı Gönder",
+  "reset_link_sent": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.",
+  "reset_cancel": "İptal",
+  "new_password": "Yeni Şifre",
+  "new_password_confirm": "Yeni Şifre (Tekrar)",
+  "reset_button": "Şifreyi Güncelle",
+  "reset_success": "Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz.",
+  "passwords_do_not_match": "Şifreler eşleşmiyor!"
 }

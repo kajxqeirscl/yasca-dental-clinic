@@ -7,6 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError
 
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
+from django.conf import settings
+
 from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document, AuditLog
 from .serializers import (
     PatientSerializer,
@@ -133,6 +139,100 @@ class LogoutView(APIView):
         )
         security_logger.info('ÇIKIŞ: kullanıcı=%s (id=%d) IP=%s', user.username, user.pk, ip)
         return Response({"detail": "Çıkış kaydedildi."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    """Şifre sıfırlama talebi alır ve e-posta gönderir."""
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Lütfen e-posta adresinizi giriniz."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = CustomUser.objects.filter(email=email).first() or CustomUser.objects.filter(username=email).first()
+        if user:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Request'in geldiği host bilgisini kullanarak linki dinamik oluştur
+            # örn: ali.localhost:5173 veya yasca-dental-clinic.onrender.com/app/ali
+            # Eğer istek yasca-dental-clinic.onrender.com'a geliyorsa, ve tenant ali ise, 
+            # path'li veya subdomain'li yapıyı dikkate almak gerekiyor. 
+            # Bizim frontend yapımızda, reset linki doğrudan frontend domain'ine gitmeli.
+            # Şimdilik origin header'ına bakabiliriz veya HTTP_HOST'a.
+            origin = request.headers.get('Origin')
+            if origin:
+                base_url = origin
+            else:
+                scheme = request.scheme
+                host = request.get_host()
+                # Django backend portu 8000, React 5173'te çalışıyorsa lokaldeyiz demektir
+                if 'localhost:8000' in host or '127.0.0.1:8000' in host:
+                    host = host.replace('8000', '5173')
+                base_url = f"{scheme}://{host}"
+                
+            # Eğer /app/tenant/ gibi path tabanlı çalışıyorsa origin bize base url'i verecektir
+            # Ancak biz en güvenli yol olarak origin veya referrer kullanıyoruz.
+            
+            reset_link = f"{base_url}/reset-password/{uid}/{token}"
+            
+            message = f"Merhaba {user.first_name or user.username},\n\nŞifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n\n{reset_link}\n\nBu talebi siz yapmadıysanız bu e-postayı dikkate almayınız."
+            try:
+                send_mail(
+                    subject="Yaşca Diş Kliniği - Şifre Sıfırlama",
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email or user.username],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                logger.error(f"E-posta gönderimi başarısız: {e}")
+                # Güvenlik gereği her zaman aynı mesajı dönüyoruz
+                pass
+
+        # Her zaman aynı mesajı dönerek e-posta enumeration saldırılarını engelliyoruz.
+        return Response({"detail": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmView(APIView):
+    """Token ve yeni şifreyi alarak şifreyi günceller."""
+    permission_classes = []
+
+    def post(self, request):
+        uidb64 = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        if not uidb64 or not token or not new_password:
+            return Response({"error": "Eksik bilgi gönderildi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            user = None
+
+        if user is not None and PasswordResetTokenGenerator().check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            
+            # Log the action
+            x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+            AuditLog.objects.create(
+                user=user,
+                action=AuditLog.Action.UPDATE,
+                content_type=ContentType.objects.get_for_model(user),
+                object_id=user.pk,
+                changes={"password": {"old": "***", "new": "*** (Reset)"}},
+                ip_address=ip
+            )
+            security_logger.info('ŞİFRE SIFIRLANDI: kullanıcı=%s IP=%s', user.username, ip)
+            return Response({"detail": "Şifreniz başarıyla güncellendi."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Geçersiz veya süresi dolmuş bağlantı."}, status=status.HTTP_400_BAD_REQUEST)
 
 class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""

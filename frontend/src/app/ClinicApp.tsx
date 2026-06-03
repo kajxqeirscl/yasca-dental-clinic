@@ -11,7 +11,9 @@ import Layout from './components/Layout';
 import ClinicSettingsPage from './components/ClinicSettingsPage';
 import TreatmentTypesPage from './components/TreatmentTypesPage';
 import AuditLogPage from './components/AuditLogPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import { setTenantSlug } from './services/api';
+import { useLocation } from 'react-router-dom';
 
 interface ClinicAppProps {
   tenantSlug: string; // 'ali', 'yildiz' vb. — boşsa lokal subdomain modu
@@ -19,15 +21,11 @@ interface ClinicAppProps {
 
 /**
  * Klinik Yönetim Paneli
- * 
- * tenantSlug doluysa (canlı ortam, path tabanlı routing):
- *   API isteklerinde X-Tenant header'ı gönderilir.
- * tenantSlug boşsa (lokal geliştirme, subdomain tabanlı):
- *   django-tenants Host header ile tenant'ı bulur.
  */
 export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const location = useLocation();
 
   // Tenant slug'ı api servisine bildir
   useEffect(() => {
@@ -41,6 +39,15 @@ export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">{t('common:loading')}</div>
       </div>
+    );
+  }
+
+  // Yönlendirme mantığı: Eğer şifre sıfırlama rotasındaysak, auth beklemeden o bileşeni göster
+  if (location.pathname.includes('/reset-password/')) {
+    return (
+      <Routes>
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+      </Routes>
     );
   }
 
