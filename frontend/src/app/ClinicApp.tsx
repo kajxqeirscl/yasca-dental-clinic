@@ -46,7 +46,7 @@ export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
   if (location.pathname.includes('/reset-password/')) {
     return (
       <Routes>
-        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        <Route path="reset-password/:uid/:token" element={<ResetPasswordPage />} />
       </Routes>
     );
   }

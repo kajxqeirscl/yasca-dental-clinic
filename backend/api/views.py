@@ -173,10 +173,16 @@ class PasswordResetRequestView(APIView):
                     host = host.replace('8000', '5173')
                 base_url = f"{scheme}://{host}"
                 
-            # Eğer /app/tenant/ gibi path tabanlı çalışıyorsa origin bize base url'i verecektir
-            # Ancak biz en güvenli yol olarak origin veya referrer kullanıyoruz.
+            # Eğer /app/tenant/ gibi path tabanlı çalışıyorsa (canlı ortam)
+            # Linki doğru oluşturabilmek için tenant slug'ı ekliyoruz
+            tenant = getattr(request, 'tenant', None)
+            path_prefix = ""
+            if tenant and tenant.schema_name != 'public':
+                # Localhost'ta subdomain (ali.localhost) kullanıldığı için path'e gerek yok
+                if 'localhost' not in base_url and '127.0.0.1' not in base_url:
+                    path_prefix = f"/app/{tenant.schema_name}"
             
-            reset_link = f"{base_url}/reset-password/{uid}/{token}"
+            reset_link = f"{base_url}{path_prefix}/reset-password/{uid}/{token}"
             
             message = f"Merhaba {user.first_name or user.username},\n\nŞifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n\n{reset_link}\n\nBu talebi siz yapmadıysanız bu e-postayı dikkate almayınız."
             try:
