@@ -148,18 +148,9 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between ml-1">
-                <label htmlFor="password" className="text-sm font-semibold text-gray-700">
-                  {t('password_label')}
-                </label>
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-                >
-                  {t('forgot_password')}
-                </button>
-              </div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 ml-1">
+                {t('password_label')}
+              </label>
               <input
                 id="password"
                 type="password"
@@ -170,6 +161,15 @@ export default function LoginPage() {
                 placeholder={t('password_placeholder')}
                 className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-gray-900 font-medium placeholder-gray-400 shadow-sm"
               />
+              <div className="flex justify-end mt-2 mr-1">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                >
+                  {t('forgot_password')}
+                </button>
+              </div>
             </div>
 
             <button
