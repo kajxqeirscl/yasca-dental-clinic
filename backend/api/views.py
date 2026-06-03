@@ -181,16 +181,17 @@ class PasswordResetRequestView(APIView):
             message = f"Merhaba {user.first_name or user.username},\n\nŞifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n\n{reset_link}\n\nBu talebi siz yapmadıysanız bu e-postayı dikkate almayınız."
             try:
                 send_mail(
-                    subject="Yaşca Diş Kliniği - Şifre Sıfırlama",
+                    subject="Şifre Sıfırlama Talebi",
                     message=message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email or user.username],
+                    recipient_list=[user.email],
                     fail_silently=False,
                 )
             except Exception as e:
-                logger.error(f"E-posta gönderimi başarısız: {e}")
-                # Güvenlik gereği her zaman aynı mesajı dönüyoruz
-                pass
+                return Response(
+                    {"error": f"E-posta gönderilirken bir sorun oluştu. Lütfen SMTP ayarlarını kontrol edin. Detay: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
         # Her zaman aynı mesajı dönerek e-posta enumeration saldırılarını engelliyoruz.
         return Response({"detail": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}, status=status.HTTP_200_OK)
