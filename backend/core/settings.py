@@ -22,9 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # .env dosyasını yükle
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# E-posta ayarları (Geliştirme için konsola yazdırır, canlıda SMTP kullanılmalıdır)
+# E-posta ayarları (Canlıda EMAIL_HOST env değişkeni varsa SMTP kullanır, yoksa konsola yazar)
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-DEFAULT_FROM_EMAIL = 'noreply@yasca-dental.com'
+if 'EMAIL_HOST' in os.environ:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@yasca-dental.com')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
