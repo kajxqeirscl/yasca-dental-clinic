@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { confirmPasswordReset, fetchPublicClinicInfo } from '../services/api';
+import { confirmPasswordReset, fetchPublicClinicInfo, setTenantSlug } from '../services/api';
 
 export default function ResetPasswordPage() {
-  const { uid, token } = useParams<{ uid: string; token: string }>();
+  const { slug, uid, token } = useParams<{ slug?: string; uid: string; token: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation('login');
+  
+  // Set tenant slug early so API calls use the correct schema
+  useEffect(() => {
+    if (slug) {
+      setTenantSlug(slug);
+    }
+  }, [slug]);
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
