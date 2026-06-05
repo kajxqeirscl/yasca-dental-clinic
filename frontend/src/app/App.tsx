@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PublicApp from './public/PublicApp';
 import ClinicApp from './ClinicApp';
+import ResetPasswordPage from './components/ResetPasswordPage';
 
 /**
  * Ana Uygulama Yönlendiricisi
@@ -23,7 +24,10 @@ export default function App() {
     // Lokal subdomain: ali.localhost -> tenant bilgisi Host header ile otomatik gider
     return (
       <BrowserRouter>
-        <ClinicApp tenantSlug="" />
+        <Routes>
+          <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+          <Route path="*" element={<ClinicApp tenantSlug="" />} />
+        </Routes>
       </BrowserRouter>
     );
   }
@@ -32,6 +36,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Şifre sıfırlama rotalarını auth'a takılmadan en üstte yakala */}
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        <Route path="/app/:slug/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        
         {/* /app/:slug altındaki her şey klinik paneline gider */}
         <Route path="/app/:slug/*" element={<ClinicAppWrapper />} />
         {/* Diğer her şey PublicApp (tanıtım sitesi) */}
