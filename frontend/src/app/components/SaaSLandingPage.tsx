@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function SaaSLandingPage() {
   const [formData, setFormData] = useState({
@@ -52,6 +53,10 @@ export default function SaaSLandingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Yaşca Dental - Ücretsiz Kayıt Olun ve Diş Kliniğinizi Yönetin</title>
+        <meta name="description" content="Sisteme hemen katılın, diş kliniğinizin veritabanı 1 saniyede otomatik kurulsun. Yaşca Dental ile randevu ve hasta takibi çok kolay." />
+      </Helmet>
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
