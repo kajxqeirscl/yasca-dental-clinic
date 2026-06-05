@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
       await confirmPasswordReset(uid, token, password);
       setSuccess(true);
       setTimeout(() => {
-        navigate('/');
+        navigate(slug ? `/app/${slug}` : '/');
       }, 3000);
     } catch (err: any) {
       setError(err.message || t('error_generic'));
@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
             <div className="text-center mt-4">
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(slug ? `/app/${slug}` : '/')}
                 className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
               >
                 {t('reset_cancel')}
