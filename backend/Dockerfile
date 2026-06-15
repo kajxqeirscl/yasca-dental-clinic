@@ -23,5 +23,5 @@ COPY . /app/
 # Portu dışa aç
 EXPOSE 8000
 
-# Gunicorn ile sunucuyu başlat
-CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Migration'ları çalıştır ve Gunicorn ile sunucuyu başlat
+CMD sh -c "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:8000"
