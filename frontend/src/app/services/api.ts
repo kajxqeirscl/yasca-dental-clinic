@@ -556,6 +556,7 @@ export async function uploadDocument(patientId: number, name: string, file: File
     method: 'POST',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
     },
     body: formData,
   });
