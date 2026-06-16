@@ -18,10 +18,14 @@ import {
   fetchDoctors,
   fetchTreatments,
   fetchClinicSettings,
+  createPatient,
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
+import { UserPlus } from 'lucide-react';
+import { PhoneInput } from './ui/phone-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
 
 interface Appointment {
   id: number;
@@ -116,6 +120,12 @@ export default function AppointmentDialog({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showPastWarning, setShowPastWarning] = useState(false);
   const [workHours, setWorkHours] = useState({ start: 9, end: 18 });
+
+  // --- Inline patient creation state ---
+  const [showInlineCreate, setShowInlineCreate] = useState(false);
+  const [inlinePhone, setInlinePhone] = useState('');
+  const [inlineCreating, setInlineCreating] = useState(false);
+  const [inlineError, setInlineError] = useState('');
 
   const debouncedSearch = useDebounce(patientSearch, 300);
 
@@ -236,6 +246,62 @@ export default function AppointmentDialog({
     setPatientSearch(val);
     if (!val) {
       setSelectedPatient(null);
+    }
+    // Hide inline create form when search text changes
+    setShowInlineCreate(false);
+    setInlineError('');
+  };
+
+  // Parse search text into first_name / last_name
+  const parseNameFromSearch = (text: string) => {
+    const parts = text.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return { first_name: parts.slice(0, -1).join(' '), last_name: parts[parts.length - 1] };
+    }
+    return { first_name: parts[0] || '', last_name: '' };
+  };
+
+  const handleInlineCreatePatient = async () => {
+    if (!inlinePhone) {
+      setInlineError('Telefon numarası zorunludur.');
+      return;
+    }
+    if (!isValidPhoneNumber(inlinePhone)) {
+      setInlineError('Geçerli bir telefon numarası giriniz.');
+      return;
+    }
+    const { first_name, last_name } = parseNameFromSearch(patientSearch);
+    if (!first_name.trim()) {
+      setInlineError('Lütfen arama kutusuna hasta adını yazın.');
+      return;
+    }
+    if (!last_name.trim()) {
+      setInlineError('Lütfen ad ve soyadı birlikte yazın (ör: Ali Yılmaz).');
+      return;
+    }
+
+    setInlineCreating(true);
+    setInlineError('');
+    try {
+      const newPatient = await createPatient({
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        phone: inlinePhone,
+      });
+      // Select the newly created patient
+      const patientOption: PatientOption = {
+        id: newPatient.id,
+        full_name: `${newPatient.first_name} ${newPatient.last_name}`,
+        phone: newPatient.phone,
+        tckn: newPatient.tckn,
+      };
+      handleSelectPatient(patientOption);
+      setShowInlineCreate(false);
+      setInlinePhone('');
+    } catch (err) {
+      setInlineError(err instanceof Error ? err.message : 'Hasta oluşturulamadı.');
+    } finally {
+      setInlineCreating(false);
     }
   };
 
@@ -454,12 +520,84 @@ return (
               </div>
             )}
 
-            {patientDropdownOpen && !patientLoading && patientResults.length === 0 && debouncedSearch.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-md px-3 py-2 text-sm text-gray-500">
-                {t('appointments:dialog.fields.not_found')}
+            {patientDropdownOpen && !patientLoading && patientResults.length === 0 && debouncedSearch.length > 0 && !showInlineCreate && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  {t('appointments:dialog.fields.not_found')}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInlineCreate(true);
+                    setPatientDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border-t border-emerald-100 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>"{debouncedSearch}" olarak yeni hasta oluştur</span>
+                </button>
               </div>
             )}
           </div>
+
+          {/* Inline Quick Patient Create Form */}
+          {showInlineCreate && !selectedPatient && (
+            <div className="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm font-semibold text-emerald-800">Hızlı Hasta Oluştur</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] text-gray-500">Ad</Label>
+                  <div className="text-sm font-medium text-gray-900 bg-white px-2 py-1.5 rounded border">
+                    {parseNameFromSearch(patientSearch).first_name || '—'}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-gray-500">Soyad</Label>
+                  <div className="text-sm font-medium text-gray-900 bg-white px-2 py-1.5 rounded border">
+                    {parseNameFromSearch(patientSearch).last_name || <span className="text-red-400 italic">Soyad yazın ↑</span>}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-[10px] text-gray-500">Telefon *</Label>
+                <PhoneInput
+                  value={inlinePhone}
+                  onChange={(val) => setInlinePhone(val || '')}
+                  className="mt-1"
+                />
+              </div>
+              {inlineError && (
+                <p className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">{inlineError}</p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowInlineCreate(false);
+                    setInlinePhone('');
+                    setInlineError('');
+                  }}
+                  className="flex-1"
+                >
+                  İptal
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleInlineCreatePatient}
+                  disabled={inlineCreating}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {inlineCreating ? 'Oluşturuluyor...' : 'Oluştur & Seç'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {selectedPatient && (
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
