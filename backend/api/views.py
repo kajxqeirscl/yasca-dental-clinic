@@ -1,4 +1,4 @@
-from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField, OuterRef, Subquery
+from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField, OuterRef, Subquery, F
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import viewsets, status, filters
@@ -242,10 +242,28 @@ class PasswordResetConfirmView(APIView):
         else:
             return Response({"error": "Geçersiz veya süresi dolmuş bağlantı."}, status=status.HTTP_400_BAD_REQUEST)
 
+class NullsLastOrderingFilter(filters.OrderingFilter):
+    def filter_queryset(self, request, queryset, view):
+        ordering = self.get_ordering(request, queryset, view)
+        if ordering:
+            order_fields = []
+            for field in ordering:
+                is_desc = field.startswith('-')
+                field_name = field[1:] if is_desc else field
+                if field_name in ['birth_date', 'last_visit_date']:
+                    if is_desc:
+                        order_fields.append(F(field_name).desc(nulls_last=True))
+                    else:
+                        order_fields.append(F(field_name).asc(nulls_last=True))
+                else:
+                    order_fields.append(field)
+            return queryset.order_by(*order_fields)
+        return queryset
+
 class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
     permission_classes = [IsAuthenticated]
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [NullsLastOrderingFilter]
     ordering_fields = ['first_name', 'last_name', 'created_at', 'birth_date', 'phone', 'tckn', 'appointments_count', 'last_visit_date', 'total_payments', 'total_debt']
 
     def get_serializer_class(self):
@@ -291,7 +309,7 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
                 | Q(tckn__tr_icontains=search)
             )
             
-        # Default ordering is handled by OrderingFilter, but we can set a fallback here if no ordering param is provided
+        # Default ordering is handled by NullsLastOrderingFilter, but we can set a fallback here if no ordering param is provided
         ordering = self.request.query_params.get("ordering")
         if not ordering:
             qs = qs.order_by("-created_at")
