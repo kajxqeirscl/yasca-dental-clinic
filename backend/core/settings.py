@@ -22,6 +22,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # .env dosyasını yükle
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
+# E-posta ayarları
+# Resend API key varsa HTTP API ile gönder (Render free tier SMTP portlarını engelliyor)
+# Yoksa geliştirme ortamı → konsola yazar
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+
+if RESEND_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': RESEND_API_KEY,
+    }
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -42,6 +56,7 @@ SHARED_APPS = [
     'customers',       # tenant management
     'corsheaders',
     'rest_framework',  # Public schema'da da DRF gerekli (kayıt endpointleri için)
+    'anymail',         # Resend HTTP API e-posta backend
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
 ]
@@ -53,6 +68,7 @@ TENANT_APPS = [
     'django.contrib.messages',
     'rest_framework',
     'api',
+    'drf_spectacular',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -76,6 +92,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Yaşca Diş Kliniği API',
+    'DESCRIPTION': 'İç ve Dış Arayüzlerin Dokümantasyonu (Proje Adımı 3)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 SIMPLE_JWT = {

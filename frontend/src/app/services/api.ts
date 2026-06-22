@@ -10,15 +10,17 @@
 // Canlıda: Tek Render URL kullanılır, tenant bilgisi X-Tenant header ile gönderilir
 const HOSTNAME = window.location.hostname;
 
-let API_BASE = '';
+let API_BASE = import.meta.env.VITE_API_URL;
 let TENANT_SUBDOMAIN = ''; // Canlı ortamda backend'e gönderilecek tenant adı
 
-if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
-  // Lokal geliştirme - django-tenants Host header ile çalışır
-  API_BASE = `http://${HOSTNAME}:8000/api`;
-} else {
-  // Canlı ortam - Tüm istekler tek Render URL'ine gider
-  API_BASE = 'https://yasca-dental-clinic.onrender.com/api';
+if (!API_BASE) {
+  if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
+    // Lokal geliştirme - django-tenants Host header ile çalışır
+    API_BASE = `http://${HOSTNAME}:8000/api`;
+  } else {
+    // Canlı ortam - Tüm istekler tek Render URL'ine gider
+    API_BASE = 'https://yasca-dental-clinic-4ato.onrender.com/api';
+  }
 }
 
 /**
@@ -162,6 +164,38 @@ export async function apiLogout() {
   } finally {
     clearAuth();
   }
+}
+
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Şifre sıfırlama bağlantısı gönderilemedi');
+  }
+  return res.json();
+}
+
+export async function confirmPasswordReset(uid: string, token: string, new_password: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset/confirm/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+    body: JSON.stringify({ uid, token, new_password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Şifre güncellenemedi');
+  }
+  return res.json();
 }
 
 export async function fetchCurrentUser() {
@@ -524,6 +558,7 @@ export async function uploadDocument(patientId: number, name: string, file: File
     method: 'POST',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
     },
     body: formData,
   });

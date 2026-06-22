@@ -305,6 +305,33 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = ["id", "patient", "treatment", "amount", "description", "payment_date", "created_at"]
 
+    def validate(self, data):
+        """Tedaviye bağlı ödemelerde toplam ödemenin tedavi fiyatını aşmasını engelle."""
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        amount = data.get("amount", getattr(self.instance, "amount", 0))
+
+        if treatment and amount:
+            from decimal import Decimal
+            treatment_price = treatment.price or Decimal("0")
+            # Bu tedaviye yapılmış mevcut ödemelerin toplamını hesapla
+            existing_payments = Payment.objects.filter(
+                treatment=treatment,
+                is_active=True
+            )
+            # Düzenleme modundaysa kendi ödemesini hariç tut
+            if self.instance:
+                existing_payments = existing_payments.exclude(pk=self.instance.pk)
+
+            total_paid = sum(p.amount for p in existing_payments)
+            remaining = treatment_price - total_paid
+
+            if amount > remaining:
+                raise serializers.ValidationError({
+                    "amount": f"Ödeme tutarı kalan borcu ({remaining:.2f} ₺) aşamaz."
+                })
+
+        return data
+
 class DocumentSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source="uploaded_by.get_full_name", read_only=True)
     file_url = serializers.FileField(source="file", read_only=True)

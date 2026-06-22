@@ -21,7 +21,7 @@ export default function TenantLoginPage() {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const checkUrl = isLocal
         ? `http://${window.location.hostname}:8000/api/public/check-domain/?subdomain=${subdomain}`
-        : `https://yasca-dental-clinic.onrender.com/api/public/check-domain/?subdomain=${subdomain}`;
+        : `https://yasca-dental-clinic-pbbo.onrender.com/api/public/check-domain/?subdomain=${subdomain}`;
       
       const res = await fetch(checkUrl);
       if (!res.ok) {

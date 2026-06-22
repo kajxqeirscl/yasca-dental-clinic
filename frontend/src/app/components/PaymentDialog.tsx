@@ -51,6 +51,7 @@ export default function PaymentDialog({
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
+  const [maxAmount, setMaxAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && patientId) {
@@ -67,6 +68,7 @@ export default function PaymentDialog({
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setError('');
     setConfirmDelete(false);
+    setMaxAmount(defaultAmount ? Number(defaultAmount) : null);
   };
 
   useEffect(() => {
@@ -85,6 +87,12 @@ export default function PaymentDialog({
       setError(t('payments:dialog.error_amount'));
       return;
     }
+    
+    if (maxAmount !== null && parsedAmount > maxAmount) {
+      setError(`Ödeme tutarı kalan borcu (${maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺) aşamaz.`);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -175,15 +183,31 @@ export default function PaymentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pay-amount">{t('payments:dialog.amount')}</Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="pay-amount">{t('payments:dialog.amount')}</Label>
+              {maxAmount !== null && (
+                <span className="text-[10px] text-gray-500 font-medium">
+                  Maks: {maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                </span>
+              )}
+            </div>
             <Input
               id="pay-amount"
               type="number"
               min="0"
+              max={maxAmount !== null ? maxAmount : undefined}
               step="0.01"
               placeholder="0.00"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              className={maxAmount !== null && parseFloat(amount.toString() || '0') > maxAmount ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                if (maxAmount !== null && parseFloat(e.target.value || '0') > maxAmount) {
+                  setError(`Ödeme tutarı kalan borcu (${maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺) aşamaz.`);
+                } else if (error.includes('aşamaz')) {
+                  setError('');
+                }
+              }}
             />
           </div>
 

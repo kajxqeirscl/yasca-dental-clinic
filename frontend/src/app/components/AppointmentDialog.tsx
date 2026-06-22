@@ -22,6 +22,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
+import { UserPlus } from 'lucide-react';
+import PatientDialog from './PatientDialog';
 
 interface Appointment {
   id: number;
@@ -116,6 +118,9 @@ export default function AppointmentDialog({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showPastWarning, setShowPastWarning] = useState(false);
   const [workHours, setWorkHours] = useState({ start: 9, end: 18 });
+
+  // --- Patient creation dialog state ---
+  const [showPatientDialog, setShowPatientDialog] = useState(false);
 
   const debouncedSearch = useDebounce(patientSearch, 300);
 
@@ -237,6 +242,15 @@ export default function AppointmentDialog({
     if (!val) {
       setSelectedPatient(null);
     }
+  };
+
+  // Parse search text into first_name / last_name for pre-filling PatientDialog
+  const parseNameFromSearch = (text: string) => {
+    const parts = text.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return { first_name: parts.slice(0, -1).join(' '), last_name: parts[parts.length - 1] };
+    }
+    return { first_name: parts[0] || '', last_name: '' };
   };
 
   const resetForm = () => {
@@ -455,8 +469,21 @@ return (
             )}
 
             {patientDropdownOpen && !patientLoading && patientResults.length === 0 && debouncedSearch.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-md px-3 py-2 text-sm text-gray-500">
-                {t('appointments:dialog.fields.not_found')}
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  {t('appointments:dialog.fields.not_found')}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPatientDropdownOpen(false);
+                    setShowPatientDialog(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border-t border-emerald-100 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Yeni Hasta Oluştur</span>
+                </button>
               </div>
             )}
           </div>
@@ -568,6 +595,24 @@ return (
       </div>
     </DialogContent>
   </Dialog>
+
+  {/* Hasta Oluşturma Dialog */}
+  <PatientDialog
+    isOpen={showPatientDialog}
+    onClose={() => setShowPatientDialog(false)}
+    initialData={patientSearch.trim() ? parseNameFromSearch(patientSearch) : undefined}
+    onSuccess={() => {
+      // Re-search to find the newly created patient
+      setShowPatientDialog(false);
+      fetchPatients(patientSearch.trim())
+        .then((results: PatientOption[]) => {
+          if (results.length > 0) {
+            handleSelectPatient(results[0]);
+          }
+        })
+        .catch(() => {});
+    }}
+  />
   </>
 );
 }

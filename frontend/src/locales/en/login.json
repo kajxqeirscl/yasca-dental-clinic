@@ -18,5 +18,15 @@
   "copyright": "© Yasca Dental SaaS",
   "back_to_home": "← Back to Home",
   "panel_login_desc": "Log in to the management panel",
-  "not_admin_info": "If you are not a System Administrator, please request your login credentials from your clinic manager."
+  "not_admin_info": "If you are not a System Administrator, please request your login credentials from your clinic manager.",
+  "reset_password_title": "Reset Your Password",
+  "reset_password_desc": "Enter your email address and we'll send you a link to reset your password.",
+  "send_reset_link": "Send Link",
+  "reset_link_sent": "A password reset link has been sent to your email address.",
+  "reset_cancel": "Cancel",
+  "new_password": "New Password",
+  "new_password_confirm": "Confirm New Password",
+  "reset_button": "Update Password",
+  "reset_success": "Your password has been successfully updated! Redirecting to login page.",
+  "passwords_do_not_match": "Passwords do not match!"
 }

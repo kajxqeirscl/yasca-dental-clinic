@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope, Globe, Shield } from 'lucide-react';
+import { Calendar, Users, LogOut, LayoutDashboard, Settings, Stethoscope, Globe, Shield, UserPlus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchPublicClinicInfo } from '../services/api';
+import PatientDialog from './PatientDialog';
+import { useClinicNavigate } from '../hooks/useClinicNavigate';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,6 +22,8 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
   const { t, i18n } = useTranslation('common');
   const { user } = useAuth();
   const [clinicName, setClinicName] = useState('Yaşca');
+  const [quickPatientOpen, setQuickPatientOpen] = useState(false);
+  const navigate = useClinicNavigate();
 
   useEffect(() => {
     if (user?.clinic_name) {
@@ -71,6 +75,14 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <Button
+                onClick={() => setQuickPatientOpen(true)}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-sm"
+                size="sm"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                {t('quick_add_patient', 'Hızlı Hasta Ekle')}
+              </Button>
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <select
@@ -126,6 +138,28 @@ export default function Layout({ children, userName, userRole, onLogout, isAdmin
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {/* Floating Action Button - Hızlı Hasta Ekle */}
+      <button
+        onClick={() => setQuickPatientOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50 group"
+        title={t('quick_add_patient', 'Hızlı Hasta Ekle')}
+      >
+        <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+      </button>
+
+      {/* Global Hasta Ekleme Dialog */}
+      <PatientDialog
+        isOpen={quickPatientOpen}
+        onClose={() => setQuickPatientOpen(false)}
+        onSuccess={() => {
+          setQuickPatientOpen(false);
+          // Eğer hastalar sayfasındaysa listeyi yenile
+          if (location.pathname.includes('/hastalar')) {
+            window.location.reload();
+          }
+        }}
+      />
     </div>
   );
 }
