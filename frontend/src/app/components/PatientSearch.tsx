@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { SearchInput } from './ui/search-input';
-import { Plus, Phone, Calendar, Search } from 'lucide-react';
+import { Plus, Phone, Calendar, Search, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -51,7 +51,9 @@ export default function PatientSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [ordering, setOrdering] = useState('-created_at');
+  const [sortField, setSortField] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const ordering = sortDirection === 'desc' ? `-${sortField}` : sortField;
   const [totalPatients, setTotalPatients] = useState(0);
   const itemsPerPage = 15; // Django PAGE_SIZE
 
@@ -111,22 +113,32 @@ export default function PatientSearch() {
                 className="pl-9 bg-gray-50/50 border-gray-200/60 focus-visible:ring-indigo-500"
               />
             </div>
-            <div className="w-full sm:w-64">
-              <Select value={ordering} onValueChange={(val) => { setOrdering(val); setCurrentPage(1); }}>
-                <SelectTrigger className="bg-gray-50/50 border-gray-200/60">
+            <div className="w-full sm:w-[320px] flex gap-2">
+              <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
+                <SelectTrigger className="bg-gray-50/50 border-gray-200/60 flex-1">
                   <SelectValue placeholder="Sıralama" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="-created_at">En Yeni Kayıtlar</SelectItem>
-                  <SelectItem value="first_name">Alfabetik (A-Z)</SelectItem>
-                  <SelectItem value="-appointments_count">En Çok Randevu Alanlar</SelectItem>
-                  <SelectItem value="-last_visit_date">En Son Ziyaret Edenler</SelectItem>
-                  <SelectItem value="-total_debt">En Çok Borcu Olanlar</SelectItem>
-                  <SelectItem value="-total_payments">En Çok Ödeme Yapanlar</SelectItem>
-                  <SelectItem value="-birth_date">Yaşa Göre (En Genç)</SelectItem>
-                  <SelectItem value="birth_date">Yaşa Göre (En Yaşlı)</SelectItem>
+                  <SelectItem value="created_at">Kayıt Tarihi</SelectItem>
+                  <SelectItem value="first_name">İsim Soyisim</SelectItem>
+                  <SelectItem value="appointments_count">Randevu Sayısı</SelectItem>
+                  <SelectItem value="last_visit_date">Ziyaret Tarihi</SelectItem>
+                  <SelectItem value="total_debt">Toplam Borç</SelectItem>
+                  <SelectItem value="total_payments">Toplam Ödeme</SelectItem>
+                  <SelectItem value="birth_date">Doğum Tarihi / Yaş</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                  setCurrentPage(1);
+                }}
+                className="bg-gray-50/50 border-gray-200/60 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+              >
+                {sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -144,12 +156,12 @@ export default function PatientSearch() {
                 <TableHead>{t('patients:search.columns.last_visit')}</TableHead>
                 
                 {/* Dynamic Column Header based on Ordering */}
-                {ordering === '-appointments_count' && <TableHead>Randevu Sayısı</TableHead>}
-                {ordering === '-total_debt' && <TableHead>Toplam Borç</TableHead>}
-                {ordering === '-total_payments' && <TableHead>Toplam Ödeme</TableHead>}
-                {(ordering === 'birth_date' || ordering === '-birth_date') && <TableHead>Doğum Tarihi</TableHead>}
-                {ordering === '-created_at' && <TableHead>Kayıt Tarihi</TableHead>}
-                {!['-appointments_count', '-total_debt', '-total_payments', 'birth_date', '-birth_date', '-created_at'].includes(ordering) && (
+                {sortField === 'appointments_count' && <TableHead>Randevu Sayısı</TableHead>}
+                {sortField === 'total_debt' && <TableHead>Toplam Borç</TableHead>}
+                {sortField === 'total_payments' && <TableHead>Toplam Ödeme</TableHead>}
+                {sortField === 'birth_date' && <TableHead>Doğum Tarihi</TableHead>}
+                {sortField === 'created_at' && <TableHead>Kayıt Tarihi</TableHead>}
+                {!['appointments_count', 'total_debt', 'total_payments', 'birth_date', 'created_at'].includes(sortField) && (
                   <TableHead>{t('patients:search.columns.tckn')}</TableHead>
                 )}
 
@@ -194,32 +206,32 @@ export default function PatientSearch() {
                     </TableCell>
 
                     {/* Dynamic Column Cell */}
-                    {ordering === '-appointments_count' && (
+                    {sortField === 'appointments_count' && (
                       <TableCell className="font-semibold text-gray-900">
                         {patient.appointments_count || 0}
                       </TableCell>
                     )}
-                    {ordering === '-total_debt' && (
+                    {sortField === 'total_debt' && (
                       <TableCell className="font-bold text-red-600">
                         {parseFloat(patient.total_debt || '0').toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </TableCell>
                     )}
-                    {ordering === '-total_payments' && (
+                    {sortField === 'total_payments' && (
                       <TableCell className="font-bold text-green-600">
                         {parseFloat(patient.total_payments || '0').toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </TableCell>
                     )}
-                    {(ordering === 'birth_date' || ordering === '-birth_date') && (
+                    {sortField === 'birth_date' && (
                       <TableCell className="text-gray-600">
                         {patient.birth_date ? formatDate(patient.birth_date) : '-'}
                       </TableCell>
                     )}
-                    {ordering === '-created_at' && (
+                    {sortField === 'created_at' && (
                       <TableCell className="text-gray-600">
                         {patient.created_at ? formatDate(patient.created_at) : '-'}
                       </TableCell>
                     )}
-                    {!['-appointments_count', '-total_debt', '-total_payments', 'birth_date', '-birth_date', '-created_at'].includes(ordering) && (
+                    {!['appointments_count', 'total_debt', 'total_payments', 'birth_date', 'created_at'].includes(sortField) && (
                       <TableCell className="text-gray-600">{patient.tckn || '-'}</TableCell>
                     )}
 

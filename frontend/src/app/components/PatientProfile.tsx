@@ -26,7 +26,10 @@ import {
   CreditCard,
   Download,
   Trash2,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import DentalChart from './DentalChart';
 import { Input } from './ui/input';
@@ -171,6 +174,12 @@ export default function PatientProfile() {
   const [defaultPaymentTreatmentId, setDefaultPaymentTreatmentId] = useState<number | undefined>();
   const [defaultPaymentAmount, setDefaultPaymentAmount] = useState<number | undefined>();
   const [defaultAppointmentTreatmentId, setDefaultAppointmentTreatmentId] = useState<number | undefined>();
+
+  // Sorting & Filtering State
+  const [treatmentFilter, setTreatmentFilter] = useState<'all' | 'completed' | 'scheduled'>('all');
+  const [treatmentSortDirection, setTreatmentSortDirection] = useState<'desc' | 'asc'>('desc');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'pending'>('all');
+  const [paymentSortDirection, setPaymentSortDirection] = useState<'desc' | 'asc'>('desc');
 
   const loadData = () => {
     if (!id) return;
@@ -699,17 +708,58 @@ export default function PatientProfile() {
             <CardContent>
               {(() => {
                 const activeTreatmentIds = new Set(treatments.map(t => t.id));
-                const standaloneAppointments = appointments.filter(a => !a.treatment || !activeTreatmentIds.has(a.treatment));
+                
+                // Filter & Sort Treatments
+                let filteredTreatments = [...treatments];
+                if (treatmentFilter === 'completed') filteredTreatments = filteredTreatments.filter(t => t.status === 'completed');
+                if (treatmentFilter === 'scheduled') filteredTreatments = filteredTreatments.filter(t => t.status !== 'completed');
+                filteredTreatments.sort((a, b) => {
+                  const dateA = new Date(a.date || 0).getTime();
+                  const dateB = new Date(b.date || 0).getTime();
+                  return treatmentSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+                });
+
+                // Filter & Sort Standalone Appointments
+                let standaloneAppointments = appointments.filter(a => !a.treatment || !activeTreatmentIds.has(a.treatment));
+                if (treatmentFilter === 'completed') standaloneAppointments = standaloneAppointments.filter(a => a.status === 'completed');
+                if (treatmentFilter === 'scheduled') standaloneAppointments = standaloneAppointments.filter(a => a.status !== 'completed');
+                standaloneAppointments.sort((a, b) => {
+                  const dateA = new Date(a.date || 0).getTime();
+                  const dateB = new Date(b.date || 0).getTime();
+                  return treatmentSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+                });
                 
                 return (
                   <div className="space-y-6">
-                    {treatments.length === 0 ? (
+                    <div className="flex gap-2">
+                      <Select value={treatmentFilter} onValueChange={(val: any) => setTreatmentFilter(val)}>
+                        <SelectTrigger className="w-[200px] bg-gray-50/50">
+                          <SelectValue placeholder="Durum Filtresi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tümü (Durum)</SelectItem>
+                          <SelectItem value="completed">Sadece Tamamlananlar</SelectItem>
+                          <SelectItem value="scheduled">Sadece Planlananlar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setTreatmentSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="bg-gray-50/50 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                        title={treatmentSortDirection === 'asc' ? 'Eskiden Yeniye' : 'Yeniden Eskiye'}
+                      >
+                        {treatmentSortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                      </Button>
+                    </div>
+
+                    {filteredTreatments.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         {t('patients:profile.treatments.no_record')}
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {treatments.map((tr) => {
+                        {filteredTreatments.map((tr) => {
                           const trAppointments = appointments.filter(a => a.treatment === tr.id);
                           
                           return (
@@ -886,23 +936,68 @@ export default function PatientProfile() {
                 </div>
               </div>
               {(() => {
-                const completedTreatments = treatments.filter(tr => tr.status === 'completed');
-                
-                // Bağımsız ödemeler: Herhangi bir tedaviye bağlı olmayan ödemeler
-                const standalonePayments = payments.filter(p => !p.treatment);
+                // Determine paid vs pending status for treatments
+                const treatmentsWithPaymentStatus = treatments
+                  .filter(tr => tr.status === 'completed')
+                  .map(tr => {
+                    const trPrice = parseFloat((tr as any).price || '0');
+                    const trPayments = payments.filter(p => p.treatment === tr.id);
+                    const totalPaidForTr = trPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                    const remaining = trPrice - totalPaidForTr;
+                    const isPaid = remaining <= 0 && trPrice > 0;
+                    return { ...tr, trPrice, trPayments, totalPaidForTr, remaining, isPaid };
+                  });
+
+                // Filter & Sort Treatment Payments
+                let filteredTreatmentPayments = [...treatmentsWithPaymentStatus];
+                if (paymentFilter === 'paid') filteredTreatmentPayments = filteredTreatmentPayments.filter(tr => tr.isPaid);
+                if (paymentFilter === 'pending') filteredTreatmentPayments = filteredTreatmentPayments.filter(tr => !tr.isPaid);
+                filteredTreatmentPayments.sort((a, b) => {
+                  const dateA = new Date(a.date || 0).getTime();
+                  const dateB = new Date(b.date || 0).getTime();
+                  return paymentSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+                });
+
+                // Filter & Sort Standalone Payments
+                // Standalone payments are inherently "paid". If filter is "pending", they should be hidden.
+                let filteredStandalonePayments = payments.filter(p => !p.treatment);
+                if (paymentFilter === 'pending') filteredStandalonePayments = [];
+                filteredStandalonePayments.sort((a, b) => {
+                  const dateA = new Date((a as any).payment_date || (a as any).date || 0).getTime();
+                  const dateB = new Date((b as any).payment_date || (b as any).date || 0).getTime();
+                  return paymentSortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+                });
 
                 return (
                   <div className="space-y-6">
+                    <div className="flex gap-2">
+                      <Select value={paymentFilter} onValueChange={(val: any) => setPaymentFilter(val)}>
+                        <SelectTrigger className="w-[200px] bg-gray-50/50">
+                          <SelectValue placeholder="Durum Filtresi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tümü (Ödeme Durumu)</SelectItem>
+                          <SelectItem value="paid">Sadece Ödenenler</SelectItem>
+                          <SelectItem value="pending">Sadece Bekleyenler</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setPaymentSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="bg-gray-50/50 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                        title={paymentSortDirection === 'asc' ? 'Eskiden Yeniye' : 'Yeniden Eskiye'}
+                      >
+                        {paymentSortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                      </Button>
+                    </div>
+
                     {/* Tedavi Bazlı Ödemeler */}
-                    {completedTreatments.length > 0 && (
+                    {filteredTreatmentPayments.length > 0 && (
                       <div className="space-y-3">
                         <h3 className="font-semibold text-gray-800 text-lg">{t('patients:profile.payments.treatment_payments', 'Tedavi Bazlı Ödemeler')}</h3>
-                        {completedTreatments.map((tr) => {
-                          const trPrice = parseFloat((tr as any).price || '0');
-                          const trPayments = payments.filter(p => p.treatment === tr.id);
-                          const totalPaidForTr = trPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-                          const remaining = trPrice - totalPaidForTr;
-                          const isPaid = remaining <= 0 && trPrice > 0;
+                        {filteredTreatmentPayments.map((tr) => {
+                          const { trPrice, trPayments, totalPaidForTr, remaining, isPaid } = tr;
 
                           return (
                             <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
@@ -990,10 +1085,15 @@ export default function PatientProfile() {
                     )}
 
                     {/* Bağımsız Ödemeler */}
-                    {standalonePayments.length > 0 && (
+                    {filteredStandalonePayments.length > 0 && (
                       <div className="space-y-3 pt-6 border-t">
-                        <h3 className="font-semibold text-gray-800 text-lg">Genel / Bağımsız Ödemeler</h3>
-                        {standalonePayments.map((pay) => (
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-800 text-lg">Genel / Bağımsız Ödemeler</h3>
+                          <Button size="sm" variant="outline" onClick={() => setIsPaymentAddOpen(true)}>
+                            <Plus className="w-4 h-4 mr-1" /> Yeni Bağımsız Ödeme
+                          </Button>
+                        </div>
+                        {filteredStandalonePayments.map((pay) => (
                           <div 
                             key={pay.id} 
                             className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
@@ -1020,7 +1120,7 @@ export default function PatientProfile() {
                       </div>
                     )}
 
-                    {completedTreatments.length === 0 && standalonePayments.length === 0 && (
+                    {filteredTreatmentPayments.length === 0 && filteredStandalonePayments.length === 0 && (
                       <div className="text-center py-8 text-gray-500">
                         {t('patients:profile.payments.no_record')}
                       </div>
