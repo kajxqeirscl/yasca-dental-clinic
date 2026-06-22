@@ -79,3 +79,7 @@ frontend/.lighthouseci/
 .stryker-tmp/
 backend/loadtests/results_*.csv
 backend/html/
+
+# Patient data exports — never commit these
+*.csv
+backend/data/
