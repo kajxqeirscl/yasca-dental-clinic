@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import AppointmentDialog from './AppointmentDialog';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
 import { fetchAppointments, fetchClinicSettings } from '../services/api';
+import { DatePicker } from './ui/date-picker';
 
 type ViewMode = 'daily' | 'weekly';
 
@@ -93,7 +94,12 @@ export default function AppointmentCalendar() {
 
   const weekDays = getWeekDays();
 
-  const formatApiDate = (date: Date) => date.toISOString().split('T')[0];
+  const formatApiDate = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
 
   const formatDisplayDate = (date: Date) => {
     return new Intl.DateTimeFormat('tr-TR', {
@@ -222,6 +228,15 @@ export default function AppointmentCalendar() {
               : formatDisplayDate(selectedDate)}
           </CardTitle>
           <div className="flex items-center gap-2">
+            <DatePicker 
+              date={formatApiDate(selectedDate)} 
+              onDateChange={(dateStr) => {
+                if (dateStr) {
+                  const [y, m, d] = dateStr.split('-');
+                  setSelectedDate(new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0));
+                }
+              }}
+            />
             <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
