@@ -209,6 +209,11 @@ export default function AppointmentDialog({
       setPatientDropdownOpen(false);
       return;
     }
+
+    // Prevent re-fetching and reopening the dropdown if the search exactly matches the currently selected patient's name
+    if (selectedPatient && debouncedSearch.trim() === selectedPatient.full_name.trim()) {
+      return;
+    }
     setPatientLoading(true);
     fetchPatients(debouncedSearch.trim())
       .then((data: any) => {
