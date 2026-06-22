@@ -95,6 +95,7 @@ export default function TreatmentAddDialog({
         setNotes(treatmentToEdit.notes || '');
         setStatus(treatmentToEdit.status);
         setDate(treatmentToEdit.date);
+        setPrice(treatmentToEdit.price?.toString() || '');
       } else {
         setToothNumber(initialToothNumber?.toString() || '');
         if (initialCategory) {
@@ -110,8 +111,13 @@ export default function TreatmentAddDialog({
         } else {
           setSelectedTypeId('');
           setTreatmentName('');
+          setPrice('');
         }
       }
+    } else {
+      // Dialog closed, reset state
+      setPrice('');
+      setError('');
     }
   }, [isOpen, treatmentToEdit, initialToothNumber, initialCategory, treatmentTypes]);
 
@@ -124,11 +130,14 @@ export default function TreatmentAddDialog({
         );
         setDoctors(sorted);
         if (sorted.length > 0) {
-          const doc =
-            user?.role === 'doctor'
-              ? sorted.find((d) => d.id === user.id) || sorted[0]
-              : sorted[0];
-          setSelectedDoctorId(doc.id);
+          // Only auto-select doctor if we are NOT editing an existing treatment
+          if (!treatmentToEdit) {
+            const doc =
+              user?.role === 'doctor'
+                ? sorted.find((d) => d.id === user.id) || sorted[0]
+                : sorted[0];
+            setSelectedDoctorId(doc.id);
+          }
         }
       })
       .catch(() => setDoctors([]));
