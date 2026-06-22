@@ -1,4 +1,4 @@
-from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField
+from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import viewsets, status, filters
@@ -255,11 +255,29 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        payments_subquery = Payment.objects.filter(
+            patient=OuterRef('pk'), is_active=True
+        ).values('patient').annotate(
+            total=Sum('amount')
+        ).values('total')
+        
+        treatments_subquery = Treatment.objects.filter(
+            patient=OuterRef('pk'), is_active=True, status='completed'
+        ).values('patient').annotate(
+            total=Sum('price')
+        ).values('total')
+        
+        last_visit_subquery = Appointment.objects.filter(
+            patient=OuterRef('pk'), status='completed'
+        ).values('patient').annotate(
+            max_date=Max('date')
+        ).values('max_date')
+
         qs = Patient.objects.annotate(
             appointments_count=Count('appointments', distinct=True),
-            last_visit_date=Max('appointments__date', filter=Q(appointments__status='completed')),
-            total_payments=Coalesce(Sum('payments__amount', filter=Q(payments__is_active=True)), Value(0, output_field=DecimalField())),
-            total_treatments=Coalesce(Sum('treatments__price', filter=Q(treatments__is_active=True, treatments__status='completed')), Value(0, output_field=DecimalField())),
+            last_visit_date=Subquery(last_visit_subquery),
+            total_payments=Coalesce(Subquery(payments_subquery), Value(0, output_field=DecimalField())),
+            total_treatments=Coalesce(Subquery(treatments_subquery), Value(0, output_field=DecimalField())),
         ).annotate(
             total_debt=Coalesce('total_treatments', Value(0, output_field=DecimalField())) - Coalesce('total_payments', Value(0, output_field=DecimalField()))
         )
