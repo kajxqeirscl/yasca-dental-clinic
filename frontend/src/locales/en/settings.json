@@ -1,0 +1,32 @@
+{
+  "title": "Clinic Settings",
+  "readonly": "View only",
+  "error_load": "Failed to load settings",
+  "error_save": "Failed to save settings",
+  "success_save": "Settings saved successfully.",
+  "work_hours": "Working Hours",
+  "start_time": "Opening Time",
+  "end_time": "Closing Time",
+  "work_days": "Working Days",
+  "days_desc": "Selected days will be shown as working days on the calendar.",
+  "summary": "Working summary:",
+  "between": "between",
+  "days_suffix": "days",
+  "saving": "Saving...",
+  "days": {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "0": "Sunday",
+    "short_1": "Mon",
+    "short_2": "Tue",
+    "short_3": "Wed",
+    "short_4": "Thu",
+    "short_5": "Fri",
+    "short_6": "Sat",
+    "short_0": "Sun"
+  }
+}

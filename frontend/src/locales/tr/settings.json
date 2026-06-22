@@ -1,0 +1,32 @@
+{
+  "title": "Klinik Ayarları",
+  "readonly": "Sadece görüntüleme",
+  "error_load": "Ayarlar yüklenemedi",
+  "error_save": "Ayarlar kaydedilemedi",
+  "success_save": "Ayarlar başarıyla kaydedildi.",
+  "work_hours": "Çalışma Saatleri",
+  "start_time": "Açılış Saati",
+  "end_time": "Kapanış Saati",
+  "work_days": "Çalışma Günleri",
+  "days_desc": "Seçili günler takvimde çalışma günü olarak gösterilir.",
+  "summary": "Çalışma özeti:",
+  "between": "arası,",
+  "days_suffix": "günleri",
+  "saving": "Kaydediliyor...",
+  "days": {
+    "1": "Pazartesi",
+    "2": "Salı",
+    "3": "Çarşamba",
+    "4": "Perşembe",
+    "5": "Cuma",
+    "6": "Cumartesi",
+    "0": "Pazar",
+    "short_1": "Pzt",
+    "short_2": "Sal",
+    "short_3": "Çar",
+    "short_4": "Per",
+    "short_5": "Cum",
+    "short_6": "Cmt",
+    "short_0": "Paz"
+  }
+}

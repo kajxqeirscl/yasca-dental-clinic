@@ -3,7 +3,44 @@
  * JWT token ile kimlik doğrulama, 401 yönlendirme
  */
 
-const API_BASE = 'http://localhost:8000/api';
+// ---------------------------------------------------------------------------
+// API Base URL & Tenant Detection
+// ---------------------------------------------------------------------------
+// Lokalde: localhost:8000 -> django-tenants Host header ile tenant bulur
+// Canlıda: VITE_API_URL env var'dan okunur (Railway backend URL)
+const HOSTNAME = window.location.hostname;
+
+const isLocal = HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1';
+
+let API_BASE: string = import.meta.env.VITE_API_URL || '';
+let TENANT_SUBDOMAIN = ''; // Canlı ortamda backend'e gönderilecek tenant adı
+
+if (!API_BASE) {
+  // VITE_API_URL tanımlı değilse lokal geliştirme moduna geç
+  API_BASE = `http://${HOSTNAME}:8000/api`;
+}
+
+/**
+ * Backend base URL'ini döndürür (sadece origin kısmı, /api olmadan).
+ * Dosya URL'leri (media) gibi durumlarda kullanılır.
+ */
+export function getApiOrigin(): string {
+  if (import.meta.env.VITE_API_URL) {
+    // https://api.yascadental.com/api -> https://api.yascadental.com
+    return (import.meta.env.VITE_API_URL as string).replace(/\/api\/?$/, '');
+  }
+  return `http://${HOSTNAME}:8000`;
+}
+
+/**
+ * Canlı ortamda ClinicApp tarafından çağrılır.
+ * URL path'inden alınan tenant slug'ı (Örn: 'ali') API isteklerine X-Tenant header olarak eklenir.
+ */
+export function setTenantSlug(slug: string) {
+  TENANT_SUBDOMAIN = slug;
+}
+
+export { TENANT_SUBDOMAIN };
 
 export const setTokens = (access: string, refresh: string) => {
   localStorage.setItem('access_token', access);
@@ -24,6 +61,7 @@ const getAuthHeaders = (): HeadersInit => {
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
   };
 };
 
@@ -36,7 +74,10 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const res = await fetch(`${API_BASE}/auth/token/refresh/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+      },
       body: JSON.stringify({ refresh }),
     });
     if (!res.ok) return null;
@@ -78,11 +119,39 @@ async function fetchWithAuth(
   return res;
 }
 
+// --- API Error Parser Helper ---
+export function parseApiError(err: any, defaultMsg = 'Bir hata oluştu'): string {
+  if (!err) return defaultMsg;
+  if (typeof err === 'string') return err;
+  if (err.detail) return err.detail;
+  
+  if (typeof err === 'object') {
+    const messages: string[] = [];
+    for (const key of Object.keys(err)) {
+      const fieldErrors = err[key];
+      if (Array.isArray(fieldErrors)) {
+        messages.push(...fieldErrors);
+      } else if (typeof fieldErrors === 'string') {
+        messages.push(fieldErrors);
+      } else if (typeof fieldErrors === 'object' && fieldErrors !== null) {
+        messages.push(parseApiError(fieldErrors));
+      }
+    }
+    if (messages.length > 0) {
+      return messages.join('\n');
+    }
+  }
+  return defaultMsg;
+}
+
 // --- Auth ---
 export async function login(username: string, password: string) {
   const res = await fetch(`${API_BASE}/auth/token/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) {
@@ -94,9 +163,63 @@ export async function login(username: string, password: string) {
   return data;
 }
 
+export async function apiLogout() {
+  try {
+    await fetchWithAuth(`${API_BASE}/auth/logout/`, {
+      method: 'POST',
+    });
+  } catch (err) {
+    console.error('Logout request failed:', err);
+  } finally {
+    clearAuth();
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Şifre sıfırlama bağlantısı gönderilemedi');
+  }
+  return res.json();
+}
+
+export async function confirmPasswordReset(uid: string, token: string, new_password: string) {
+  const res = await fetch(`${API_BASE}/auth/password-reset/confirm/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+    body: JSON.stringify({ uid, token, new_password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Şifre güncellenemedi');
+  }
+  return res.json();
+}
+
 export async function fetchCurrentUser() {
   const res = await fetchWithAuth(`${API_BASE}/auth/me/`);
   if (!res.ok) throw new Error('Oturum bilgisi alınamadı');
+  return res.json();
+}
+
+export async function fetchPublicClinicInfo() {
+  const res = await fetch(`${API_BASE}/public/clinic-info/`, {
+    headers: {
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
+    },
+  });
+  if (!res.ok) throw new Error('Klinik bilgisi alınamadı');
   return res.json();
 }
 
@@ -130,7 +253,7 @@ export async function createPatient(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Hasta eklenemedi');
+    throw new Error(parseApiError(err, 'Hasta eklenemedi'));
   }
   return res.json();
 }
@@ -152,7 +275,10 @@ export async function updatePatient(
     method: 'PUT',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Hasta güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Hasta güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -178,7 +304,7 @@ export async function createAppointment(data: {
   date: string;
   time: string;
   notes?: string;
-  treatment_type?: string;
+  treatment?: number | null;
   status?: string;
 }) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/`, {
@@ -189,26 +315,29 @@ export async function createAppointment(data: {
       date: data.date,
       time: data.time,
       notes: data.notes,
-      treatment_type: data.treatment_type,
+      treatment: data.treatment,
       status: data.status ?? 'scheduled',
     }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Randevu eklenemedi');
+    throw new Error(parseApiError(err, 'Randevu eklenemedi'));
   }
   return res.json();
 }
 
 export async function updateAppointment(
   id: number,
-  data: Partial<{ status: string; notes: string; treatment_type: string; date: string; time: string }>
+  data: Partial<{ status: string; notes: string; treatment: number | null; date: string; time: string }>
 ) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Randevu güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Randevu güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -216,7 +345,10 @@ export async function deleteAppointment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/appointments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Randevu silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Randevu silinemedi'));
+  }
 }
 
 // --- Dashboard ---
@@ -258,7 +390,7 @@ export async function createTreatment(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi eklenemedi');
+    throw new Error(parseApiError(err, 'Tedavi eklenemedi'));
   }
   return res.json();
 }
@@ -279,7 +411,10 @@ export async function updateTreatment(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Tedavi güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -288,7 +423,10 @@ export async function updatePayment(id: number, data: any) {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Ödeme güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Ödeme güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -296,7 +434,10 @@ export async function deletePayment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/payments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Ödeme silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Ödeme silinemedi'));
+  }
   return true;
 }
 
@@ -304,7 +445,10 @@ export async function deleteTreatment(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/treatments/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Tedavi silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi silinemedi'));
+  }
 }
 
 // --- Treatment Types ---
@@ -322,7 +466,7 @@ export async function createTreatmentType(data: { name: string; default_price: n
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Tedavi türü eklenemedi');
+    throw new Error(parseApiError(err, 'Tedavi türü eklenemedi'));
   }
   return res.json();
 }
@@ -335,7 +479,10 @@ export async function updateTreatmentType(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Tedavi türü güncellenemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi türü güncellenemedi'));
+  }
   return res.json();
 }
 
@@ -343,7 +490,10 @@ export async function deleteTreatmentType(id: number) {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/${id}/`, {
     method: 'DELETE',
   });
-  if (!res.ok) throw new Error('Tedavi türü silinemedi');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Tedavi türü silinemedi'));
+  }
 }
 
 // --- Payments ---
@@ -368,7 +518,7 @@ export async function createPayment(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Ödeme eklenemedi');
+    throw new Error(parseApiError(err, 'Ödeme eklenemedi'));
   }
   return res.json();
 }
@@ -384,6 +534,8 @@ export async function updateClinicSettings(data: {
   work_start_time?: string;
   work_end_time?: string;
   work_days?: number[];
+  allow_international_numbers?: boolean;
+  default_country?: string;
 }) {
   const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`, {
     method: 'PUT',
@@ -391,7 +543,7 @@ export async function updateClinicSettings(data: {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || JSON.stringify(err) || 'Ayarlar kaydedilemedi');
+    throw new Error(parseApiError(err, 'Ayarlar kaydedilemedi'));
   }
   return res.json();
 }
@@ -415,6 +567,7 @@ export async function uploadDocument(patientId: number, name: string, file: File
     method: 'POST',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(TENANT_SUBDOMAIN ? { 'X-Tenant': TENANT_SUBDOMAIN } : {}),
     },
     body: formData,
   });
@@ -432,3 +585,54 @@ export async function deleteDocument(documentId: number) {
   });
   if (!res.ok) throw new Error('Doküman silinemedi');
 }
+
+
+// --- Kullanici Yonetimi ---
+export async function fetchUsers() {
+  const res = await fetchWithAuth(`${API_BASE}/users/`);
+  if (!res.ok) throw new Error('Kullanıcılar yüklenemedi');
+  const data = await res.json();
+  return data.results ? data.results : data;
+}
+
+export async function createUser(data: any) {
+  const res = await fetchWithAuth(`${API_BASE}/users/`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı eklenemedi'));
+  }
+  return res.json();
+}
+
+export async function updateUser(id: number, data: any) {
+  const res = await fetchWithAuth(`${API_BASE}/users/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı güncellenemedi'));
+  }
+  return res.json();
+}
+
+export async function deleteUser(id: number) {
+  const res = await fetchWithAuth(`${API_BASE}/users/${id}/`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(parseApiError(err, 'Kullanıcı silinemedi'));
+  }
+}
+
+// ── Audit Logs ──
+export async function getAuditLogs(page = 1) {
+  const res = await fetchWithAuth(`${API_BASE}/audit-logs/?page=${page}`);
+  if (!res.ok) throw new Error('İşlem geçmişi yüklenemedi');
+  return res.json();
+}
+

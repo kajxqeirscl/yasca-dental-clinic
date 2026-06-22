@@ -3,9 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Calendar, Users, Clock, CheckCircle, Plus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 import { fetchDashboardToday } from '../services/api';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
 import AppointmentDialog from './AppointmentDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from './ui/pagination';
 
 interface TodayAppointment {
   id: number;
@@ -32,6 +42,7 @@ interface DashboardData {
 type FilterStatus = 'all' | 'completed' | 'scheduled';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -43,13 +54,16 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<FilterStatus>(() => {
     return (localStorage.getItem('dashboardAppointmentFilter') as FilterStatus) || 'all';
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleFilterChange = (newFilter: FilterStatus) => {
     setFilter(newFilter);
     localStorage.setItem('dashboardAppointmentFilter', newFilter);
+    setCurrentPage(1);
   };
 
-  const loadData = () => {
+  const loadData = async () => {
     setLoading(true);
     fetchDashboardToday()
       .then(setData)
@@ -67,8 +81,8 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl text-gray-900">Hoş Geldiniz</h2>
-        <div className="text-gray-500">Yükleniyor...</div>
+        <h2 className="text-2xl text-gray-900">{t('dashboard:title')}</h2>
+        <div className="text-gray-500">{t('common:loading')}</div>
       </div>
     );
   }
@@ -76,7 +90,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl text-gray-900">Hoş Geldiniz</h2>
+        <h2 className="text-2xl text-gray-900">{t('dashboard:title')}</h2>
         <div className="p-4 bg-red-50 text-red-700 rounded-md">{error}</div>
       </div>
     );
@@ -89,21 +103,28 @@ export default function Dashboard() {
   const totalPatients = data?.total_patients ?? 0;
 
   // Filter logic
-  const filteredAppointments = appointments.filter(apt => {
-    if (filter === 'all') return true;
-    return apt.status === filter;
+  const filteredAppointments = (data?.today_appointments || []).filter((app) => {
+    if (filter === 'completed') return app.status === 'completed';
+    if (filter === 'scheduled') return app.status === 'scheduled';
+    return true;
   });
+
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const paginatedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return <Badge className="bg-blue-100 text-blue-800 border-none">Planlandı</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-none">{t('appointments:detail.status.scheduled')}</Badge>;
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800 border-none">Tamamlandı</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-none">{t('appointments:detail.status.completed')}</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800 border-none">İptal</Badge>;
+        return <Badge className="bg-red-100 text-red-800 border-none">{t('appointments:detail.status.cancelled')}</Badge>;
       case 'no_show':
-        return <Badge className="bg-orange-100 text-orange-800 border-none">Gelmedi</Badge>;
+        return <Badge className="bg-orange-100 text-orange-800 border-none">{t('appointments:detail.status.no_show')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -118,7 +139,7 @@ export default function Dashboard() {
     }
   };
 
-  const formatTime = (t: string) => (t ? t.slice(0, 5) : '');
+
 
   const handleAppointmentClick = (apt: TodayAppointment) => {
     setSelectedAppointment(apt);
@@ -133,39 +154,39 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl text-gray-900">Hoş Geldiniz</h2>
+      <h2 className="text-2xl text-gray-900">{t('dashboard:title')}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Bugünkü Randevular</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard:today_appointments')}</CardTitle>
             <Calendar className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-gray-900">{appointments.length}</div>
-            <p className="text-xs text-gray-500 mt-1">{completedToday} tamamlandı</p>
+            <p className="text-xs text-gray-500 mt-1">{completedToday} {t('dashboard:completed')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Bekleyen Hastalar</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard:waiting_patients')}</CardTitle>
             <Users className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-gray-900">{waitingToday}</div>
-            <p className="text-xs text-gray-500 mt-1">Bugün için (Planlanan + Gelmedi)</p>
+            <p className="text-xs text-gray-500 mt-1">{t('dashboard:waiting_desc')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Toplam Hasta</CardTitle>
+            <CardTitle className="text-sm">{t('dashboard:total_patients')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-gray-900">{totalPatients}</div>
-            <p className="text-xs text-gray-500 mt-1">Aktif kayıtlar</p>
+            <p className="text-xs text-gray-500 mt-1">{t('dashboard:active_records')}</p>
           </CardContent>
         </Card>
       </div>
@@ -173,10 +194,10 @@ export default function Dashboard() {
       <Card>
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
-            <CardTitle>Bugünün Randevuları</CardTitle>
+            <CardTitle>{t('dashboard:today_appointments_title')}</CardTitle>
             <div className="flex items-center gap-3">
               <Button size="sm" onClick={() => setIsNewOpen(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                <Plus className="w-4 h-4 mr-1" /> {t('dashboard:new_appointment')}
               </Button>
               <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
                 <Button 
@@ -185,7 +206,7 @@ export default function Dashboard() {
                   onClick={() => handleFilterChange('all')}
                   className="text-xs px-3 h-8"
                 >
-                  Tümü
+                  {t('dashboard:filter_all')}
                 </Button>
                 <Button 
                   variant={filter === 'completed' ? 'default' : 'ghost'} 
@@ -193,7 +214,7 @@ export default function Dashboard() {
                   onClick={() => handleFilterChange('completed')}
                   className="text-xs px-3 h-8"
                 >
-                  Tamamlanan
+                  {t('dashboard:filter_completed')}
                 </Button>
                 <Button 
                   variant={filter === 'scheduled' ? 'default' : 'ghost'} 
@@ -201,7 +222,7 @@ export default function Dashboard() {
                   onClick={() => handleFilterChange('scheduled')}
                   className="text-xs px-3 h-8"
                 >
-                  Planlanan
+                  {t('dashboard:filter_scheduled')}
                 </Button>
               </div>
             </div>
@@ -211,35 +232,71 @@ export default function Dashboard() {
           <div className="space-y-2">
             {filteredAppointments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Filtreye uygun randevu bulunmuyor.
+                {t('dashboard:no_appointments')}
               </div>
             ) : (
-              filteredAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border-l-4 cursor-pointer transition-colors ${getStatusBg(appointment.status)}`}
-                  onClick={() => handleAppointmentClick(appointment)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white rounded-lg shadow-sm">
-                      <Clock className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">{formatTime(appointment.time)}</span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-gray-900">{appointment.patient_name}</span>
+              <>
+                {paginatedAppointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border-l-4 cursor-pointer transition-colors ${getStatusBg(appointment.status)}`}
+                    onClick={() => handleAppointmentClick(appointment)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-12 h-12 bg-white rounded-lg shadow-sm">
+                        <Clock className="w-5 h-5 text-gray-600" />
                       </div>
-                      {(appointment.treatment_type_name || appointment.notes) && (
-                        <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
-                          {appointment.treatment_type_name || appointment.notes}
-                        </p>
-                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">{formatTimeStr(appointment.time)}</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-900">{appointment.patient_name}</span>
+                        </div>
+                        {(appointment.treatment_type_name || appointment.notes) && (
+                          <p className="text-sm text-gray-600 mt-0.5 truncate max-w-md">
+                            {appointment.treatment_type_name || appointment.notes}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    {getStatusBadge(appointment.status)}
                   </div>
-                  {getStatusBadge(appointment.status)}
-                </div>
-              ))
+                ))}
+                
+                {totalPages > 1 && (
+                  <div className="mt-4 border-t pt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              isActive={currentPage === pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className="cursor-pointer"
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </CardContent>

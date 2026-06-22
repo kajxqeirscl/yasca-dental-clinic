@@ -14,6 +14,7 @@ import { createTreatment, updateTreatment, deleteTreatment, fetchDoctors, fetchT
 import { useAuth } from '../contexts/AuthContext';
 import { type TreatmentCategory } from './TreatmentTypesPage';
 import { DatePicker } from './ui/date-picker';
+import { useTranslation } from 'react-i18next';
 
 interface Treatment {
   id: number;
@@ -67,6 +68,7 @@ export default function TreatmentAddDialog({
   initialCategory,
   treatmentToEdit,
 }: TreatmentAddDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [treatmentTypes, setTreatmentTypes] = useState<TreatmentTypeOption[]>([]);
@@ -149,11 +151,11 @@ export default function TreatmentAddDialog({
 
   const handleSave = async () => {
     if (!selectedDoctorId) {
-      setError('Lütfen hekim seçin.');
+      setError(t('treatments:dialog.error_doctor'));
       return;
     }
     if (!selectedTypeId && !treatmentName.trim()) {
-      setError('Tedavi türü veya işlem adı giriniz.');
+      setError(t('treatments:dialog.error_type'));
       return;
     }
     setLoading(true);
@@ -180,7 +182,7 @@ export default function TreatmentAddDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'İşlem başarısız');
+      setError(err instanceof Error ? err.message : t('treatments:dialog.error_fail'));
     } finally {
       setLoading(false);
     }
@@ -194,7 +196,7 @@ export default function TreatmentAddDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError('Silinemedi');
+      setError(err instanceof Error ? err.message : t('treatments:dialog.error_delete'));
     } finally {
       setLoading(false);
     }
@@ -210,9 +212,9 @@ export default function TreatmentAddDialog({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{treatmentToEdit ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Kaydı Ekle'}</DialogTitle>
+          <DialogTitle>{treatmentToEdit ? t('treatments:dialog.title_edit') : t('treatments:dialog.title_add')}</DialogTitle>
           <DialogDescription>
-            {treatmentToEdit ? 'Mevcut tedavi bilgilerini güncelleyin veya silin.' : 'Hastaya yapılan tedaviyi kaydedin.'}
+            {treatmentToEdit ? t('treatments:dialog.description_edit') : t('treatments:dialog.description_add')}
           </DialogDescription>
         </DialogHeader>
 
@@ -224,21 +226,22 @@ export default function TreatmentAddDialog({
           {/* Tarih & Hekim */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="treat-date">Tarih *</Label>
+              <Label htmlFor="treat-date">{t('treatments:dialog.date')}</Label>
               <DatePicker
                 date={date}
                 onDateChange={setDate}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="treat-doctor">Hekim *</Label>
+              <Label htmlFor="treat-doctor">{t('treatments:dialog.doctor')}</Label>
               <select
                 id="treat-doctor"
                 className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedDoctorId}
                 onChange={(e) => setSelectedDoctorId(Number(e.target.value) || '')}
               >
-                <option value="">Seçin...</option>
+                <option value="">{t('treatments:dialog.select_doctor')}</option>
                 {doctors.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.full_name || d.username}
@@ -250,7 +253,7 @@ export default function TreatmentAddDialog({
 
           {/* Tedavi Türü */}
           <div className="space-y-2">
-            <Label htmlFor="treat-type">İşlem Türü</Label>
+            <Label htmlFor="treat-type">{t('treatments:dialog.type')}</Label>
             <select
               id="treat-type"
               className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -269,7 +272,7 @@ export default function TreatmentAddDialog({
                 }
               }}
             >
-              <option value="">Listeden seçin (veya aşağıya yazın)</option>
+              <option value="">{t('treatments:dialog.select_type')}</option>
               {treatmentTypes.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -281,10 +284,10 @@ export default function TreatmentAddDialog({
           {/* Özel İşlem Adı */}
           {!selectedTypeId && (
             <div className="space-y-2">
-              <Label htmlFor="treat-name">Özel İşlem Adı</Label>
+              <Label htmlFor="treat-name">{t('treatments:dialog.custom_name')}</Label>
               <Input
                 id="treat-name"
-                placeholder="Örn: Özel Beyazlatma"
+                placeholder={t('treatments:dialog.custom_name_placeholder')}
                 value={treatmentName}
                 onChange={(e) => setTreatmentName(e.target.value)}
               />
@@ -294,29 +297,29 @@ export default function TreatmentAddDialog({
           {/* Diş No & Durum */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="treat-tooth">Diş No (FDI)</Label>
+              <Label htmlFor="treat-tooth">{t('treatments:dialog.tooth')}</Label>
               <select
                 id="treat-tooth"
                 className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={toothNumber}
                 onChange={(e) => setToothNumber(e.target.value)}
               >
-                <option value="">Seçin (opsiyonel)</option>
+                <option value="">{t('treatments:dialog.select_tooth')}</option>
                 {TOOTH_NUMBERS.map((n) => (
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="treat-status">Durum</Label>
+              <Label htmlFor="treat-status">{t('treatments:dialog.status')}</Label>
               <select
                 id="treat-status"
                 className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
-                <option value="completed">Tamamlandı</option>
-                <option value="planned">Yapılacak</option>
+                <option value="completed">{t('treatments:dialog.status_completed')}</option>
+                <option value="planned">{t('treatments:dialog.status_planned')}</option>
               </select>
             </div>
           </div>
@@ -324,7 +327,7 @@ export default function TreatmentAddDialog({
           {/* Fiyat & Notlar */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="treat-price">Uygulanan Fiyat (TL)</Label>
+              <Label htmlFor="treat-price">{t('treatments:dialog.price')}</Label>
               <Input
                 id="treat-price"
                 type="number"
@@ -334,10 +337,10 @@ export default function TreatmentAddDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="treat-notes">Notlar</Label>
+              <Label htmlFor="treat-notes">{t('treatments:dialog.notes')}</Label>
               <Textarea
                 id="treat-notes"
-                placeholder="Varsa ek bilgiler..."
+                placeholder={t('treatments:dialog.notes_placeholder')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={1}
@@ -354,16 +357,16 @@ export default function TreatmentAddDialog({
               onClick={() => setConfirmDelete(true)}
               disabled={loading}
             >
-              Kaydı Sil
+              {t('treatments:dialog.delete')}
             </Button>
           ) : <div />}
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => handleOpenChange(false)}>
-              İptal
+              {t('common:cancel')}
             </Button>
             <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-              {loading ? 'Kaydediliyor...' : treatmentToEdit ? 'Güncelle' : 'Kaydet'}
+              {loading ? t('treatments:dialog.saving') : treatmentToEdit ? t('treatments:dialog.update') : t('treatments:dialog.save')}
             </Button>
           </div>
         </div>
@@ -373,15 +376,15 @@ export default function TreatmentAddDialog({
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Tedavi Kaydını Sil</DialogTitle>
+            <DialogTitle>{t('treatments:delete_dialog.title')}</DialogTitle>
             <DialogDescription>
-              Bu tedavi kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              {t('treatments:delete_dialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Vazgeç</Button>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>{t('treatments:delete_dialog.cancel')}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-              {loading ? 'Siliniyor...' : 'Evet, Sil'}
+              {loading ? t('treatments:delete_dialog.deleting') : t('treatments:delete_dialog.confirm')}
             </Button>
           </div>
         </DialogContent>

@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# Commit message hook — Conventional Commits format zorunlu.
+#
+# Geçerli prefix'ler:
+#   feat:     yeni özellik
+#   fix:      bug fix
+#   docs:     dokümantasyon
+#   test:     test ekleme/değişiklik
+#   refactor: davranış değişmeden refactor
+#   chore:    build/tooling/deps
+#   style:    formatting, missing semicolons (no code change)
+#   perf:     performans iyileştirme
+#   ci:       CI yapılandırma
+#
+# Örnek: feat(appointments): conflict detection ekle
+#
+# Bypass yok — branch koruması conventional commits gerektirir.
+
+commit_msg=$(cat "$1")
+pattern='^(feat|fix|docs|test|refactor|chore|style|perf|ci|build|revert)(\(.+\))?!?: .{1,}'
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Commit mesajı Conventional Commits formatına uymuyor."
+  echo ""
+  echo "Beklenen format:"
+  echo "  <type>(<scope>): <subject>"
+  echo ""
+  echo "Geçerli type'lar: feat, fix, docs, test, refactor, chore, style, perf, ci, build, revert"
+  echo ""
+  echo "Örnek:"
+  echo "  feat(appointments): conflict detection ekle"
+  echo "  fix(auth): X-Tenant header refresh'te kayboluyor"
+  echo "  test(dialog): PatientDialog edge case'leri"
+  exit 1
+fi
+
+echo "✅ Commit mesajı geçerli."

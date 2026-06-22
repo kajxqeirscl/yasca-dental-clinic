@@ -1,0 +1,111 @@
+name: Contract Tests (Pact)
+
+# Faz 9 — Consumer-Driven Contracts.
+# consumer job: frontend'in beklentisini pact dosyasına döker (her zaman çalışır).
+# provider job: gerçek backend'i ayağa kaldırıp bu sözleşmeye uyup uymadığını
+#               doğrular. Backend bir alanı değiştirip frontend'i kıracaksa
+#               BURADA yakalanır, production'da değil.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  consumer:
+    name: Pact Consumer (frontend → pact dosyası)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Pact (consumer)
+        run: npm install --no-save @pact-foundation/pact
+
+      - name: Generate pact (consumer test)
+        run: npm run test:pact
+
+      - name: Upload pact file
+        uses: actions/upload-artifact@v4
+        with:
+          name: pacts
+          path: frontend/pacts/
+
+  provider:
+    name: Pact Provider Verification (backend)
+    runs-on: ubuntu-latest
+    needs: consumer
+    continue-on-error: true   # Faz 9 başlangıcı: raporla, henüz merge'i bloke etme
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: yascadb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres123@localhost:5432/yascadb_test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install deps + pact-python
+        run: pip install -r requirements-dev.txt
+
+      - name: Download pact file
+        uses: actions/download-artifact@v4
+        with:
+          name: pacts
+          path: frontend/pacts/
+
+      - name: Migrate + seed
+        run: |
+          python manage.py migrate_schemas --shared
+          python manage.py migrate_schemas --tenant
+          python manage.py seed_demo_data
+
+      - name: Start provider server
+        run: |
+          python manage.py runserver 0.0.0.0:8000 &
+          # Hazır olana kadar bekle
+          for i in {1..30}; do
+            curl -sf http://localhost:8000/api/public/clinic-info/ -H "X-Tenant: standard" && break
+            sleep 1
+          done
+
+      - name: Obtain access token (standard tenant admin)
+        run: |
+          TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/token/ \
+            -H "X-Tenant: standard" -H "Content-Type: application/json" \
+            -d '{"username":"tony","password":"demo123!"}' | python -c "import sys,json;print(json.load(sys.stdin).get('access',''))")
+          echo "PACT_VERIFY_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Verify provider against pact
+        run: python contracts/verify_provider.py

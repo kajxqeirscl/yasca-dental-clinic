@@ -7,11 +7,14 @@
     "doc": "docs"
   },
   "scripts": {
-    "frontend": "npm run dev --prefix frontend",
-    "backend": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver",
-    "install:all": "npm install --prefix frontend && pip install -r backend/requirements.txt"
+    "dev": "docker-compose up --build -d && npm run dev --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "demo": "docker-compose run --rm backend sh -c \"python manage.py flush --no-input && python manage.py seed_demo_data\""
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^25.1.0"
+  }
 }

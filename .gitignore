@@ -17,6 +17,11 @@ __pycache__/
 *.sqlite3
 *.sqlite3-journal
 media/
+*.egg-info/
+*.egg
+
+# Docker
+postgres_data/
 
 # Environment Variables
 .env
@@ -26,6 +31,7 @@ media/
 
 # Logs
 *.log
+logs/
 npm-debug.log*
 yarn-error.log*
 yarn-debug.log*
@@ -59,3 +65,21 @@ playwright/.cache/
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+
+# Gemini AI
+.gemini/
+# Husky auto-generated
+.husky/_/
+
+# ── Faz 9: üretilen test çıktıları (baseline görüntüler HARİÇ — onlar commit'lenir) ──
+frontend/playwright-report-visual/
+frontend/pacts/
+frontend/reports/
+frontend/.lighthouseci/
+.stryker-tmp/
+backend/loadtests/results_*.csv
+backend/html/
+
+# Patient data exports — never commit these
+*.csv
+backend/data/

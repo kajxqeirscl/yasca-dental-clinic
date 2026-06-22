@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "home": "Home",
+    "features": "Features",
+    "pricing": "Pricing",
+    "login": "Client Login",
+    "start": "Get Started"
+  },
+  "hero": {
+    "badge": "Yasca SaaS V2.0 is Live",
+    "title_1": "Take Your Dental Clinic",
+    "title_2": "Into the Future",
+    "subtitle": "Manage your patients' appointments, treatments and payments from a single screen on a fully isolated cloud infrastructure.",
+    "cta_primary": "Start Free Trial",
+    "cta_secondary": "Explore Features"
+  },
+  "features": {
+    "title": "Why Yasca Dental?",
+    "subtitle": "Forget old desktop software. Everything you need is modern, fast and accessible from anywhere.",
+    "cloud": { "title": "Cloud-Based Architecture", "desc": "Access your clinic seamlessly from anywhere, on any device. Your data is always safe." },
+    "security": { "title": "KVKK & GDPR Compliant", "desc": "Protect patient privacy at the highest level with 100% isolated databases for each clinic." },
+    "calendar": { "title": "Smart Scheduling", "desc": "Organize your doctors' and assistants' daily workflow with a single click using an advanced calendar." },
+    "staff": { "title": "Multi-Staff Support", "desc": "Add unlimited doctors and assistants. Manage permissions without cross-clinic confusion." },
+    "fast": { "title": "Fast Treatment Planning", "desc": "Add new treatments and payments for patients in seconds and collect instantly." },
+    "metrics": { "title": "Real-Time Metrics", "desc": "Track your clinic's daily performance, payments and patient traffic in real time." }
+  },
+  "pricing": {
+    "title": "Transparent Pricing",
+    "subtitle": "No hidden fees, no surprises. Choose the plan that fits your clinic best.",
+    "popular": "Most Popular",
+    "per_month": "/mo",
+    "select": "Choose Plan",
+    "custom": "Custom",
+    "standard": { "title": "Standard", "desc": "Core features for new small clinics.", "f1": "Single Doctor", "f2": "Cloud Database", "f3": "Appointment Tracking", "f4": "Email Support" },
+    "pro": { "title": "Professional", "desc": "Full-featured package for growing clinics.", "f1": "Up to 5 Doctors", "f2": "Advanced Anamnesis", "f3": "Finance & Accounting", "f4": "24/7 Priority Support" },
+    "enterprise": { "title": "Enterprise", "desc": "Unlimited access for large hospitals.", "f1": "Unlimited Staff", "f2": "Custom Domain", "f3": "Custom API Access", "f4": "Dedicated Account Manager" }
+  },
+  "cta": {
+    "title_1": "Now Is the Perfect Time",
+    "title_2": "to Simplify Clinic Management",
+    "subtitle": "Try all features free for 14 days — no credit card required. Set up your system in seconds.",
+    "button": "Create My Clinic"
+  },
+  "register": {
+    "title": "Create Your Account",
+    "subtitle": "Fill in your details and get started in seconds.",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "clinic_name": "Clinic Name",
+    "subdomain": "System Address (Subdomain)",
+    "subdomain_hint": "Only lowercase English letters and numbers allowed.",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Sign Up Free",
+    "submitting": "Setting up...",
+    "have_account": "Already have a clinic?",
+    "login_link": "Log In",
+    "success_title": "Your Clinic is Ready!",
+    "success_subtitle": "Your database was successfully created and isolated.",
+    "success_address": "Your Clinic Address",
+    "success_login": "Admin Login",
+    "success_cta": "Go to Management Panel",
+    "benefit_1": "Instant Isolated Database Setup",
+    "benefit_2": "14-Day Free Trial",
+    "benefit_3": "Unlimited Patients & Appointments",
+    "benefit_4": "No Credit Card Required"
+  },
+  "tenant_login": {
+    "title": "Log In to Your Clinic",
+    "subtitle": "Enter your clinic's unique address to access the system.",
+    "label": "Clinic Address",
+    "button": "Go to Clinic Panel",
+    "no_account": "Don't have an account?",
+    "register_link": "Create New Clinic"
+  },
+  "footer": {
+    "tagline": "Next-generation cloud-based management platform for modern dental clinics.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "updates": "Updates",
+    "about": "About Us",
+    "stories": "Customer Stories",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "kvkk": "KVKK Disclosure",
+    "rights": "All rights reserved.",
+    "made_in": "Made with ❤️ in Turkey"
+  }
+}

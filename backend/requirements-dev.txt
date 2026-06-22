@@ -1,0 +1,15 @@
+-r requirements.txt
+pytest>=7.0
+pytest-django>=4.5
+pytest-cov>=4.0
+pytest-rerunfailures>=14.0
+factory-boy>=3.3
+faker>=20.0
+# Mutation testing (Faz 5):
+mutmut>=2.4
+# Pre-commit (Faz 6):
+pre-commit>=3.0
+# Load testing (Faz 9):
+locust>=2.20
+# Contract testing — provider verification (Faz 9):
+pact-python>=2.2

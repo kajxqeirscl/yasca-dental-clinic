@@ -4,70 +4,134 @@ from datetime import timedelta, time
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
+from django_tenants.utils import schema_context
 
+from customers.models import Client, Domain
 from api.models import (
-    Clinic, CustomUser, Patient, Appointment, TreatmentType, Treatment, Payment, ClinicSettings
+    CustomUser, Patient, Appointment, TreatmentType, Treatment, Payment, ClinicSettings
 )
 from api.tests.factories import (
-    ClinicFactory, AdminUserFactory, DoctorUserFactory, AssistantUserFactory,
+    AdminUserFactory, DoctorUserFactory, AssistantUserFactory,
     PatientFactory, AnamnesisFactory, TreatmentTypeFactory, AppointmentFactory,
     TreatmentFactory, PaymentFactory
 )
 
 class Command(BaseCommand):
-    help = 'Seeds the database with realistic demo data for presentation'
+    help = 'Seeds the database with realistic demo data across multiple tenants for presentation'
+
+    def handle(self, *args, **options):
+        self.stdout.write(self.style.WARNING("Starting Demo Data Generation..."))
+
+        # Step 1: Ensure public tenant exists
+        public_tenant, created = Client.objects.get_or_create(
+            schema_name='public',
+            defaults={'name': 'Yasca Dental SaaS', 'is_active': True}
+        )
+        Domain.objects.get_or_create(
+            domain='localhost',
+            defaults={'tenant': public_tenant, 'is_primary': True}
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS("Created Public SaaS Tenant."))
+        else:
+            self.stdout.write("Public SaaS Tenant already exists.")
+
+        # Define Demo Clinics
+        clinics_data = [
+            {
+                'schema_name': 'standard', 
+                'name': 'Stark Standard Clinic', 
+                'domain': 'standard.localhost',
+                'admin': ('tony', 'Tony', 'Stark'),
+                'doctor': ('dr_steve', 'Steve', 'Rogers'),
+                'assistant': ('asistan_peter', 'Peter', 'Parker')
+            },
+            {
+                'schema_name': 'premium', 
+                'name': 'Yıldız Premium Kliniği', 
+                'domain': 'premium.localhost',
+                'admin': ('kemal', 'Kemal', 'Yıldız'),
+                'doctor': ('dr_ahmet', 'Ahmet', 'Kaya'),
+                'assistant': ('asistan_ayse', 'Ayşe', 'Demir')
+            },
+        ]
+
+        from django.db import connection
+
+        for clinic_data in clinics_data:
+            self.stdout.write(f"\n--- Setting up {clinic_data['name']} ---")
+            
+            schema_name = clinic_data['schema_name']
+            # Delete domain first, then client
+            Domain.objects.filter(tenant__schema_name=schema_name).delete()
+            Client.objects.filter(schema_name=schema_name).delete()
+            
+            # Manually drop schema CASCADE to guarantee a clean slate
+            with connection.cursor() as cursor:
+                cursor.execute(f"DROP SCHEMA IF EXISTS {schema_name} CASCADE")
+            
+            tenant = Client.objects.create(
+                schema_name=schema_name,
+                name=clinic_data['name'],
+                is_active=True
+            )
+            Domain.objects.create(
+                domain=clinic_data['domain'],
+                tenant=tenant,
+                is_primary=True
+            )
+            self.stdout.write(self.style.SUCCESS(f"Created Tenant: {clinic_data['name']}"))
+
+            # Step 3: Seed data within the tenant's schema
+            with schema_context(tenant.schema_name):
+                self._seed_tenant_data(tenant, clinic_data)
+
+        self.stdout.write(self.style.SUCCESS("\n" + "=" * 40))
+        self.stdout.write(self.style.SUCCESS("Successfully generated all demo data!"))
+        self.stdout.write(self.style.SUCCESS("=" * 40))
 
     @transaction.atomic
-    def handle(self, *args, **options):
-        self.stdout.write(self.style.WARNING("Clearing existing data..."))
-        # We don't necessarily need to clear here if they used flush, but let's be safe
-        # CustomUser.objects.all().delete() # Flush handles this better.
+    def _seed_tenant_data(self, tenant, clinic_data):
+        # Prevent double seeding if users exist
+        if CustomUser.objects.exists():
+            self.stdout.write(self.style.WARNING("Data already seeded for this tenant. Skipping generation."))
+            return
 
-        self.stdout.write("Generating Clinic...")
-        clinic = ClinicFactory(name="Yaşca Dental Premium Klinik")
-        
-        # Ensure ClinicSettings exist for this clinic
-        settings = ClinicSettings.get_settings(clinic)
+        self.stdout.write("Configuring Clinic Settings...")
+        settings = ClinicSettings.get_settings()
         settings.work_start_time = time(9, 0)
         settings.work_end_time = time(18, 0)
         settings.work_days = [1, 2, 3, 4, 5, 6] # Mon-Sat
         settings.save()
 
         self.stdout.write("Generating Users...")
-        # Create Demo Admin
         admin = AdminUserFactory(
-            username="admin", 
-            first_name="Sistem", 
-            last_name="Yöneticisi", 
-            clinic=clinic,
-            is_staff=True,
+            username=clinic_data['admin'][0], 
+            first_name=clinic_data['admin'][1], 
+            last_name=clinic_data['admin'][2], 
+            is_staff=True, 
             is_superuser=True
         )
         admin.set_password("demo123!")
         admin.save()
 
-        # Create Demo Doctor
         doctor = DoctorUserFactory(
-            username="dr_ahmet", 
-            first_name="Ahmet", 
-            last_name="Yılmaz", 
-            clinic=clinic
+            username=clinic_data['doctor'][0], 
+            first_name=clinic_data['doctor'][1], 
+            last_name=clinic_data['doctor'][2]
         )
         doctor.set_password("demo123!")
         doctor.save()
 
-        # Create Demo Assistant
         assistant = AssistantUserFactory(
-            username="asistan_ayse", 
-            first_name="Ayşe", 
-            last_name="Kaya", 
-            clinic=clinic
+            username=clinic_data['assistant'][0], 
+            first_name=clinic_data['assistant'][1], 
+            last_name=clinic_data['assistant'][2]
         )
         assistant.set_password("demo123!")
         assistant.save()
 
         self.stdout.write("Generating Treatment Types...")
-        # (name, price, category)
         tt_data = [
             ("Kanal Tedavisi",     2500.00, TreatmentType.Category.CANAL),
             ("Diş Çekimi",          800.00, TreatmentType.Category.EXTRACTION),
@@ -79,13 +143,13 @@ class Command(BaseCommand):
         ]
         treatment_types = []
         for name, price, category in tt_data:
-            tt = TreatmentTypeFactory(clinic=clinic, name=name, default_price=price, category=category)
+            tt = TreatmentTypeFactory(name=name, default_price=price, category=category)
             treatment_types.append(tt)
 
         self.stdout.write("Generating Patients and Anamnesis...")
         patients = []
         for _ in range(15):
-            patient = PatientFactory(clinic=clinic)
+            patient = PatientFactory()
             AnamnesisFactory(
                 patient=patient, 
                 allergies=random.choice(["", "Penisilin", "Lokal Anestezi", "Aspirin"]),
@@ -93,15 +157,14 @@ class Command(BaseCommand):
             )
             patients.append(patient)
 
-        # Make sure our specific demo patient exists
-        demo_patient = PatientFactory(clinic=clinic, first_name="Mustafa", last_name="Öztürk", phone="05559998877")
+        # Demo specific patient
+        demo_patient = PatientFactory(first_name="Mustafa", last_name="Öztürk", phone="+905559998877")
         AnamnesisFactory(patient=demo_patient, allergies="Penisilin", smoking="Günde 1 paket")
         patients.append(demo_patient)
 
-        self.stdout.write("Generating Appointments...")
+        self.stdout.write("Generating Appointments & Treatments...")
         today = timezone.localdate()
         
-        # Today's appointments for dr_ahmet
         times = [
             (time(9, 0), Appointment.Status.COMPLETED),
             (time(10, 0), Appointment.Status.COMPLETED),
@@ -112,59 +175,48 @@ class Command(BaseCommand):
             (time(16, 30), Appointment.Status.SCHEDULED),
         ]
 
-        for idx, (t, status) in enumerate(times):
+        for t, status in times:
             p = random.choice(patients)
+            tt = random.choice(treatment_types)
+            # Treatments are generated for both scheduled and completed appointments
+            treatment_status = Treatment.Status.COMPLETED if status == Appointment.Status.COMPLETED else Treatment.Status.PLANNED
+            treatment = TreatmentFactory(
+                patient=p,
+                doctor=doctor,
+                treatment_type=tt,
+                treatment_name=tt.name,
+                tooth_number=str(random.randint(11, 48)),
+                status=treatment_status,
+                price=tt.default_price,
+                date=today
+            )
+            
             AppointmentFactory(
-                clinic=clinic,
                 patient=p,
                 doctor=doctor,
                 date=today,
                 time=t,
                 status=status,
-                treatment_type=random.choice(treatment_types)
+                treatment=treatment
             )
             
-            # If completed, add a treatment and maybe a payment
-            if status == Appointment.Status.COMPLETED:
-                tt = random.choice(treatment_types)
-                treatment = TreatmentFactory(
-                    clinic=clinic,
+            # Payments are only for completed treatments
+            if treatment_status == Treatment.Status.COMPLETED and random.random() > 0.3:
+                PaymentFactory(
                     patient=p,
-                    doctor=doctor,
-                    treatment_type=tt,
-                    treatment_name=tt.name,
-                    tooth_number=str(random.randint(11, 48)),
-                    status=Treatment.Status.COMPLETED,
-                    price=tt.default_price,
-                    date=today
+                    treatment=treatment,
+                    amount=tt.default_price,
+                    description=f"{tt.name} Ödemesi",
+                    payment_date=today
                 )
-                if random.random() > 0.3: # 70% chance they paid
-                    PaymentFactory(
-                        clinic=clinic,
-                        patient=p,
-                        treatment=treatment,
-                        amount=tt.default_price,
-                        description=f"{tt.name} Ödemesi",
-                        payment_date=today
-                    )
 
-        # Generate some past appointments and history
+        # Generate some past history
         for _ in range(20):
             past_date = today - timedelta(days=random.randint(1, 30))
             p = random.choice(patients)
             tt = random.choice(treatment_types)
             
-            AppointmentFactory(
-                clinic=clinic,
-                patient=p,
-                doctor=doctor,
-                date=past_date,
-                time=time(random.randint(9, 17), random.choice([0, 30])),
-                status=Appointment.Status.COMPLETED,
-                treatment_type=tt
-            )
             treatment = TreatmentFactory(
-                clinic=clinic,
                 patient=p,
                 doctor=doctor,
                 treatment_type=tt,
@@ -174,11 +226,19 @@ class Command(BaseCommand):
                 price=tt.default_price,
                 date=past_date
             )
-            # 50% chance of full payment, 30% chance of partial (installment)
+
+            AppointmentFactory(
+                patient=p,
+                doctor=doctor,
+                date=past_date,
+                time=time(random.randint(9, 17), random.choice([0, 30])),
+                status=Appointment.Status.COMPLETED,
+                treatment=treatment
+            )
+            
             rand = random.random()
             if rand > 0.3:
                 PaymentFactory(
-                    clinic=clinic,
                     patient=p,
                     treatment=treatment,
                     amount=tt.default_price,
@@ -186,10 +246,8 @@ class Command(BaseCommand):
                     payment_date=past_date
                 )
             elif rand > 0.1:
-                # Partial payment (taksit)
                 partial = float(tt.default_price) * random.choice([0.5, 0.25])
                 PaymentFactory(
-                    clinic=clinic,
                     patient=p,
                     treatment=treatment,
                     amount=partial,
@@ -197,11 +255,4 @@ class Command(BaseCommand):
                     payment_date=past_date
                 )
 
-
-        self.stdout.write(self.style.SUCCESS("Successfully seeded demo data!"))
-        self.stdout.write(self.style.SUCCESS("-" * 40))
-        self.stdout.write(self.style.SUCCESS("DEMO ACCOUNTS (Password: demo123!)"))
-        self.stdout.write(self.style.SUCCESS(f" Admin    : {admin.username}"))
-        self.stdout.write(self.style.SUCCESS(f" Doctor   : {doctor.username}"))
-        self.stdout.write(self.style.SUCCESS(f" Assistant: {assistant.username}"))
-        self.stdout.write(self.style.SUCCESS("-" * 40))
+        self.stdout.write(self.style.SUCCESS(f"Seeded Demo Data for {tenant.name}"))

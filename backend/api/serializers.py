@@ -10,6 +10,7 @@ from .models import (
     Payment,
     CustomUser,
     Document,
+    AuditLog,
 )
 
 
@@ -49,7 +50,7 @@ class AnamnesisSerializer(serializers.ModelSerializer):
 class PatientSerializer(serializers.ModelSerializer):
     """Hasta detay ve oluşturma."""
 
-    anamnesis = AnamnesisSerializer(required=False)
+    anamnesis = AnamnesisSerializer(required=False, allow_null=True)
     full_name = serializers.ReadOnlyField()
 
     class Meta:
@@ -103,7 +104,7 @@ class DoctorMinimalSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.full_name", read_only=True)
     patient_phone = serializers.CharField(source="patient.phone", read_only=True)
-    treatment_type_name = serializers.CharField(source="treatment_type.name", read_only=True)
+    treatment_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -119,23 +120,32 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "time",
             "status",
             "notes",
-            "treatment_type",
-            "treatment_type_name",
+            "treatment",
+            "treatment_name",
             "created_at",
         ]
 
     def get_doctor_name(self, obj):
         return obj.doctor.get_full_name() or obj.doctor.username
 
+    def get_treatment_name(self, obj):
+        if not obj.treatment:
+            return None
+        return obj.treatment.treatment_type.name if obj.treatment.treatment_type else obj.treatment.treatment_name
+
     def validate(self, data):
         """F-008: Aynı hekime aynı saatte randevu çakışması kontrolü."""
-        doctor = data.get("doctor")
-        date = data.get("date")
-        time = data.get("time")
+        doctor = data.get("doctor", getattr(self.instance, "doctor", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada geçmiş tarih kontrolü
-        if not self.instance and date and date < timezone.localdate():
-            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
+        
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        if treatment and treatment.status == "completed":
+            if not self.instance or getattr(self.instance, "treatment", None) != treatment:
+                raise serializers.ValidationError({"treatment": "Tamamlanmış bir tedaviye yeni randevu eklenemez."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
@@ -143,6 +153,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
+                is_active=True
             )
             if self.instance:
                 existing = existing.exclude(pk=self.instance.pk)
@@ -166,17 +177,21 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             "time",
             "status",
             "notes",
-            "treatment_type",
+            "treatment",
         ]
 
     def validate(self, data):
-        doctor = data.get("doctor")
-        date = data.get("date")
-        time = data.get("time")
+        doctor = data.get("doctor", getattr(self.instance, "doctor", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        time = data.get("time", getattr(self.instance, "time", None))
         
-        # Sadece yeni oluşturmada geçmiş tarih kontrolü
-        if not self.instance and date and date < timezone.localdate():
-            raise serializers.ValidationError({"date": "Geçmiş bir tarihe randevu oluşturulamaz."})
+        # Geçmiş tarih ve saat kontrolü backend'de katı olarak engellenmeyecek,
+        # Frontend tarafında kullanıcıya uyarı (confirmation) olarak sunulacak.
+
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        if treatment and treatment.status == "completed":
+            if not self.instance or getattr(self.instance, "treatment", None) != treatment:
+                raise serializers.ValidationError({"treatment": "Tamamlanmış bir tedaviye yeni randevu eklenemez."})
 
         if doctor and date and time:
             existing = Appointment.objects.filter(
@@ -184,6 +199,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 date=date,
                 time=time,
                 status=Appointment.Status.SCHEDULED,
+                is_active=True
             )
             if self.instance:
                 existing = existing.exclude(pk=self.instance.pk)
@@ -199,6 +215,26 @@ class TreatmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TreatmentType
         fields = ["id", "name", "category", "default_price", "is_active"]
+
+    def validate(self, data):
+        name = data.get("name", getattr(self.instance, "name", None))
+        request = self.context.get("request")
+        user = request.user if request else None
+
+        if name and user:
+            # Aynı isimde başka aktif tedavi türü var mı kontrol et
+            qs = TreatmentType.objects.filter(name__iexact=name, is_active=True)
+            if user.role == CustomUser.Role.DOCTOR:
+                qs = qs.filter(doctor=user)
+            else:
+                qs = qs.filter(doctor__isnull=True)
+                
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+                
+            if qs.exists():
+                raise serializers.ValidationError({"name": "Bu isimde bir tedavi türü zaten mevcut."})
+        return data
 
 
 class TreatmentSerializer(serializers.ModelSerializer):
@@ -229,6 +265,31 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def validate(self, data):
+        patient = data.get("patient", getattr(self.instance, "patient", None))
+        date = data.get("date", getattr(self.instance, "date", None))
+        tooth_number = data.get("tooth_number", getattr(self.instance, "tooth_number", None))
+        treatment_type = data.get("treatment_type", getattr(self.instance, "treatment_type", None))
+        
+        # Aynı hastaya, aynı gün, aynı dişe, aynı tedavi türü eklenmesini engelle
+        if patient and date and treatment_type and tooth_number:
+            qs = Treatment.objects.filter(
+                patient=patient,
+                date=date,
+                tooth_number=tooth_number,
+                treatment_type=treatment_type,
+                is_active=True
+            )
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            
+            if qs.exists():
+                raise serializers.ValidationError(
+                    "Bu hastaya aynı gün aynı dişe bu tedavi zaten eklenmiş."
+                )
+                
+        return data
+
     def get_doctor_name(self, obj):
         return obj.doctor.get_full_name() or obj.doctor.username
 
@@ -236,13 +297,40 @@ class TreatmentSerializer(serializers.ModelSerializer):
 class ClinicSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClinicSettings
-        fields = ["id", "work_start_time", "work_end_time", "work_days"]
+        fields = ["id", "work_start_time", "work_end_time", "work_days", "allow_international_numbers", "default_country"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ["id", "patient", "treatment", "amount", "description", "payment_date", "created_at"]
+
+    def validate(self, data):
+        """Tedaviye bağlı ödemelerde toplam ödemenin tedavi fiyatını aşmasını engelle."""
+        treatment = data.get("treatment", getattr(self.instance, "treatment", None))
+        amount = data.get("amount", getattr(self.instance, "amount", 0))
+
+        if treatment and amount:
+            from decimal import Decimal
+            treatment_price = treatment.price or Decimal("0")
+            # Bu tedaviye yapılmış mevcut ödemelerin toplamını hesapla
+            existing_payments = Payment.objects.filter(
+                treatment=treatment,
+                is_active=True
+            )
+            # Düzenleme modundaysa kendi ödemesini hariç tut
+            if self.instance:
+                existing_payments = existing_payments.exclude(pk=self.instance.pk)
+
+            total_paid = sum(p.amount for p in existing_payments)
+            remaining = treatment_price - total_paid
+
+            if amount > remaining:
+                raise serializers.ValidationError({
+                    "amount": f"Ödeme tutarı kalan borcu ({remaining:.2f} ₺) aşamaz."
+                })
+
+        return data
 
 class DocumentSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source="uploaded_by.get_full_name", read_only=True)
@@ -259,3 +347,38 @@ class DocumentSerializer(serializers.ModelSerializer):
             return obj.file.size
         except Exception:
             return 0
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'password', 'is_active']
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().create(validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.get_full_name', read_only=True, default='Sistem')
+    user_email = serializers.CharField(source='user.email', read_only=True, default='')
+    model_name = serializers.CharField(source='content_type.model', read_only=True)
+    
+    class Meta:
+        model = AuditLog
+        fields = ['id', 'username', 'user_email', 'action', 'model_name', 'object_id', 'changes', 'ip_address', 'created_at']
+

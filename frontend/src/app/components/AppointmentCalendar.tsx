@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { formatTimeFromHour, formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 import AppointmentDialog from './AppointmentDialog';
 import AppointmentDetailDialog from './AppointmentDetailDialog';
 import { fetchAppointments, fetchClinicSettings } from '../services/api';
@@ -29,6 +31,7 @@ interface ClinicSettings {
 }
 
 export default function AppointmentCalendar() {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('calendarViewMode') as ViewMode) || 'weekly';
   });
@@ -90,8 +93,7 @@ export default function AppointmentCalendar() {
 
   const weekDays = getWeekDays();
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
-  const formatTime = (hour: number) => `${hour.toString().padStart(2, '0')}:00`;
+  const formatApiDate = (date: Date) => date.toISOString().split('T')[0];
 
   const formatDisplayDate = (date: Date) => {
     return new Intl.DateTimeFormat('tr-TR', {
@@ -108,12 +110,12 @@ export default function AppointmentCalendar() {
       const daysToFetch = viewMode === 'weekly' ? weekDays : [selectedDate];
       const all: Appointment[] = [];
       for (const day of daysToFetch) {
-        const data = await fetchAppointments(formatDate(day));
+        const data = await fetchAppointments(formatApiDate(day));
         all.push(...data);
       }
       setAppointments(all);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Randevular yüklenemedi');
+      setError(err instanceof Error ? err.message : t('appointments:calendar.error_load'));
       setAppointments([]);
     } finally {
       setLoading(false);
@@ -126,7 +128,7 @@ export default function AppointmentCalendar() {
 
   // Group appointments by the hour they fall under
   const getAppointmentsForSlot = (date: Date, hour: number) => {
-    const dateStr = formatDate(date);
+    const dateStr = formatApiDate(date);
     return appointments.filter((apt) => {
       if (apt.date !== dateStr) return false;
       const aptHour = parseInt(apt.time.split(':')[0], 10);
@@ -136,8 +138,8 @@ export default function AppointmentCalendar() {
 
   const handleSlotClick = (date: Date, hour: number) => {
     setSelectedSlot({
-      date: formatDate(date),
-      time: formatTime(hour),
+      date: formatApiDate(date),
+      time: `${hour.toString().padStart(2, '0')}:00:00`,
     });
     setIsDialogOpen(true);
   };
@@ -180,7 +182,7 @@ export default function AppointmentCalendar() {
     >
       <div className="font-medium truncate">{apt.patient_name}</div>
       {!compact && (
-        <div className="text-[11px] opacity-75">{apt.time.substring(0, 5)}</div>
+        <div className="text-[11px] opacity-75">{formatTimeStr(apt.time)}</div>
       )}
     </div>
   );
@@ -188,10 +190,10 @@ export default function AppointmentCalendar() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl text-gray-900">Randevu Takvimi</h2>
+        <h2 className="text-2xl text-gray-900">{t('appointments:calendar.title')}</h2>
         <div className="flex items-center gap-4">
           <Button onClick={() => handleSlotClick(new Date(), startHour)}>
-            <Plus className="w-4 h-4 mr-2" /> Yeni Randevu
+            <Plus className="w-4 h-4 mr-2" /> {t('appointments:calendar.new')}
           </Button>
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button
@@ -199,14 +201,14 @@ export default function AppointmentCalendar() {
               size="sm"
               onClick={() => { setViewMode('daily'); localStorage.setItem('calendarViewMode', 'daily'); }}
             >
-              Günlük
+              {t('appointments:calendar.view.daily')}
             </Button>
             <Button
               variant={viewMode === 'weekly' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => { setViewMode('weekly'); localStorage.setItem('calendarViewMode', 'weekly'); }}
             >
-              Haftalık
+              {t('appointments:calendar.view.weekly')}
             </Button>
           </div>
         </div>
@@ -228,7 +230,7 @@ export default function AppointmentCalendar() {
               size="sm"
               onClick={() => setSelectedDate(new Date())}
             >
-              Bugün
+              {t('appointments:calendar.today')}
             </Button>
             <Button variant="outline" size="icon" onClick={() => navigateDate('next')}>
               <ChevronRight className="w-4 h-4" />
@@ -237,7 +239,7 @@ export default function AppointmentCalendar() {
         </CardHeader>
         <CardContent>
           {loading && (
-            <div className="text-center py-4 text-gray-500 text-sm">Yükleniyor...</div>
+            <div className="text-center py-4 text-gray-500 text-sm">{t('appointments:calendar.loading')}</div>
           )}
           {error && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
@@ -249,7 +251,7 @@ export default function AppointmentCalendar() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="border p-2 bg-gray-50 w-20 sticky left-0 z-10">Saat</th>
+                    <th className="border p-2 bg-gray-50 w-20 sticky left-0 z-10">{t('appointments:calendar.time')}</th>
                     {weekDays.map((day, idx) => (
                       <th key={idx} className="border p-2 bg-gray-50 min-w-36">
                         {formatDisplayDate(day)}
@@ -272,7 +274,7 @@ export default function AppointmentCalendar() {
                           className="border p-2 bg-gray-50 text-center text-sm sticky left-0 z-10"
                           style={{ minHeight: `${rowMinHeight}px` }}
                         >
-                          {formatTime(hour)}
+                          {formatTimeFromHour(hour)}
                         </td>
                         {weekDays.map((day, idx) => {
                           const slotAppointments = getAppointmentsForSlot(day, hour);
@@ -304,7 +306,7 @@ export default function AppointmentCalendar() {
                     style={{ minHeight: slotAppointments.length > 1 ? `${slotAppointments.length * 52 + 16}px` : undefined }}
                     onClick={() => handleSlotClick(selectedDate, hour)}
                   >
-                    <div className="w-20 shrink-0 text-gray-600">{formatTime(hour)}</div>
+                    <div className="w-20 shrink-0 text-gray-600">{formatTimeFromHour(hour)}</div>
                     <div className="flex-1">
                       {slotAppointments.length > 0 ? (
                         slotAppointments.map((apt) => (
@@ -318,7 +320,7 @@ export default function AppointmentCalendar() {
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">{apt.patient_name}</span>
-                              <span className="text-sm opacity-75">{apt.time.substring(0, 5)}</span>
+                              <span className="text-sm opacity-75">{formatTimeStr(apt.time)}</span>
                             </div>
                              <div className="text-sm opacity-75">{apt.patient_phone}</div>
                              {(apt.treatment_type_name || apt.notes) && (
@@ -329,7 +331,7 @@ export default function AppointmentCalendar() {
                           </div>
                         ))
                       ) : (
-                        <div className="text-gray-400 text-sm">Boş</div>
+                        <div className="text-gray-400 text-sm">{t('appointments:calendar.empty')}</div>
                       )}
                     </div>
                   </div>

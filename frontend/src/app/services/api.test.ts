@@ -2,7 +2,7 @@
  * Unit tests for the API service layer (api.ts).
  * MSW intercepts all fetch() calls — no real network activity.
  */
-import { describe, it, expect, beforeAll, afterEach, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
 import {
@@ -11,19 +11,14 @@ import {
   fetchPatients,
   clearAuth,
   setTokens,
+  setTenantSlug,
   getAccessToken,
   getRefreshToken,
 } from './api';
 
 const BASE = 'http://localhost:8000/api';
 
-// Start / stop MSW around the suite
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => {
-  server.resetHandlers();
-  localStorage.clear();
-});
-afterAll(() => server.close());
+// MSW setup/teardown setupTests.ts içinde global olarak yapılıyor.
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -142,5 +137,120 @@ describe('fetchPatients()', () => {
     );
     await fetchPatients('mehmet');
     expect(capturedUrl).toContain('search=mehmet');
+  });
+});
+
+// ─── X-Tenant header ──────────────────────────────────────────────────────────
+
+describe('X-Tenant header', () => {
+  afterEach(() => setTenantSlug(''));
+
+  it('setTenantSlug sonrası fetchCurrentUser X-Tenant header gönderir', async () => {
+    setTenantSlug('ali');
+    setTokens('tok', 'ref');
+    let capturedHeader: string | null = null;
+    server.use(
+      http.get(`${BASE}/auth/me/`, ({ request }) => {
+        capturedHeader = request.headers.get('X-Tenant');
+        return HttpResponse.json({ id: 1, username: 'x', role: 'doctor' });
+      })
+    );
+
+    await fetchCurrentUser();
+
+    expect(capturedHeader).toBe('ali');
+  });
+
+  it('TENANT_SUBDOMAIN boşken X-Tenant header gönderilmez', async () => {
+    setTenantSlug('');
+    setTokens('tok', 'ref');
+    let capturedHeader: string | null = null;
+    server.use(
+      http.get(`${BASE}/auth/me/`, ({ request }) => {
+        capturedHeader = request.headers.get('X-Tenant');
+        return HttpResponse.json({ id: 1, username: 'x', role: 'doctor' });
+      })
+    );
+
+    await fetchCurrentUser();
+
+    expect(capturedHeader).toBeNull();
+  });
+
+  it('login() çağrısında da X-Tenant header bulunur', async () => {
+    setTenantSlug('beta');
+    let capturedHeader: string | null = null;
+    server.use(
+      http.post(`${BASE}/auth/token/`, ({ request }) => {
+        capturedHeader = request.headers.get('X-Tenant');
+        return HttpResponse.json({ access: 'a', refresh: 'r' });
+      })
+    );
+
+    await login('u', 'p');
+
+    expect(capturedHeader).toBe('beta');
+  });
+
+  it('refresh token isteğinde X-Tenant taşınır', async () => {
+    setTenantSlug('standard');
+    setTokens('expired', 'good-refresh');
+    let refreshHeader: string | null = null;
+
+    server.use(
+      http.get(`${BASE}/auth/me/`, () =>
+        HttpResponse.json({ detail: 'unauth' }, { status: 401 })
+      ),
+      http.post(`${BASE}/auth/token/refresh/`, ({ request }) => {
+        refreshHeader = request.headers.get('X-Tenant');
+        return HttpResponse.json({ access: 'new', refresh: 'new-ref' });
+      })
+    );
+
+    // fetchCurrentUser 401 alır → refresh tetiklenir → tekrar 401 → clearAuth
+    await fetchCurrentUser().catch(() => {});
+
+    expect(refreshHeader).toBe('standard');
+  });
+});
+
+// ─── parseApiError ────────────────────────────────────────────────────────────
+
+describe('parseApiError', () => {
+  it('null/undefined için default mesaj döner', async () => {
+    const { parseApiError } = await import('./api');
+    expect(parseApiError(null)).toBe('Bir hata oluştu');
+    expect(parseApiError(undefined, 'custom')).toBe('custom');
+  });
+
+  it('string error olduğu gibi döner', async () => {
+    const { parseApiError } = await import('./api');
+    expect(parseApiError('hata var')).toBe('hata var');
+  });
+
+  it('detail alanı varsa onu kullanır', async () => {
+    const { parseApiError } = await import('./api');
+    expect(parseApiError({ detail: 'Kimlik doğrulanmadı' })).toBe(
+      'Kimlik doğrulanmadı',
+    );
+  });
+
+  it('field-level array hatalarını birleştirir', async () => {
+    const { parseApiError } = await import('./api');
+    expect(
+      parseApiError({
+        first_name: ['Boş bırakılamaz.'],
+        phone: ['Geçersiz format.'],
+      }),
+    ).toContain('Boş bırakılamaz.');
+  });
+
+  it('nested object hatalarını da çözer', async () => {
+    const { parseApiError } = await import('./api');
+    expect(
+      parseApiError({
+        anamnesis: { medical_history: ['Çok uzun.'] },
+      }),
+    ).toContain('Çok uzun.');
   });
 });

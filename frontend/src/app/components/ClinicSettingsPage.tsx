@@ -3,34 +3,57 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { Settings, Clock, Calendar, CheckCircle } from 'lucide-react';
+import { Switch } from './ui/switch';
+import { Settings, Clock, Calendar, CheckCircle, Globe } from 'lucide-react';
 import { fetchClinicSettings, updateClinicSettings } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
 
-const DAYS = [
-  { value: 1, label: 'Pazartesi', short: 'Pzt' },
-  { value: 2, label: 'Salı', short: 'Sal' },
-  { value: 3, label: 'Çarşamba', short: 'Çar' },
-  { value: 4, label: 'Perşembe', short: 'Per' },
-  { value: 5, label: 'Cuma', short: 'Cum' },
-  { value: 6, label: 'Cumartesi', short: 'Cmt' },
-  { value: 0, label: 'Pazar', short: 'Paz' },
+const DAYS = (t: any) => [
+  { value: 1, label: t('settings:days.1'), short: t('settings:days.short_1') },
+  { value: 2, label: t('settings:days.2'), short: t('settings:days.short_2') },
+  { value: 3, label: t('settings:days.3'), short: t('settings:days.short_3') },
+  { value: 4, label: t('settings:days.4'), short: t('settings:days.short_4') },
+  { value: 5, label: t('settings:days.5'), short: t('settings:days.short_5') },
+  { value: 6, label: t('settings:days.6'), short: t('settings:days.short_6') },
+  { value: 0, label: t('settings:days.0'), short: t('settings:days.short_0') },
 ];
 
 interface ClinicSettingsData {
   work_start_time: string;
   work_end_time: string;
   work_days: number[];
+  allow_international_numbers: boolean;
+  default_country: string;
 }
 
+const generateTimeOptions = () => {
+  const options = [];
+  for (let h = 6; h <= 22; h++) {
+    for (const m of [0, 30]) {
+      const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      options.push(timeStr);
+    }
+  }
+  return options;
+};
+
+import UserManagement from './UserManagement';
+
 export default function ClinicSettingsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+
+  const [activeTab, setActiveTab] = useState<'general' | 'users'>('general');
 
   const [settings, setSettings] = useState<ClinicSettingsData>({
     work_start_time: '09:00',
     work_end_time: '18:00',
     work_days: [1, 2, 3, 4, 5, 6],
+    allow_international_numbers: false,
+    default_country: 'TR',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,9 +68,11 @@ export default function ClinicSettingsPage() {
           work_start_time: data.work_start_time?.substring(0, 5) || '09:00',
           work_end_time: data.work_end_time?.substring(0, 5) || '18:00',
           work_days: data.work_days?.map(Number) || [1, 2, 3, 4, 5, 6],
+          allow_international_numbers: data.allow_international_numbers || false,
+          default_country: data.default_country || 'TR',
         });
       })
-      .catch(() => setError('Ayarlar yüklenemedi'))
+      .catch(() => setError(t('settings:error_load')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -70,16 +95,20 @@ export default function ClinicSettingsPage() {
         work_start_time: settings.work_start_time + ':00',
         work_end_time: settings.work_end_time + ':00',
         work_days: settings.work_days,
+        allow_international_numbers: settings.allow_international_numbers,
+        default_country: settings.default_country,
       });
       setSettings({
         work_start_time: data.work_start_time?.substring(0, 5) || settings.work_start_time,
         work_end_time: data.work_end_time?.substring(0, 5) || settings.work_end_time,
         work_days: data.work_days?.map(Number) || settings.work_days,
+        allow_international_numbers: data.allow_international_numbers ?? settings.allow_international_numbers,
+        default_country: data.default_country || settings.default_country,
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ayarlar kaydedilemedi');
+      setError(err instanceof Error ? err.message : t('settings:error_save'));
     } finally {
       setSaving(false);
     }
@@ -88,30 +117,54 @@ export default function ClinicSettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl text-gray-900">Klinik Ayarları</h2>
-        <div className="text-gray-500">Yükleniyor...</div>
+        <h2 className="text-2xl text-gray-900">{t('settings:title')}</h2>
+        <div className="text-gray-500">{t('common:loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-gray-600" />
-        <h2 className="text-2xl text-gray-900">Klinik Ayarları</h2>
+        <h2 className="text-2xl text-gray-900">{t('settings:title')}</h2>
         {!isAdmin && (
           <Badge variant="outline" className="text-orange-600 border-orange-300">
-            Sadece görüntüleme
+            {t('settings:readonly')}
           </Badge>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'general' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Çalışma Ayarları
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'users' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Personel Yönetimi
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'general' ? (
+        <div className="space-y-6">
 
       {error && (
         <div className="p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>
       )}
       {success && (
         <div className="p-3 bg-green-50 text-green-700 rounded-md text-sm flex items-center gap-2">
-          <CheckCircle className="w-4 h-4" /> Ayarlar başarıyla kaydedildi.
+          <CheckCircle className="w-4 h-4" /> {t('settings:success_save')}
         </div>
       )}
 
@@ -119,36 +172,46 @@ export default function ClinicSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="w-4 h-4" /> Çalışma Saatleri
+            <Clock className="w-4 h-4" /> {t('settings:work_hours')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="start-time">Açılış Saati</Label>
-              <input
+              <Label htmlFor="start-time">{t('settings:start_time')}</Label>
+              <select
                 id="start-time"
-                type="time"
                 className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                 value={settings.work_start_time}
                 disabled={!isAdmin}
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, work_start_time: e.target.value }))
                 }
-              />
+              >
+                {generateTimeOptions().map((t) => (
+                  <option key={t} value={t}>
+                    {formatTimeStr(t)}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end-time">Kapanış Saati</Label>
-              <input
+              <Label htmlFor="end-time">{t('settings:end_time')}</Label>
+              <select
                 id="end-time"
-                type="time"
                 className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                 value={settings.work_end_time}
                 disabled={!isAdmin}
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, work_end_time: e.target.value }))
                 }
-              />
+              >
+                {generateTimeOptions().map((t) => (
+                  <option key={t} value={t}>
+                    {formatTimeStr(t)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </CardContent>
@@ -158,12 +221,12 @@ export default function ClinicSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Calendar className="w-4 h-4" /> Çalışma Günleri
+            <Calendar className="w-4 h-4" /> {t('settings:work_days')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {DAYS.map((day) => {
+            {DAYS(t).map((day) => {
               const active = settings.work_days.includes(day.value);
               return (
                 <button
@@ -185,8 +248,32 @@ export default function ClinicSettingsPage() {
             })}
           </div>
           <p className="text-xs text-gray-400 mt-3">
-            Seçili günler takvimde çalışma günü olarak gösterilir.
+            {t('settings:days_desc')}
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Telefon Ayarları */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Globe className="w-4 h-4" /> Telefon & Ülke Ayarları
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-2">
+              <Label>Varsayılan Ülke</Label>
+              <select
+                className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                value={settings.default_country}
+                disabled={!isAdmin}
+                onChange={(e) => setSettings((prev) => ({ ...prev, default_country: e.target.value }))}
+              >
+                <option value="TR">Türkiye (+90)</option>
+              </select>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -194,12 +281,12 @@ export default function ClinicSettingsPage() {
       <Card className="bg-gray-50">
         <CardContent className="pt-4">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Çalışma özeti:</span>{' '}
-            {settings.work_start_time} – {settings.work_end_time} arası,{' '}
-            {DAYS.filter((d) => settings.work_days.includes(d.value))
+            <span className="font-medium">{t('settings:summary')}</span>{' '}
+            {formatTimeStr(settings.work_start_time)} – {formatTimeStr(settings.work_end_time)} {t('settings:between')}{' '}
+            {DAYS(t).filter((d) => settings.work_days.includes(d.value))
               .map((d) => d.short)
               .join(', ')}{' '}
-            günleri
+            {t('settings:days_suffix')}
           </p>
         </CardContent>
       </Card>
@@ -207,9 +294,13 @@ export default function ClinicSettingsPage() {
       {isAdmin && (
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={saving} className="px-8">
-            {saving ? 'Kaydediliyor...' : 'Kaydet'}
+            {saving ? t('settings:saving') : t('common:save')}
           </Button>
         </div>
+      )}
+        </div>
+      ) : (
+        <UserManagement />
       )}
     </div>
   );

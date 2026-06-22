@@ -1,0 +1,84 @@
+{
+  "calendar": {
+    "title": "Randevu Takvimi",
+    "new": "Yeni Randevu",
+    "view": {
+      "daily": "Günlük",
+      "weekly": "Haftalık"
+    },
+    "today": "Bugün",
+    "loading": "Yükleniyor...",
+    "time": "Saat",
+    "error_load": "Randevular yüklenemedi",
+    "empty": "Boş"
+  },
+  "dialog": {
+    "title_add": "Yeni Randevu Ekle",
+    "title_edit": "Randevuyu Düzenle",
+    "description_add": "Randevu bilgilerini girin ve kaydedin.",
+    "description_edit": "Randevu bilgilerini güncelleyin.",
+    "error_add": "Randevu eklenemedi",
+    "saving": "Kaydediliyor...",
+    "fields": {
+      "date": "Tarih",
+      "time": "Saat",
+      "select_time": "Saat seçin",
+      "patient": "Hasta Seç *",
+      "patient_search": "Ad, soyad, telefon veya TC No ile ara...",
+      "searching": "Aranıyor...",
+      "not_found": "Hasta bulunamadı",
+      "selected": "seçildi",
+      "doctor": "Hekim *",
+      "select_doctor": "Hekim seçin",
+      "doctor_empty": "Henüz hekim tanımlanmamış. Admin panelinden ekleyebilirsiniz.",
+      "treatment": "İşlem",
+      "select_treatment": "İşlem seçin (opsiyonel)",
+      "treatment_empty": "Henüz tedavi türü tanımlanmamış. Admin panelinden ekleyebilirsiniz.",
+      "notes": "Notlar",
+      "notes_placeholder": "Ek bilgiler..."
+    },
+    "errors": {
+      "patient": "Lütfen randevu için bir hasta seçin.",
+      "doctor": "Lütfen randevuyu gerçekleştirecek hekimi seçin.",
+      "date": "Lütfen geçerli bir randevu tarihi belirleyin.",
+      "time": "Lütfen randevu saatini seçin.",
+      "multi_prefix": "Randevu oluşturabilmek için lütfen eksik alanları tamamlayın: ",
+      "field_patient": "hasta",
+      "field_doctor": "hekim",
+      "field_date": "tarih",
+      "field_time": "saat"
+    }
+  },
+  "detail": {
+    "title": "Randevu Detayı",
+    "description": "Randevu bilgilerini inceleyebilir, durumunu değiştirebilirsiniz.",
+    "fields": {
+      "date": "Tarih",
+      "time": "Saat",
+      "patient": "Hasta",
+      "doctor": "Hekim",
+      "treatment": "İşlem",
+      "notes": "Notlar"
+    },
+    "change_status": "Durumu Değiştir",
+    "status": {
+      "scheduled": "Planlandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal",
+      "no_show": "Gelmedi"
+    },
+    "actions": {
+      "delete": "Sil",
+      "edit": "Düzenle",
+      "close": "Kapat",
+      "go_to_patient": "Hasta Profili"
+    },
+    "delete_dialog": {
+      "title": "Randevuyu Sil",
+      "description": "Bu randevuyu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "Vazgeç",
+      "confirm": "Evet, Sil",
+      "deleting": "Siliniyor..."
+    }
+  }
+}

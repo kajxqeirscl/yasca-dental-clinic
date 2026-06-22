@@ -10,6 +10,7 @@ import {
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { CATEGORY_OPTIONS, type TreatmentCategory } from './TreatmentTypesPage';
+import { useTranslation } from 'react-i18next';
 
 // Diş numaraları - FDI Sistemi
 
@@ -53,14 +54,11 @@ const statusColors: Record<ToothStatus, string> = {
   other:     'bg-orange-100 border-orange-300',
 };
 
-// Map from TreatmentCategory to human-readable label (for the dropdown menu)
-const categoryToLabel: Record<TreatmentCategory, string> = Object.fromEntries(
-  CATEGORY_OPTIONS.map((c) => [c.value, c.label])
-) as Record<TreatmentCategory, string>;
 
-const STATUS_DISPLAY: { status: ToothStatus; label: string }[] = [
-  { status: 'healthy',   label: 'Sağlıklı' },
-  ...CATEGORY_OPTIONS.map((c) => ({ status: c.value as ToothStatus, label: c.label })),
+
+const STATUS_DISPLAY = (t: any): { status: ToothStatus; label: string }[] => [
+  { status: 'healthy',   label: t('treatments:chart.status.healthy') },
+  ...CATEGORY_OPTIONS.map((c) => ({ status: c.value as ToothStatus, label: t(c.labelKey) })),
 ];
 
 interface Treatment {
@@ -75,6 +73,7 @@ interface DentalChartProps {
 }
 
 export default function DentalChart({ onToothSelect, treatments = [] }: DentalChartProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'adult' | 'primary'>('adult');
 
   /**
@@ -114,14 +113,14 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
-          <DropdownMenuLabel>Diş {number} - İşlem Seç</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('treatments:chart.select', { number })}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {/* Primary action: open TreatmentAddDialog without pre-selecting a category */}
           <DropdownMenuItem
             onClick={() => onToothSelect?.(number, undefined)}
             className="font-medium text-blue-600 focus:text-blue-700 cursor-pointer"
           >
-            + Yeni Tedavi Ekle
+            {t('treatments:chart.new')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {/* Secondary actions: open dialog pre-filtered to a specific category */}
@@ -130,7 +129,7 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
               key={cat.value}
               onClick={() => onToothSelect?.(number, cat.value as TreatmentCategory)}
             >
-              {cat.label}
+              {t(cat.labelKey)}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -146,7 +145,7 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
     <div className="space-y-8">
       {/* Üst Çene */}
       <div className="space-y-4">
-        <h3 className="text-center text-sm text-gray-600">Üst Çene</h3>
+        <h3 className="text-center text-sm text-gray-600">{t('treatments:chart.upper')}</h3>
         <div className="flex justify-center gap-8">
           <div className="flex gap-1">
             {upperTeeth[0].map((tooth) => (
@@ -163,7 +162,7 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
 
       {/* Alt Çene */}
       <div className="space-y-4">
-        <h3 className="text-center text-sm text-gray-600">Alt Çene</h3>
+        <h3 className="text-center text-sm text-gray-600">{t('treatments:chart.lower')}</h3>
         <div className="flex justify-center gap-8">
           <div className="flex gap-1">
             {lowerTeeth[0].map((tooth) => (
@@ -184,8 +183,8 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'adult' | 'primary')}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="adult">Olgun Dişler</TabsTrigger>
-          <TabsTrigger value="primary">Süt Dişleri</TabsTrigger>
+          <TabsTrigger value="adult">{t('treatments:chart.adult')}</TabsTrigger>
+          <TabsTrigger value="primary">{t('treatments:chart.primary')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="adult" className="mt-6">
@@ -198,7 +197,7 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
       </Tabs>
 
       <div className="flex flex-wrap justify-center gap-4 pt-6 border-t">
-        {STATUS_DISPLAY.map(({ status, label }) => (
+        {STATUS_DISPLAY(t).map(({ status, label }) => (
           <div key={status} className="flex items-center gap-2">
             <div className={`w-6 h-6 border-2 rounded ${statusColors[status]}`} />
             <span className="text-xs text-gray-600">{label}</span>

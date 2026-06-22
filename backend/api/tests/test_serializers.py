@@ -1,29 +1,33 @@
 """
 Unit tests for DRF serializers.
 Tests the nested create/update logic and the appointment conflict validation (F-008).
+
+NOT: Önceki ``Clinic`` modeli django-tenants'a geçişte kaldırıldı; clinic
+foreign key referansları temizlendi. Testler default schema'da çalışır.
 """
 import pytest
 from datetime import date, time
 
 from api.serializers import (
-    PatientSerializer,
-    PatientListSerializer,
-    AppointmentSerializer,
     AppointmentCreateSerializer,
+    AppointmentSerializer,
+    PatientListSerializer,
+    PatientSerializer,
+    TreatmentSerializer,
 )
-from api.models import Appointment, Anamnesis
+from api.models import Anamnesis, Appointment
 from api.tests.factories import (
-    ClinicFactory,
+    AppointmentFactory,
     DoctorUserFactory,
     PatientFactory,
-    AppointmentFactory,
+    TreatmentFactory,
+    TreatmentTypeFactory,
 )
 
 
 @pytest.mark.django_db
 class TestPatientSerializer:
     def test_creates_patient_without_anamnesis(self):
-        clinic = ClinicFactory()
         data = {
             "first_name": "Ali",
             "last_name": "Yılmaz",
@@ -31,12 +35,11 @@ class TestPatientSerializer:
         }
         serializer = PatientSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
-        patient = serializer.save(clinic=clinic)
+        patient = serializer.save()
         assert patient.pk is not None
         assert not Anamnesis.objects.filter(patient=patient).exists()
 
     def test_creates_patient_with_nested_anamnesis(self):
-        clinic = ClinicFactory()
         data = {
             "first_name": "Ayşe",
             "last_name": "Kaya",
@@ -48,7 +51,7 @@ class TestPatientSerializer:
         }
         serializer = PatientSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
-        patient = serializer.save(clinic=clinic)
+        patient = serializer.save()
         anam = Anamnesis.objects.get(patient=patient)
         assert anam.allergies == "Penisilin"
         assert anam.chronic_diseases == "Diyabet"
@@ -93,18 +96,15 @@ class TestPatientListSerializerLastVisit:
         assert serializer.data["last_visit"] is None
 
     def test_last_visit_returns_most_recent_completed_date(self):
-        clinic = ClinicFactory()
-        doctor = DoctorUserFactory(clinic=clinic)
-        patient = PatientFactory(clinic=clinic)
+        doctor = DoctorUserFactory()
+        patient = PatientFactory()
         AppointmentFactory(
-            clinic=clinic,
             patient=patient,
             doctor=doctor,
             date=date(2026, 1, 10),
             status=Appointment.Status.COMPLETED,
         )
         AppointmentFactory(
-            clinic=clinic,
             patient=patient,
             doctor=doctor,
             date=date(2026, 3, 20),
@@ -112,7 +112,6 @@ class TestPatientListSerializerLastVisit:
         )
         # A scheduled one should NOT count
         AppointmentFactory(
-            clinic=clinic,
             patient=patient,
             doctor=doctor,
             date=date(2026, 5, 1),
@@ -127,21 +126,19 @@ class TestAppointmentConflictValidation:
     """F-008: same doctor + date + time must be rejected."""
 
     def _existing_appointment(self):
-        clinic = ClinicFactory()
-        doctor = DoctorUserFactory(clinic=clinic)
-        patient = PatientFactory(clinic=clinic)
+        doctor = DoctorUserFactory()
+        patient = PatientFactory()
         appt = AppointmentFactory(
-            clinic=clinic,
             patient=patient,
             doctor=doctor,
             date=date(2026, 6, 1),
             time=time(10, 0),
             status=Appointment.Status.SCHEDULED,
         )
-        return appt, doctor, patient, clinic
+        return appt, doctor, patient
 
     def test_appointment_serializer_rejects_duplicate_slot(self):
-        appt, doctor, patient, clinic = self._existing_appointment()
+        appt, doctor, patient = self._existing_appointment()
         data = {
             "patient": patient.pk,
             "doctor": doctor.pk,
@@ -154,7 +151,7 @@ class TestAppointmentConflictValidation:
         assert "non_field_errors" in serializer.errors
 
     def test_appointment_serializer_skips_conflict_check_on_update(self):
-        appt, doctor, patient, clinic = self._existing_appointment()
+        appt, doctor, patient = self._existing_appointment()
         data = {
             "patient": patient.pk,
             "doctor": doctor.pk,
@@ -169,7 +166,7 @@ class TestAppointmentConflictValidation:
         assert serializer.is_valid(), serializer.errors
 
     def test_appointment_create_serializer_rejects_duplicate_slot(self):
-        appt, doctor, patient, clinic = self._existing_appointment()
+        appt, doctor, patient = self._existing_appointment()
         data = {
             "patient": patient.pk,
             "doctor": doctor.pk,
@@ -182,7 +179,7 @@ class TestAppointmentConflictValidation:
         assert "non_field_errors" in serializer.errors
 
     def test_different_time_is_valid(self):
-        appt, doctor, patient, clinic = self._existing_appointment()
+        appt, doctor, patient = self._existing_appointment()
         data = {
             "patient": patient.pk,
             "doctor": doctor.pk,
@@ -194,12 +191,10 @@ class TestAppointmentConflictValidation:
         assert serializer.is_valid(), serializer.errors
 
     def test_cancelled_slot_does_not_block_new_appointment(self):
-        clinic = ClinicFactory()
-        doctor = DoctorUserFactory(clinic=clinic)
-        patient = PatientFactory(clinic=clinic)
+        doctor = DoctorUserFactory()
+        patient = PatientFactory()
         # Existing appointment is CANCELLED — should not block
         AppointmentFactory(
-            clinic=clinic,
             patient=patient,
             doctor=doctor,
             date=date(2026, 6, 1),
@@ -215,3 +210,72 @@ class TestAppointmentConflictValidation:
         }
         serializer = AppointmentCreateSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
+
+
+@pytest.mark.django_db
+class TestPatientSerializerValidation:
+    """Negatif senaryolar: zorunlu alanlar (Ad/Soyad/Telefon) eksik/boş ise reddedilir.
+
+    F-003: Patient modelinde first_name, last_name ve phone zorunludur.
+    DRF ModelSerializer bu alanları otomatik 'required' kabul eder.
+    """
+
+    def test_rejects_missing_phone(self):
+        data = {"first_name": "Ali", "last_name": "Yılmaz"}  # phone yok
+        serializer = PatientSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "phone" in serializer.errors
+
+    def test_rejects_blank_first_name(self):
+        data = {"first_name": "", "last_name": "Yılmaz", "phone": "05551234567"}
+        serializer = PatientSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "first_name" in serializer.errors
+
+
+@pytest.mark.django_db
+class TestTreatmentSerializerValidation:
+    """Tedavi tekrarı kontrolü (validate): aynı hasta + gün + diş + tedavi türü
+    ikinci kez eklenemez. Farklı diş numarası ise sorun yok."""
+
+    def _existing_treatment(self):
+        doctor = DoctorUserFactory()
+        patient = PatientFactory()
+        ttype = TreatmentTypeFactory()
+        treatment = TreatmentFactory(
+            patient=patient,
+            doctor=doctor,
+            treatment_type=ttype,
+            tooth_number="11",
+            date=date(2026, 6, 1),
+        )
+        return treatment, doctor, patient, ttype
+
+    def test_allows_different_tooth_same_day(self):
+        _, doctor, patient, ttype = self._existing_treatment()
+        data = {
+            "patient": patient.pk,
+            "doctor": doctor.pk,
+            "treatment_type": ttype.pk,
+            "tooth_number": "21",  # farklı diş → çakışma yok
+            "date": "2026-06-01",
+            "status": "completed",
+            "price": "150.00",
+        }
+        serializer = TreatmentSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+
+    def test_rejects_duplicate_tooth_same_day(self):
+        _, doctor, patient, ttype = self._existing_treatment()
+        data = {
+            "patient": patient.pk,
+            "doctor": doctor.pk,
+            "treatment_type": ttype.pk,
+            "tooth_number": "11",  # aynı diş + aynı gün + aynı tür → çakışma
+            "date": "2026-06-01",
+            "status": "completed",
+            "price": "150.00",
+        }
+        serializer = TreatmentSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors

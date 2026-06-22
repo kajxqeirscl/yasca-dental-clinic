@@ -16,10 +16,14 @@ import {
   updateAppointment,
   fetchPatients,
   fetchDoctors,
-  fetchTreatmentTypes,
+  fetchTreatments,
   fetchClinicSettings,
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { formatTimeStr } from '../utils/date';
+import { useTranslation } from 'react-i18next';
+import { UserPlus } from 'lucide-react';
+import PatientDialog from './PatientDialog';
 
 interface Appointment {
   id: number;
@@ -32,8 +36,8 @@ interface Appointment {
   doctor_name?: string;
   status: string;
   notes?: string;
-  treatment_type?: number;
-  treatment_type_name?: string;
+  treatment?: number;
+  treatment_name?: string;
 }
 
 interface AppointmentDialogProps {
@@ -41,6 +45,8 @@ interface AppointmentDialogProps {
   onClose: () => void;
   selectedSlot: { date: string; time: string } | null;
   appointmentToEdit?: Appointment | null;
+  defaultTreatmentId?: number;
+  defaultPatient?: PatientOption | null;
   onSuccess?: () => void;
 }
 
@@ -57,10 +63,12 @@ interface DoctorOption {
   full_name: string;
 }
 
-interface TreatmentTypeOption {
+interface TreatmentOption {
   id: number;
-  name: string;
-  default_price: string;
+  treatment_name: string;
+  treatment_type_name: string;
+  tooth_number?: string;
+  status: string;
 }
 
 // Debounce hook
@@ -78,8 +86,11 @@ export default function AppointmentDialog({
   onClose,
   selectedSlot,
   appointmentToEdit,
+  defaultTreatmentId,
+  defaultPatient,
   onSuccess,
 }: AppointmentDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   // --- Patient search state ---
@@ -94,9 +105,9 @@ export default function AppointmentDialog({
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
 
-  // --- Treatment type state ---
-  const [treatmentTypes, setTreatmentTypes] = useState<TreatmentTypeOption[]>([]);
-  const [selectedTreatment, setSelectedTreatment] = useState('');
+  // --- Treatment state ---
+  const [patientTreatments, setPatientTreatments] = useState<TreatmentOption[]>([]);
+  const [selectedTreatment, setSelectedTreatment] = useState<number | ''>('');
 
   // --- Other ---
   const [date, setDate] = useState('');
@@ -105,7 +116,11 @@ export default function AppointmentDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showPastWarning, setShowPastWarning] = useState(false);
   const [workHours, setWorkHours] = useState({ start: 9, end: 18 });
+
+  // --- Patient creation dialog state ---
+  const [showPatientDialog, setShowPatientDialog] = useState(false);
 
   const debouncedSearch = useDebounce(patientSearch, 300);
 
@@ -128,10 +143,6 @@ export default function AppointmentDialog({
         }
       })
       .catch(() => setDoctors([]));
-
-    fetchTreatmentTypes()
-      .then((list: TreatmentTypeOption[]) => setTreatmentTypes(list))
-      .catch(() => setTreatmentTypes([]));
 
     fetchClinicSettings()
       .then((settings) => {
@@ -158,14 +169,37 @@ export default function AppointmentDialog({
       setSelectedDoctorId(appointmentToEdit.doctor);
       setNotes(appointmentToEdit.notes || '');
 
-      if (appointmentToEdit.treatment_type) {
-        setSelectedTreatment(appointmentToEdit.treatment_type);
+      if (appointmentToEdit.treatment) {
+        setSelectedTreatment(appointmentToEdit.treatment);
       }
     } else if (selectedSlot) {
       setDate(selectedSlot.date);
       setTime(selectedSlot.time);
+    } else {
+      setDate(new Date().toLocaleDateString('en-CA'));
+      setTime('');
     }
-  }, [appointmentToEdit, selectedSlot, treatmentTypes]);
+    
+    if (defaultTreatmentId && !appointmentToEdit) {
+      setSelectedTreatment(defaultTreatmentId);
+    }
+
+    if (defaultPatient && !appointmentToEdit) {
+      setSelectedPatient(defaultPatient);
+      setPatientSearch(defaultPatient.full_name);
+    }
+  }, [appointmentToEdit, selectedSlot, defaultTreatmentId, defaultPatient]);
+
+  // Fetch treatments when patient changes
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchTreatments(selectedPatient.id.toString())
+        .then((list: TreatmentOption[]) => setPatientTreatments(list))
+        .catch(() => setPatientTreatments([]));
+    } else {
+      setPatientTreatments([]);
+    }
+  }, [selectedPatient]);
 
   // Search patients with debounce
   useEffect(() => {
@@ -210,20 +244,34 @@ export default function AppointmentDialog({
     }
   };
 
+  // Parse search text into first_name / last_name for pre-filling PatientDialog
+  const parseNameFromSearch = (text: string) => {
+    const parts = text.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return { first_name: parts.slice(0, -1).join(' '), last_name: parts[parts.length - 1] };
+    }
+    return { first_name: parts[0] || '', last_name: '' };
+  };
+
   const resetForm = () => {
-    setPatientSearch('');
-    setSelectedPatient(null);
+    if (defaultPatient) {
+      setPatientSearch(defaultPatient.full_name);
+      setSelectedPatient(defaultPatient);
+    } else {
+      setPatientSearch('');
+      setSelectedPatient(null);
+    }
     setPatientResults([]);
     setPatientDropdownOpen(false);
-    setSelectedTreatment('');
-    setDate(appointmentToEdit?.date || selectedSlot?.date || '');
+    setSelectedTreatment(defaultTreatmentId || '');
+    setDate(appointmentToEdit?.date || selectedSlot?.date || new Date().toLocaleDateString('en-CA'));
     setTime(appointmentToEdit?.time || selectedSlot?.time || '');
     setNotes('');
     setError('');
     setValidationErrors([]);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const missing: string[] = [];
     if (!selectedPatient) missing.push('patient');
     if (!selectedDoctorId) missing.push('doctor');
@@ -234,24 +282,57 @@ export default function AppointmentDialog({
     if (missing.length > 0) {
       if (missing.length === 1) {
         const singleMessages: { [key: string]: string } = {
-          patient: 'Lütfen randevu için bir hasta seçin.',
-          doctor: 'Lütfen randevuyu gerçekleştirecek hekimi seçin.',
-          date: 'Lütfen geçerli bir randevu tarihi belirleyin.',
-          time: 'Lütfen randevu saatini seçin.'
+          patient: t('appointments:dialog.errors.patient'),
+          doctor: t('appointments:dialog.errors.doctor'),
+          date: t('appointments:dialog.errors.date'),
+          time: t('appointments:dialog.errors.time')
         };
         setError(singleMessages[missing[0]]);
       } else {
         const fieldNames: { [key: string]: string } = {
-          patient: 'hasta',
-          doctor: 'hekim',
-          date: 'tarih',
-          time: 'saat'
+          patient: t('appointments:dialog.errors.field_patient'),
+          doctor: t('appointments:dialog.errors.field_doctor'),
+          date: t('appointments:dialog.errors.field_date'),
+          time: t('appointments:dialog.errors.field_time')
         };
         const list = missing.map(m => fieldNames[m]).join(', ');
-        setError(`Randevu oluşturabilmek için lütfen eksik alanları tamamlayın: ${list}.`);
+        setError(`${t('appointments:dialog.errors.multi_prefix')}${list}.`);
       }
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDateObj = new Date(date);
+    selectedDateObj.setHours(0, 0, 0, 0);
+
+    const isNewDate = !appointmentToEdit || appointmentToEdit.date !== date;
+    const isNewTime = !appointmentToEdit || appointmentToEdit.time !== time;
+
+    let isPast = false;
+    
+    if (isNewDate || isNewTime) {
+      if (selectedDateObj < today) {
+        isPast = true;
+      } else if (selectedDateObj.getTime() === today.getTime() && time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        if (hours < now.getHours() || (hours === now.getHours() && minutes < now.getMinutes())) {
+          isPast = true;
+        }
+      }
+    }
+
+    if (isPast) {
+      setShowPastWarning(true);
+      return;
+    }
+
+    proceedSave();
+  };
+
+  const proceedSave = async () => {
+    setShowPastWarning(false);
     setLoading(true);
     setError('');
     try {
@@ -261,7 +342,7 @@ export default function AppointmentDialog({
         date: date,
         time: time,
         notes: notes || undefined,
-        treatment_type: selectedTreatment ? Number(selectedTreatment) : undefined,
+        treatment: selectedTreatment ? Number(selectedTreatment) : null,
         status: appointmentToEdit ? appointmentToEdit.status : 'scheduled',
       };
 
@@ -274,7 +355,7 @@ export default function AppointmentDialog({
     onSuccess?.();
     onClose();
   } catch (err) {
-    setError(err instanceof Error ? err.message : 'Randevu eklenemedi');
+    setError(err instanceof Error ? err.message : t('appointments:dialog.error_add'));
   } finally {
     setLoading(false);
   }
@@ -299,12 +380,13 @@ const handleOpenChange = (open: boolean) => {
 };
 
 return (
+  <>
   <Dialog open={isOpen} onOpenChange={handleOpenChange}>
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{appointmentToEdit ? 'Randevuyu Düzenle' : 'Yeni Randevu Ekle'}</DialogTitle>
+        <DialogTitle>{appointmentToEdit ? t('appointments:dialog.title_edit') : t('appointments:dialog.title_add')}</DialogTitle>
         <DialogDescription>
-          {appointmentToEdit ? 'Randevu bilgilerini güncelleyin.' : 'Randevu bilgilerini girin ve kaydedin.'}
+          {appointmentToEdit ? t('appointments:dialog.description_edit') : t('appointments:dialog.description_add')}
         </DialogDescription>
       </DialogHeader>
 
@@ -318,16 +400,17 @@ return (
         {/* Date & Time */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Tarih</Label>
+            <Label>{t('appointments:dialog.fields.date')}</Label>
             <DatePicker
               date={date}
               onDateChange={setDate}
               minDate={new Date().toLocaleDateString('en-CA')}
-              className={validationErrors.includes('date') ? 'border-red-500 focus:ring-red-500' : ''}
+              className={validationErrors.includes('date') ? 'border-red-500 focus-within:ring-red-500' : ''}
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label>Saat</Label>
+            <Label>{t('appointments:dialog.fields.time')}</Label>
             <select
               className={`w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.includes('time') ? 'border-red-500 focus:ring-red-500' : ''
                 }`}
@@ -335,10 +418,10 @@ return (
               onChange={(e) => setTime(e.target.value + ':00')}
               required
             >
-              <option value="">Saat seçin</option>
+              <option value="">{t('appointments:dialog.fields.select_time')}</option>
               {generateTimeOptions().map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {formatTimeStr(t)}
                 </option>
               ))}
             </select>
@@ -347,11 +430,11 @@ return (
 
         {/* Patient Search Dropdown */}
         <div className="space-y-2" ref={patientRef}>
-          <Label htmlFor="patient-search">Hasta Seç *</Label>
+          <Label htmlFor="patient-search">{t('appointments:dialog.fields.patient')}</Label>
           <div className="relative">
             <Input
               id="patient-search"
-              placeholder="Ad, soyad, telefon veya TC No ile ara..."
+              placeholder={t('appointments:dialog.fields.patient_search')}
               value={patientSearch}
               onChange={handlePatientSearchChange}
               onFocus={() => {
@@ -362,7 +445,7 @@ return (
             />
             {patientLoading && (
               <div className="absolute right-3 top-2.5 text-gray-400 text-sm">
-                Aranıyor...
+                {t('appointments:dialog.fields.searching')}
               </div>
             )}
 
@@ -386,8 +469,21 @@ return (
             )}
 
             {patientDropdownOpen && !patientLoading && patientResults.length === 0 && debouncedSearch.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-md px-3 py-2 text-sm text-gray-500">
-                Hasta bulunamadı
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  {t('appointments:dialog.fields.not_found')}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPatientDropdownOpen(false);
+                    setShowPatientDialog(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border-t border-emerald-100 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Yeni Hasta Oluştur</span>
+                </button>
               </div>
             )}
           </div>
@@ -397,14 +493,14 @@ return (
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              {selectedPatient.full_name} seçildi
+              {selectedPatient.full_name} {t('appointments:dialog.fields.selected')}
             </p>
           )}
         </div>
 
         {/* Doctor Dropdown */}
         <div className="space-y-2">
-          <Label htmlFor="doctor">Hekim *</Label>
+          <Label htmlFor="doctor">{t('appointments:dialog.fields.doctor')}</Label>
           <select
             id="doctor"
             className={`w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.includes('doctor') ? 'border-red-500 focus:ring-red-500' : ''
@@ -412,7 +508,7 @@ return (
             value={selectedDoctorId}
             onChange={(e) => setSelectedDoctorId(Number(e.target.value) || '')}
           >
-            <option value="">Hekim seçin</option>
+            <option value="">{t('appointments:dialog.fields.select_doctor')}</option>
             {doctors.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.full_name || d.username}
@@ -421,40 +517,47 @@ return (
           </select>
           {doctors.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">
-              Henüz hekim tanımlanmamış. Admin panelinden ekleyebilirsiniz.
+              {t('appointments:dialog.fields.doctor_empty')}
             </p>
           )}
         </div>
 
-        {/* Treatment Type Dropdown */}
+        {/* Treatment Dropdown */}
         <div className="space-y-2">
-          <Label htmlFor="treatment">İşlem</Label>
+          <Label htmlFor="treatment">{t('appointments:dialog.fields.treatment', 'İşlem (Tedavi)')}</Label>
           <select
             id="treatment"
-            className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             value={selectedTreatment}
-            onChange={(e) => setSelectedTreatment(e.target.value)}
+            onChange={(e) => setSelectedTreatment(e.target.value ? Number(e.target.value) : '')}
+            disabled={!selectedPatient}
           >
-            <option value="">İşlem seçin (opsiyonel)</option>
-            {treatmentTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">{t('appointments:dialog.fields.select_treatment', 'Tedavi Seçin (İsteğe Bağlı)')}</option>
+            {patientTreatments.map((tr) => (
+              <option key={tr.id} value={tr.id} disabled={tr.status === 'completed'}>
+                {tr.treatment_type_name || tr.treatment_name} {tr.tooth_number ? `(Diş: ${tr.tooth_number})` : ''}
+                {tr.status === 'completed' ? ` - ${t('patients:profile.treatments.status.completed', 'Tamamlandı')}` : ''}
               </option>
             ))}
           </select>
-          {treatmentTypes.length === 0 && (
+          {!selectedPatient && (
+             <p className="text-xs text-gray-400 mt-1">
+               {t('appointments:dialog.fields.treatment_need_patient', 'Tedavi seçmek için önce hasta seçmelisiniz.')}
+             </p>
+          )}
+          {selectedPatient && patientTreatments.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">
-              Henüz tedavi türü tanımlanmamış. Admin panelinden ekleyebilirsiniz.
+              {t('appointments:dialog.fields.treatment_empty', 'Bu hastanın kayıtlı tedavisi yok.')}
             </p>
           )}
         </div>
 
         {/* Notes */}
         <div className="space-y-2">
-          <Label htmlFor="notes">Notlar</Label>
+          <Label htmlFor="notes">{t('appointments:dialog.fields.notes')}</Label>
           <Textarea
             id="notes"
-            placeholder="Ek bilgiler..."
+            placeholder={t('appointments:dialog.fields.notes_placeholder')}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
@@ -464,13 +567,52 @@ return (
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => handleOpenChange(false)}>
-          İptal
+          {t('common:cancel')}
         </Button>
         <Button onClick={handleSave} disabled={loading}>
-          {loading ? 'Kaydediliyor...' : 'Kaydet'}
+          {loading ? t('appointments:dialog.saving') : t('common:save')}
         </Button>
       </div>
     </DialogContent>
   </Dialog>
+
+  {/* Geçmiş Tarih/Saat Uyarı Dialogu */}
+  <Dialog open={showPastWarning} onOpenChange={setShowPastWarning}>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{t('appointments:dialog.past_warning_title', 'Geçmiş Tarih/Saat Uyarısı')}</DialogTitle>
+        <DialogDescription>
+          {t('appointments:dialog.past_warning_desc', 'Geçmiş bir tarihe veya saate randevu oluşturuyorsunuz. Yine de devam etmek istiyor musunuz?')}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={() => setShowPastWarning(false)}>
+          {t('common:cancel', 'İptal')}
+        </Button>
+        <Button onClick={proceedSave} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700">
+          {loading ? t('appointments:dialog.saving', 'Kaydediliyor...') : t('common:continue', 'Devam Et')}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+
+  {/* Hasta Oluşturma Dialog */}
+  <PatientDialog
+    isOpen={showPatientDialog}
+    onClose={() => setShowPatientDialog(false)}
+    initialData={patientSearch.trim() ? parseNameFromSearch(patientSearch) : undefined}
+    onSuccess={() => {
+      // Re-search to find the newly created patient
+      setShowPatientDialog(false);
+      fetchPatients(patientSearch.trim())
+        .then((results: PatientOption[]) => {
+          if (results.length > 0) {
+            handleSelectPatient(results[0]);
+          }
+        })
+        .catch(() => {});
+    }}
+  />
+  </>
 );
 }

@@ -7,7 +7,6 @@ from factory.django import DjangoModelFactory
 from django.utils import timezone
 
 from api.models import (
-    Clinic,
     CustomUser,
     Patient,
     Anamnesis,
@@ -17,15 +16,6 @@ from api.models import (
     ClinicSettings,
     Payment,
 )
-
-
-class ClinicFactory(DjangoModelFactory):
-    class Meta:
-        model = Clinic
-
-    name = factory.Sequence(lambda n: f"Klinik {n}")
-    address = factory.Faker("address", locale="tr_TR")
-    phone = factory.Faker("phone_number", locale="tr_TR")
 
 
 class CustomUserFactory(DjangoModelFactory):
@@ -38,7 +28,6 @@ class CustomUserFactory(DjangoModelFactory):
     first_name = factory.Faker("first_name", locale="tr_TR")
     last_name = factory.Faker("last_name", locale="tr_TR")
     role = CustomUser.Role.ASSISTANT
-    clinic = factory.SubFactory(ClinicFactory)
 
     @factory.post_generation
     def password(obj, create, extracted, **kwargs):  # noqa: N805
@@ -75,10 +64,9 @@ class PatientFactory(DjangoModelFactory):
     class Meta:
         model = Patient
 
-    clinic = factory.SubFactory(ClinicFactory)
     first_name = factory.Faker("first_name", locale="tr_TR")
     last_name = factory.Faker("last_name", locale="tr_TR")
-    phone = factory.Sequence(lambda n: f"0555{n:07d}")
+    phone = factory.Sequence(lambda n: f"+90555{n:07d}")
     tckn = ""
     birth_date = None
 
@@ -96,7 +84,6 @@ class TreatmentTypeFactory(DjangoModelFactory):
     class Meta:
         model = TreatmentType
 
-    clinic = factory.SubFactory(ClinicFactory)
     name = factory.Sequence(lambda n: f"Tedavi Türü {n}")
     default_price = factory.Faker(
         "pydecimal", left_digits=4, right_digits=2, positive=True
@@ -109,21 +96,19 @@ class AppointmentFactory(DjangoModelFactory):
     class Meta:
         model = Appointment
 
-    clinic = factory.SubFactory(ClinicFactory)
     patient = factory.SubFactory(PatientFactory)
     doctor = factory.SubFactory(DoctorUserFactory)
     date = factory.LazyFunction(lambda: timezone.localdate())
     time = "10:00:00"
     status = Appointment.Status.SCHEDULED
     notes = ""
-    treatment_type = None
+    treatment = None
 
 
 class TreatmentFactory(DjangoModelFactory):
     class Meta:
         model = Treatment
 
-    clinic = factory.SubFactory(ClinicFactory)
     patient = factory.SubFactory(PatientFactory)
     doctor = factory.SubFactory(DoctorUserFactory)
     treatment_type = None
@@ -137,7 +122,6 @@ class PaymentFactory(DjangoModelFactory):
     class Meta:
         model = Payment
 
-    clinic = factory.SubFactory(ClinicFactory)
     patient = factory.SubFactory(PatientFactory)
     amount = factory.Faker(
         "pydecimal", left_digits=4, right_digits=2, positive=True

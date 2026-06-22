@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+# Pre-push hook — tam test suite çalıştırır.
+#
+# Push'tan önce: frontend unit + backend SQLite (PG opsiyonel — yavaş).
+# Hata varsa push reddedilir.
+
+cd "$(dirname "$0")/.."
+
+echo "🧪 Frontend tests çalışıyor..."
+npm test
+FRONT_EXIT=$?
+
+if [ $FRONT_EXIT -ne 0 ]; then
+  echo "❌ Frontend testleri başarısız. Push reddedildi."
+  exit $FRONT_EXIT
+fi
+
+echo "🧪 Backend tests çalışıyor (SQLite mode)..."
+cd ../backend
+if command -v pytest >/dev/null 2>&1; then
+  pytest -q
+  BACK_EXIT=$?
+
+  if [ $BACK_EXIT -ne 0 ]; then
+    echo "❌ Backend testleri başarısız. Push reddedildi."
+    exit $BACK_EXIT
+  fi
+else
+  echo "⚠️  pytest yüklü değil. Backend test'leri atlandı."
+fi
+
+echo "✅ Tüm testler geçti. Push devam ediyor."
+echo ""
+echo "💡 Multi-tenant kod değiştirdiysen: .\\scripts\\test-pg.ps1 ile PG mode'da da test et."

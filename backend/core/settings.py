@@ -12,36 +12,81 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# .env dosyasını yükle
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# E-posta ayarları
+# Resend API key varsa HTTP API ile gönder (Render free tier SMTP portlarını engelliyor)
+# Yoksa geliştirme ortamı → konsola yazar
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+
+if RESEND_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': RESEND_API_KEY,
+    }
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z'  # local dev fallback only
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Production domain (Railway URL or custom domain) — used by django-tenants to register domains
+# Example: api.yascadental.com
+PRODUCTION_DOMAIN = os.environ.get('PRODUCTION_DOMAIN', 'localhost')
+
+ALLOWED_HOSTS = ['*']  # django-tenants zaten domain doğrulaması yapıyor
 
 
 # Application definition
 
-INSTALLED_APPS = [
+SHARED_APPS = [
+    'django_tenants',  # obligatory
+    'customers',       # tenant management
+    'corsheaders',
+    'rest_framework',  # Public schema'da da DRF gerekli (kayıt endpointleri için)
+    'anymail',         # Resend HTTP API e-posta backend
+    'django.contrib.contenttypes',
+    'django.contrib.staticfiles',
+]
+
+TENANT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
     'rest_framework',
-    'api',  # CustomUser burada tanımlı
+    'api',
+    'drf_spectacular',
 ]
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+TENANT_MODEL = 'customers.Client'
+TENANT_DOMAIN_MODEL = 'customers.Domain'
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
+
+# PUBLIC_SCHEMA_URLCONF artık kullanılmıyor.
+# Hem public hem tenant istekleri core.urls üzerinden çalışır.
+# Public endpointler (register, check-domain) core.urls içinde api/public/ altında tanımlıdır.
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
@@ -54,6 +99,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Yaşca Diş Kliniği API',
+    'DESCRIPTION': 'İç ve Dış Arayüzlerin Dokümantasyonu (Proje Adımı 3)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 SIMPLE_JWT = {
@@ -62,18 +115,26 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',       # CORS her zaman EN BAŞTA olmalı
+    'api.middleware.HeaderTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'api.middleware.ThreadLocalMiddleware',
+    'api.middleware.RequestLoggingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+# Tüm origin'lerden gelen isteklere izin ver (CORS)
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept', 'accept-encoding', 'authorization', 'content-type',
+    'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
+    'x-tenant',  # Canlı ortamda tenant kimliğini taşıyan özel header
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -99,11 +160,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import dj_database_url
+
+db_config = dj_database_url.config(
+    default=os.environ.get('DATABASE_URL'),
+    conn_max_age=600,
+    conn_health_checks=True,
+)
+db_config['ENGINE'] = 'django_tenants.postgresql_backend'
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': db_config
 }
 
 
@@ -151,42 +218,105 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ---------------------------------------------------------------------------
+# Log dizinini oluştur
+# ---------------------------------------------------------------------------
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        # Tenant-Aware profesyonel formatter
+        'tenant_aware': {
+            '()': 'api.middleware.TenantAwareFormatter',
+            'format': '[{asctime}] {levelname} [Tenant: {tenant}] [User: {user_id}] [Path: {request_path}] {name} - {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {message}',
             'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
         },
     },
     'handlers': {
+        # Konsol — geliştirme sırasında okunabilir çıktı
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
+        # Django genel logları (framework hataları, DB sorguları vs.)
+        'django_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'django.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
+        },
+        # API uygulama logları (business logic, CRUD, audit)
+        'api_file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django.log',
-            'formatter': 'verbose',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'api.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
+        },
+        # Güvenlik logları (giriş/çıkış, yetki hataları)
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'security.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'backupCount': 10,
+            'formatter': 'tenant_aware',
+            'encoding': 'utf-8',
         },
     },
     'loggers': {
+        # Django framework logları
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'django_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
+        # Django güvenlik logları
+        'django.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # API uygulama logları
         'api': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'api_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
+        },
+        # API istek logları (RequestLoggingMiddleware tarafından kullanılır)
+        'api.request': {
+            'handlers': ['console', 'api_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Güvenlik logları (giriş/çıkış/yetki hataları)
+        'api.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }

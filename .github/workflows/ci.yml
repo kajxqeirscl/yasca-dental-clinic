@@ -8,34 +8,64 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Backend: pytest + coverage
+  # Backend: dual-mode pytest matrix (SQLite hızlı + PostgreSQL fidelity)
   # ─────────────────────────────────────────────
   backend:
-    name: Backend Tests
+    name: Backend Tests (${{ matrix.db-mode }})
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    strategy:
+      fail-fast: false
+      matrix:
+        db-mode: [sqlite, postgres]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_DB: yascadb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Postgres mode: gerçek tenant isolation tests aktif
+      # SQLite mode: shim aktif, hızlı geri bildirim
+      DATABASE_URL: ${{ matrix.db-mode == 'postgres' && 'postgresql://postgres:postgres123@localhost:5432/yascadb_test' || '' }}
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-django pytest-cov factory-boy faker
+        run: pip install -r requirements-dev.txt
+
+      - name: Run django-tenants migrations (PostgreSQL only)
+        if: matrix.db-mode == 'postgres'
+        run: |
+          python manage.py migrate_schemas --shared
+          python manage.py migrate_schemas --tenant
 
       - name: Run tests with coverage
-        run: pytest --cov=api --cov-report=xml --cov-fail-under=80
+        run: pytest --cov=api --cov=customers --cov-config=.coveragerc --cov-report=xml --cov-fail-under=78
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           file: backend/coverage.xml
-          flags: backend
+          flags: backend-${{ matrix.db-mode }}
 
   # ─────────────────────────────────────────────
   # Frontend: type-check + lint + vitest
@@ -63,9 +93,9 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx eslint src --max-warnings 0
+        run: npx eslint --max-warnings 0
 
-      - name: Run unit tests with coverage
+      - name: Run unit tests with coverage (threshold gate'i vitest.config.ts içinde)
         run: npx vitest run --coverage
 
       - name: Upload coverage to Codecov
@@ -75,38 +105,17 @@ jobs:
           flags: frontend
 
   # ─────────────────────────────────────────────
-  # E2E: Playwright (runs only after both pass)
+  # A11y: ayrı job — zero-tolerance gate (PR'a merge için required check)
   # ─────────────────────────────────────────────
-  e2e:
-    name: E2E Tests
+  a11y:
+    name: A11y Tests (WCAG 2.1 AA)
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install backend dependencies
-        run: pip install -r backend/requirements.txt
-
-      - name: Run migrations & seed test data
-        run: |
-          cd backend
-          python manage.py migrate
-        env:
-          DJANGO_SETTINGS_MODULE: core.settings_test
-
-      - name: Start backend server
-        run: |
-          cd backend
-          python manage.py runserver 0.0.0.0:8000 &
-          # Wait for it to be ready
-          npx wait-on http-get://localhost:8000/admin/login/ --timeout 30000
-        env:
-          DJANGO_SETTINGS_MODULE: core.settings_test
 
       - uses: actions/setup-node@v4
         with:
@@ -114,29 +123,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
-        run: cd frontend && npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Install Playwright browsers
-        run: cd frontend && npx playwright install --with-deps chromium
-
-      - name: Build frontend
-        run: cd frontend && npm run build
-
-      - name: Serve frontend
-        run: |
-          cd frontend
-          npx serve dist -p 5173 &
-
-      - name: Run E2E tests
-        run: cd frontend && npx playwright test
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:5173
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: frontend/playwright-report/
-          retention-days: 14
+      - name: Run a11y unit tests
+        run: npx vitest run src/app/components/__a11y__

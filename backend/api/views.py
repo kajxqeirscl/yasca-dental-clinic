@@ -5,6 +5,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
+from django.conf import settings
 
 from .models import Patient, Appointment, Treatment, TreatmentType, ClinicSettings, Payment, CustomUser, Document, AuditLog
 from .serializers import (
@@ -18,42 +25,80 @@ from .serializers import (
     PaymentSerializer,
     DoctorMinimalSerializer,
     DocumentSerializer,
+    UserSerializer,
+    AuditLogSerializer,
 )
 from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
 
-from .permissions import IsAdminUser, IsAdminOrDoctorUser
+from .mixins import AuditLogMixin
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.contenttypes.models import ContentType
+import logging
+
+logger = logging.getLogger(__name__)
+security_logger = logging.getLogger('api.security')
 
 
-class AuditMixin:
-    def _log_action(self, action, instance):
-        if not hasattr(instance, 'id'):
-            return
-        AuditLog.objects.create(
-            clinic=self.request.user.clinic,
-            user=self.request.user,
-            action=action,
-            model_name=instance.__class__.__name__,
-            object_id=instance.id,
-            object_repr=str(instance)[:255],
-        )
+class AuditedTokenObtainPairView(TokenObtainPairView):
+    """
+    JWT token alma işlemini sarmalayarak başarılı ve başarısız
+    giriş denemelerini AuditLog tablosuna kaydeder.
+    """
 
-    def perform_update(self, serializer):
-        instance = serializer.save()
-        self._log_action(AuditLog.Action.UPDATE, instance)
+    def _get_client_ip(self, request):
+        x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded:
+            return x_forwarded.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
 
-    def perform_destroy(self, instance):
-        if hasattr(instance, "is_active"):
-            instance.is_active = False
-            instance.save(update_fields=['is_active'])
-            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
-        elif hasattr(instance, "status") and hasattr(instance.__class__, "Status") and hasattr(instance.__class__.Status, "CANCELLED"):
-            instance.status = instance.__class__.Status.CANCELLED
-            instance.save(update_fields=['status'])
-            self._log_action(AuditLog.Action.SOFT_DELETE, instance)
-        else:
-            instance.delete()
-            self._log_action(AuditLog.Action.DELETE, instance)
+    def post(self, request, *args, **kwargs):
+        ip = self._get_client_ip(request)
+        username = request.data.get('username', '') or request.data.get('email', '')
+
+        try:
+            response = super().post(request, *args, **kwargs)
+        except Exception:
+            # Başarısız giriş denemesi
+            AuditLog.objects.create(
+                user=None,
+                action=AuditLog.Action.CREATE,
+                content_type=ContentType.objects.get_for_model(CustomUser),
+                object_id=0,
+                changes={"login": {"old": None, "new": f"BAŞARISIZ GİRİŞ: {username}"}},
+                ip_address=ip
+            )
+            security_logger.warning('BAŞARISIZ GİRİŞ: kullanıcı=%s IP=%s', username, ip)
+            raise
+
+        # Başarılı giriş
+        user = CustomUser.objects.filter(username=username).first() or \
+               CustomUser.objects.filter(email=username).first()
+        if user:
+            AuditLog.objects.create(
+                user=user,
+                action=AuditLog.Action.CREATE,
+                content_type=ContentType.objects.get_for_model(user),
+                object_id=user.pk,
+                changes={"login": {"old": None, "new": f"BAŞARILI GİRİŞ: {user.username}"}},
+                ip_address=ip
+            )
+            security_logger.info('BAŞARILI GİRİŞ: kullanıcı=%s (id=%d) IP=%s', user.username, user.pk, ip)
+
+        return response
+
+
+class PublicClinicInfoView(APIView):
+    """Giriş yapılmadan kliniğin genel bilgilerini (adını vb.) döner."""
+    permission_classes = []
+
+    def get(self, request):
+        from django.db import connection
+        tenant_name = connection.tenant.name if hasattr(connection, 'tenant') and connection.tenant else 'Yaşca'
+        return Response({
+            "clinic_name": tenant_name,
+        })
 
 
 class CurrentUserView(APIView):
@@ -61,7 +106,9 @@ class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from django.db import connection
         user = request.user
+        tenant_name = connection.tenant.name if hasattr(connection, 'tenant') and connection.tenant else 'Yaşca'
         return Response({
             "id": user.id,
             "username": user.username,
@@ -69,10 +116,132 @@ class CurrentUserView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "role": user.role,
+            "clinic_name": tenant_name,
         })
 
 
-class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
+class LogoutView(APIView):
+    """Çıkış işlemini AuditLog'a kaydeder."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+
+        AuditLog.objects.create(
+            user=user,
+            action=AuditLog.Action.DELETE,
+            content_type=ContentType.objects.get_for_model(user),
+            object_id=user.pk,
+            changes={"logout": {"old": user.username, "new": "ÇIKIŞ YAPILDI"}},
+            ip_address=ip
+        )
+        security_logger.info('ÇIKIŞ: kullanıcı=%s (id=%d) IP=%s', user.username, user.pk, ip)
+        return Response({"detail": "Çıkış kaydedildi."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    """Şifre sıfırlama talebi alır ve e-posta gönderir."""
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Lütfen e-posta adresinizi giriniz."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = CustomUser.objects.filter(email=email).first() or CustomUser.objects.filter(username=email).first()
+        if user:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Request'in geldiği host bilgisini kullanarak linki dinamik oluştur
+            # örn: ali.localhost:5173 veya yasca-dental-clinic.onrender.com/app/ali
+            # Eğer istek yasca-dental-clinic.onrender.com'a geliyorsa, ve tenant ali ise, 
+            # path'li veya subdomain'li yapıyı dikkate almak gerekiyor. 
+            # Bizim frontend yapımızda, reset linki doğrudan frontend domain'ine gitmeli.
+            # Şimdilik origin header'ına bakabiliriz veya HTTP_HOST'a.
+            origin = request.headers.get('Origin')
+            if origin:
+                base_url = origin
+            else:
+                scheme = request.scheme
+                host = request.get_host()
+                # Django backend portu 8000, React 5173'te çalışıyorsa lokaldeyiz demektir
+                if 'localhost:8000' in host or '127.0.0.1:8000' in host:
+                    host = host.replace('8000', '5173')
+                base_url = f"{scheme}://{host}"
+                
+            # Eğer /app/tenant/ gibi path tabanlı çalışıyorsa (canlı ortam)
+            # Linki doğru oluşturabilmek için tenant slug'ı ekliyoruz
+            tenant = getattr(request, 'tenant', None)
+            path_prefix = ""
+            if tenant and tenant.schema_name != 'public':
+                # Localhost'ta subdomain (ali.localhost) kullanıldığı için path'e gerek yok
+                if 'localhost' not in base_url and '127.0.0.1' not in base_url:
+                    path_prefix = f"/app/{tenant.schema_name}"
+            
+            reset_link = f"{base_url}{path_prefix}/reset-password/{uid}/{token}"
+            
+            message = f"Merhaba {user.first_name or user.username},\n\nŞifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n\n{reset_link}\n\nBu talebi siz yapmadıysanız bu e-postayı dikkate almayınız."
+            try:
+                send_mail(
+                    subject="Şifre Sıfırlama Talebi",
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                return Response(
+                    {"error": f"E-posta gönderilirken bir sorun oluştu. Lütfen SMTP ayarlarını kontrol edin. Detay: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        # Her zaman aynı mesajı dönerek e-posta enumeration saldırılarını engelliyoruz.
+        return Response({"detail": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmView(APIView):
+    """Token ve yeni şifreyi alarak şifreyi günceller."""
+    permission_classes = []
+
+    def post(self, request):
+        uidb64 = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        if not uidb64 or not token or not new_password:
+            return Response({"error": "Eksik bilgi gönderildi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            user = None
+
+        if user is not None and PasswordResetTokenGenerator().check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            
+            # Log the action
+            x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+            AuditLog.objects.create(
+                user=user,
+                action=AuditLog.Action.UPDATE,
+                content_type=ContentType.objects.get_for_model(user),
+                object_id=user.pk,
+                changes={"password": {"old": "***", "new": "*** (Reset)"}},
+                ip_address=ip
+            )
+            security_logger.info('ŞİFRE SIFIRLANDI: kullanıcı=%s IP=%s', user.username, ip)
+            return Response({"detail": "Şifreniz başarıyla güncellendi."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Geçersiz veya süresi dolmuş bağlantı."}, status=status.HTTP_400_BAD_REQUEST)
+
+class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
     permission_classes = [IsAuthenticated]
 
@@ -83,27 +252,44 @@ class PatientViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Patient.objects.filter(clinic=user.clinic)
-        if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
-            qs = qs.filter(
-                Q(appointments__doctor=user) | Q(treatments__doctor=user)
-            ).distinct()
+        qs = Patient.objects.all()
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
-                Q(first_name__icontains=search)
-                | Q(last_name__icontains=search)
-                | Q(phone__icontains=search)
-                | Q(tckn__icontains=search)
+                Q(first_name__tr_icontains=search)
+                | Q(last_name__tr_icontains=search)
+                | Q(phone__tr_icontains=search)
+                | Q(tckn__tr_icontains=search)
             )
         return qs.order_by("last_name", "first_name")
 
-    def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
-        self._log_action(AuditLog.Action.CREATE, instance)
+    def perform_destroy(self, instance):
+        # Kontrol: Aktif (planlanmış) randevu var mı?
+        active_appointments = instance.appointments.filter(
+            is_active=True, status='scheduled'
+        ).count()
+        if active_appointments:
+            raise ValidationError(
+                f"Bu hastanın {active_appointments} aktif randevusu var. Önce randevuları iptal edin."
+            )
+        # Kontrol: Ödenmemiş tedavi var mı?
+        completed_treatments = instance.treatments.filter(is_active=True, status='completed')
+        total_treatment_cost = sum(float(t.price) for t in completed_treatments)
+        total_paid = sum(
+            float(p.amount) for p in instance.payments.filter(is_active=True)
+        )
+        if total_treatment_cost > total_paid:
+            raise ValidationError(
+                "Bu hastanın ödenmemiş tedavi bakiyesi var. Önce ödemeleri tamamlayın."
+            )
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
-class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
+
+
+class AppointmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Randevu CRUD. F-006, F-007, F-008, F-009."""
     permission_classes = [IsAuthenticated]
 
@@ -114,7 +300,7 @@ class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Appointment.objects.filter(clinic=user.clinic).select_related("patient", "doctor")
+        qs = Appointment.objects.filter(is_active=True).select_related("patient", "doctor")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(doctor=user)
         date = self.request.query_params.get("date")
@@ -125,19 +311,22 @@ class AppointmentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.order_by("date", "time")
 
-    def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
-        self._log_action(AuditLog.Action.CREATE, instance)
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
-class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
+
+
+class TreatmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Tedavi CRUD. F-010, F-011."""
     serializer_class = TreatmentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        qs = Treatment.objects.filter(clinic=user.clinic).select_related("patient", "doctor", "treatment_type")
+        qs = Treatment.objects.all().select_related("patient", "doctor", "treatment_type")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(doctor=user)
         patient_id = self.request.query_params.get("patient")
@@ -145,12 +334,28 @@ class TreatmentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-date")
 
-    def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
-        self._log_action(AuditLog.Action.CREATE, instance)
+    def perform_destroy(self, instance):
+        # Kontrol: Bağlı aktif randevu var mı?
+        linked_appointments = instance.appointments.filter(is_active=True).count()
+        if linked_appointments:
+            raise ValidationError(
+                f"Bu tedaviye bağlı {linked_appointments} adet randevu var. Önce randevuyu iptal edin veya silin."
+            )
+
+        # Kontrol: Bağlı ödeme var mı?
+        linked_payments = instance.payments.filter(is_active=True).count()
+        if linked_payments:
+            raise ValidationError(
+                f"Bu tedaviye bağlı {linked_payments} ödeme kaydı var. Önce ödemeleri silin."
+            )
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
-class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
+
+
+class TreatmentTypeViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Tedavi türleri. F-020. Hekim ve Yönetici düzenleyebilir."""
     serializer_class = TreatmentTypeSerializer
     
@@ -160,12 +365,27 @@ class TreatmentTypeViewSet(AuditMixin, viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        return TreatmentType.objects.filter(clinic=self.request.user.clinic, is_active=True).order_by("name")
+        user = self.request.user
+        if user.role == CustomUser.Role.DOCTOR:
+            return TreatmentType.objects.filter(doctor=user, is_active=True).order_by('name')
+        return TreatmentType.objects.filter(is_active=True).order_by('name')
 
     def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
-        self._log_action(AuditLog.Action.CREATE, instance)
+        user = self.request.user
+        doctor = user if user.role == CustomUser.Role.DOCTOR else None
+        instance = serializer.save(doctor=doctor)
+        self.log_action(AuditLog.Action.CREATE, instance)
 
+    def perform_destroy(self, instance):
+        # Kontrol: Bu türü kullanan aktif tedavi var mı?
+        active_treatments = instance.treatments.filter(is_active=True).count()
+        if active_treatments:
+            raise ValidationError(
+                f"Bu tedavi türünü kullanan {active_treatments} aktif tedavi var. Önce tedavileri silin veya türünü değiştirin."
+            )
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 class ClinicSettingsView(APIView):
     """Klinik ayarları. F-022."""
@@ -176,29 +396,57 @@ class ClinicSettingsView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request):
-        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        obj = ClinicSettings.get_settings()
         if not obj:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
         return Response(ClinicSettingsSerializer(obj).data)
 
     def put(self, request):
-        obj = ClinicSettings.get_settings(clinic=request.user.clinic)
+        obj = ClinicSettings.get_settings()
         if not obj:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+        # Eski değerleri kaydet
+        old_data = {}
+        for key in request.data.keys():
+            if hasattr(obj, key):
+                old_data[key] = getattr(obj, key)
+
         serializer = ClinicSettingsSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Değişenleri bul ve logla
+        changes = {}
+        for key, new_val in serializer.validated_data.items():
+            old_val = old_data.get(key)
+            if old_val != new_val:
+                changes[key] = {"old": str(old_val), "new": str(new_val)}
+
+        if changes:
+            from django.contrib.contenttypes.models import ContentType
+            x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                action=AuditLog.Action.UPDATE,
+                content_type=ContentType.objects.get_for_model(obj),
+                object_id=obj.pk,
+                changes=changes,
+                ip_address=ip
+            )
+
         return Response(serializer.data)
 
 
-class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
+class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Ödeme kayıtları. F-014, F-015."""
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        qs = Payment.objects.filter(clinic=user.clinic).select_related("patient")
+        qs = Payment.objects.all().select_related("patient")
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             qs = qs.filter(
                 Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
@@ -208,9 +456,12 @@ class PaymentViewSet(AuditMixin, viewsets.ModelViewSet):
             qs = qs.filter(patient_id=patient_id)
         return qs.filter(is_active=True).order_by("-payment_date")
 
-    def perform_create(self, serializer):
-        instance = serializer.save(clinic=self.request.user.clinic)
-        self._log_action(AuditLog.Action.CREATE, instance)
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
+
 
 
 class DoctorListView(APIView):
@@ -218,7 +469,7 @@ class DoctorListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        doctors = CustomUser.objects.filter(clinic=request.user.clinic, role=CustomUser.Role.DOCTOR)
+        doctors = CustomUser.objects.filter(role=CustomUser.Role.DOCTOR)
         return Response(DoctorMinimalSerializer(doctors, many=True).data)
 
 
@@ -230,10 +481,9 @@ class DashboardView(APIView):
         user = request.user
         today = timezone.localdate()
         appointments = Appointment.objects.filter(
-            clinic=user.clinic,
             date=today
         ).exclude(status=Appointment.Status.CANCELLED)
-        patients_qs = Patient.objects.filter(clinic=user.clinic)
+        patients_qs = Patient.objects.all()
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             appointments = appointments.filter(doctor=user)
             patients_qs = patients_qs.filter(
@@ -252,7 +502,7 @@ class DashboardView(APIView):
             "total_patients": total_patients,
         })
 
-class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
+class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta dokümanları için API."""
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated]
@@ -260,7 +510,7 @@ class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Document.objects.filter(clinic=user.clinic)
+        queryset = Document.objects.all()
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             queryset = queryset.filter(
                 Q(patient__appointments__doctor=user) | Q(patient__treatments__doctor=user)
@@ -272,7 +522,28 @@ class DocumentViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save(
-            clinic=self.request.user.clinic,
             uploaded_by=self.request.user
         )
-        self._log_action(AuditLog.Action.CREATE, instance)
+        self.log_action(AuditLog.Action.CREATE, instance)
+
+    def perform_destroy(self, instance):
+        self.log_action(AuditLog.Action.DELETE, instance)
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
+
+class UserViewSet(AuditLogMixin, viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all().order_by('id')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        return CustomUser.objects.all().order_by('id')
+
+
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """Sadece yoneticilerin erisebilecegi islem gecmisi."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AuditLogSerializer
+    queryset = AuditLog.objects.select_related("user", "content_type").order_by("-created_at")

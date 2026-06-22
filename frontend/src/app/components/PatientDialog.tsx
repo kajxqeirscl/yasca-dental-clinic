@@ -10,8 +10,12 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { createPatient, updatePatient } from '../services/api';
 import { DatePicker } from './ui/date-picker';
+import { PhoneInput } from './ui/phone-input';
+import { isValidPhoneNumber } from 'react-phone-number-input';
+import { createPatient, updatePatient } from '../services/api';
+
+import { useTranslation } from 'react-i18next';
 
 interface PatientDialogProps {
   isOpen: boolean;
@@ -36,6 +40,7 @@ export default function PatientDialog({
   patientId,
   initialData,
 }: PatientDialogProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -47,6 +52,8 @@ export default function PatientDialog({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [showFutureWarning, setShowFutureWarning] = useState(false);
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -65,14 +72,61 @@ export default function PatientDialog({
         });
       }
       setError('');
+      setMissingFields([]);
     }
   }, [isOpen, initialData]);
 
   const handleSave = async () => {
-    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.phone.trim()) {
-      setError('Ad, Soyad ve Telefon zorunludur.');
+    const newMissingFields = [];
+    if (!formData.first_name.trim()) newMissingFields.push('Ad');
+    if (!formData.last_name.trim()) newMissingFields.push('Soyad');
+    
+    // Phone validation
+    const phoneClean = formData.phone || '';
+    if (!phoneClean) {
+      newMissingFields.push('Telefon');
+    } else if (!isValidPhoneNumber(phoneClean)) {
+      setError('Lütfen geçerli bir telefon numarası giriniz.');
+      setMissingFields(['Telefon']);
       return;
     }
+
+    // TCKN validation (optional, but must be 11 digits if provided)
+    if (formData.tckn.trim() && !/^[0-9]{11}$/.test(formData.tckn.trim())) {
+      setError('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.');
+      setMissingFields(['TC Kimlik No']);
+      return;
+    }
+
+    if (newMissingFields.length > 0) {
+      setMissingFields(newMissingFields);
+      setError(`Lütfen eksik alanları doldurunuz: ${newMissingFields.join(', ')}`);
+      return;
+    }
+    
+    setMissingFields([]);
+
+    let isFuture = false;
+    if (formData.birth_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const bDate = new Date(formData.birth_date);
+      bDate.setHours(0, 0, 0, 0);
+      if (bDate > today) {
+        isFuture = true;
+      }
+    }
+
+    if (isFuture) {
+      setShowFutureWarning(true);
+      return;
+    }
+
+    proceedSave();
+  };
+
+  const proceedSave = async () => {
+    setShowFutureWarning(false);
     setLoading(true);
     setError('');
     try {
@@ -94,7 +148,7 @@ export default function PatientDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Hasta eklenemedi');
+      setError(err instanceof Error ? err.message : t('patients:dialog.error_add'));
     } finally {
       setLoading(false);
     }
@@ -103,6 +157,7 @@ export default function PatientDialog({
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setError('');
+      setMissingFields([]);
       setFormData({
         first_name: '',
         last_name: '',
@@ -117,12 +172,13 @@ export default function PatientDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{patientId ? 'Hastayı Düzenle' : 'Yeni Hasta Ekle'}</DialogTitle>
+          <DialogTitle>{patientId ? t('patients:dialog.title_edit') : t('patients:dialog.title_add')}</DialogTitle>
           <DialogDescription>
-            Hasta bilgilerini girin ve kaydedin.
+            {t('patients:dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -133,66 +189,72 @@ export default function PatientDialog({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Ad</Label>
+              <Label htmlFor="name">{t('patients:dialog.fields.first_name')}</Label>
               <Input
                 id="name"
                 value={formData.first_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, first_name: e.target.value })
-                }
+                className={missingFields.includes('Ad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, first_name: e.target.value });
+                  if (missingFields.includes('Ad')) setMissingFields(missingFields.filter(f => f !== 'Ad'));
+                }}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="surname">Soyad</Label>
+              <Label htmlFor="surname">{t('patients:dialog.fields.last_name')}</Label>
               <Input
                 id="surname"
                 value={formData.last_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, last_name: e.target.value })
-                }
+                className={missingFields.includes('Soyad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, last_name: e.target.value });
+                  if (missingFields.includes('Soyad')) setMissingFields(missingFields.filter(f => f !== 'Soyad'));
+                }}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
-              <Input
+              <Label htmlFor="phone">{t('patients:dialog.fields.phone')}</Label>
+              <PhoneInput
                 id="phone"
-                type="tel"
-                placeholder="0532 123 4567"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                required
+                className={missingFields.includes('Telefon') ? 'border-red-500 focus-within:ring-red-500' : ''}
+                onChange={(val) => {
+                  setFormData({ ...formData, phone: val || '' });
+                  if (missingFields.includes('Telefon')) setMissingFields(missingFields.filter(f => f !== 'Telefon'));
+                }}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tckn">TC Kimlik No</Label>
+              <Label htmlFor="tckn">{t('patients:dialog.fields.tckn')}</Label>
               <Input
                 id="tckn"
                 type="text"
-                placeholder="12345678901"
+                placeholder={t('patients:dialog.fields.tckn_placeholder')}
                 maxLength={11}
                 value={formData.tckn}
-                onChange={(e) =>
-                  setFormData({ ...formData, tckn: e.target.value })
-                }
+                className={missingFields.includes('TC Kimlik No') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, tckn: e.target.value });
+                  if (missingFields.includes('TC Kimlik No')) setMissingFields(missingFields.filter(f => f !== 'TC Kimlik No'));
+                }}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="birthDate">Doğum Tarihi</Label>
+            <Label htmlFor="birthDate">{t('patients:dialog.fields.birth_date')}</Label>
             <DatePicker
               date={formData.birth_date}
-              onDateChange={(val) => setFormData({ ...formData, birth_date: val })}
+              onDateChange={(d) => setFormData({ ...formData, birth_date: d })}
+              maxDate={new Date().toLocaleDateString('en-CA')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Adres</Label>
+            <Label htmlFor="address">{t('patients:dialog.fields.address')}</Label>
             <Textarea
               id="address"
               value={formData.address}
@@ -204,10 +266,10 @@ export default function PatientDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notlar</Label>
+            <Label htmlFor="notes">{t('patients:dialog.fields.notes')}</Label>
             <Textarea
               id="notes"
-              placeholder="Alerji, kronik hastalık vb."
+              placeholder={t('patients:dialog.fields.notes_placeholder')}
               value={formData.notes}
               onChange={(e) =>
                 setFormData({ ...formData, notes: e.target.value })
@@ -218,13 +280,33 @@ export default function PatientDialog({
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            İptal
+            {t('common:cancel')}
           </Button>
           <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
+            {loading ? t('patients:dialog.saving') : t('common:save')}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={showFutureWarning} onOpenChange={setShowFutureWarning}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('patients:dialog.future_warning_title', 'Gelecek Tarih Uyarısı')}</DialogTitle>
+          <DialogDescription>
+            {t('patients:dialog.future_warning_desc', 'Doğum tarihi olarak gelecekteki bir tarihi seçtiniz. Yine de devam etmek istiyor musunuz?')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={() => setShowFutureWarning(false)}>
+            {t('common:cancel', 'İptal')}
+          </Button>
+          <Button onClick={proceedSave} disabled={loading} className="bg-yellow-600 hover:bg-yellow-700">
+            {loading ? t('patients:dialog.saving', 'Kaydediliyor...') : t('common:continue', 'Devam Et')}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
