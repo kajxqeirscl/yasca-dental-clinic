@@ -1,5 +1,5 @@
 from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField, OuterRef, Subquery, F
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Concat
 from django.utils import timezone
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
@@ -302,9 +302,10 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
         
         search = self.request.query_params.get("search", "").strip()
         if search:
-            qs = qs.filter(
-                Q(first_name__tr_icontains=search)
-                | Q(last_name__tr_icontains=search)
+            qs = qs.annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            ).filter(
+                Q(full_name__tr_icontains=search)
                 | Q(phone__tr_icontains=search)
                 | Q(tckn__tr_icontains=search)
             )
