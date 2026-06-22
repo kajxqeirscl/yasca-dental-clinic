@@ -22,7 +22,7 @@ class PatientListSerializer(serializers.ModelSerializer):
     appointments_count = serializers.IntegerField(read_only=True, required=False)
     total_payments = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, required=False)
     total_debt = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, required=False)
-    last_visit_date = serializers.DateTimeField(read_only=True, required=False)
+    last_visit_date = serializers.DateField(read_only=True, required=False)
 
     class Meta:
         model = Patient
