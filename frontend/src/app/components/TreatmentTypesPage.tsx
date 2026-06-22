@@ -7,7 +7,8 @@ import { Input } from './ui/input';
 import { SearchInput } from './ui/search-input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Badge } from './ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedSearch } from '../hooks/useLocalizedSearch';
@@ -65,6 +66,8 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     category: 'other' as TreatmentCategory,
     default_price: '',
   });
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -131,9 +134,23 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     setDeletingId(id);
   };
 
-  const filteredTypes = types.filter((type) => {
+  let filteredTypes = types.filter((type) => {
     const catLabel = getCategoryLabel(type.category, t);
     return match(type.name, searchQuery) || match(catLabel, searchQuery);
+  });
+
+  filteredTypes.sort((a, b) => {
+    let cmp = 0;
+    if (sortField === 'name') {
+      cmp = a.name.localeCompare(b.name, 'tr');
+    } else if (sortField === 'category') {
+      const catA = getCategoryLabel(a.category, t);
+      const catB = getCategoryLabel(b.category, t);
+      cmp = catA.localeCompare(catB, 'tr');
+    } else if (sortField === 'default_price') {
+      cmp = parseFloat(a.default_price || '0') - parseFloat(b.default_price || '0');
+    }
+    return sortDirection === 'asc' ? cmp : -cmp;
   });
 
   useEffect(() => {
@@ -161,12 +178,44 @@ export default function TreatmentTypesPage({ userRole }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>{t('treatments:page.search_title')}</CardTitle>
-          <SearchInput 
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('treatments:page.search_placeholder')}
-            className="mt-4"
-          />
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder={t('treatments:page.search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-9 bg-gray-50/50 border-gray-200/60 focus-visible:ring-indigo-500"
+              />
+            </div>
+            <div className="w-full sm:w-[320px] flex gap-2">
+              <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
+                <SelectTrigger className="bg-gray-50/50 border-gray-200/60 flex-1">
+                  <SelectValue placeholder="Sıralama" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Tedavi Adı</SelectItem>
+                  <SelectItem value="category">Kategori</SelectItem>
+                  <SelectItem value="default_price">Varsayılan Fiyat</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                  setCurrentPage(1);
+                }}
+                className="bg-gray-50/50 border-gray-200/60 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+              >
+                {sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
