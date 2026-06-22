@@ -1095,7 +1095,7 @@ export default function PatientProfile() {
                       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.file_url || '');
                       const isPdf = /\.(pdf)$/i.test(doc.file_url || '');
                       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                      const mediaBase = isLocal ? 'http://localhost:8000' : 'https://yasca-dental-clinic.onrender.com';
+                      const mediaBase = isLocal ? 'http://localhost:8000' : 'https://yasca-dental-clinic-pbbo.onrender.com';
                       const fileUrl = doc.file_url?.startsWith('http') 
                         ? doc.file_url 
                         : `${mediaBase}${doc.file_url}`;
