@@ -28,6 +28,8 @@ export default function TenantLoginPage() {
         throw new Error('Böyle bir klinik bulunamadı. Lütfen adresi kontrol edin.');
       }
       
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
       if (isLocal) {
         // Lokal: subdomain tabanlı yönlendirme
         const port = window.location.port ? `:${window.location.port}` : '';
