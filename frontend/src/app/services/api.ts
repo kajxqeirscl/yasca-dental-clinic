@@ -224,12 +224,13 @@ export async function fetchPublicClinicInfo() {
 }
 
 // --- Patients ---
-export async function fetchPatients(search = '') {
-  const params = search ? `?search=${encodeURIComponent(search)}` : '';
-  const res = await fetchWithAuth(`${API_BASE}/patients/${params}`);
+export async function fetchPatients(search = '', page = 1) {
+  const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+  const res = await fetchWithAuth(`${API_BASE}/patients/?page=${page}${searchParam}`);
   if (!res.ok) throw new Error('Hastalar yüklenemedi');
   const data = await res.json();
-  return data.results ? data.results : data;
+  // Return the full paginated object (with .count and .results) so the UI can do remote pagination
+  return data.results ? data : { results: data, count: data.length };
 }
 
 export async function fetchPatient(id: string) {

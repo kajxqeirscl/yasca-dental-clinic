@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { SearchInput } from './ui/search-input';
-import { Plus, Phone, Calendar } from 'lucide-react';
+import { Plus, Phone, Calendar, Search } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -43,33 +43,32 @@ export default function PatientSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [totalPatients, setTotalPatients] = useState(0);
+  const itemsPerPage = 50; // Django PAGE_SIZE
 
   const loadPatients = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchPatients(searchQuery);
-      setPatients(data);
+      const data = await fetchPatients(searchQuery, currentPage);
+      setPatients(data.results);
+      setTotalPatients(data.count);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('patients:search.error_loading'));
       setPatients([]);
+      setTotalPatients(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    setCurrentPage(1);
     const timer = setTimeout(loadPatients, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, currentPage]);
 
-  const totalPages = Math.ceil(patients.length / itemsPerPage);
-  const paginatedPatients = patients.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalPatients / itemsPerPage);
+  const paginatedPatients = patients;
 
   const handlePatientCreated = () => {
     setIsDialogOpen(false);
@@ -89,12 +88,19 @@ export default function PatientSearch() {
       <Card>
         <CardHeader>
           <CardTitle>{t('patients:search.search_title')}</CardTitle>
-          <SearchInput 
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('patients:search.search_placeholder')}
-            className="mt-4"
-          />
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder={t('patients:search.search_placeholder')}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset page on new search
+              }}
+              className="pl-9 bg-gray-50/50 border-gray-200/60 focus-visible:ring-indigo-500"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {error && (
