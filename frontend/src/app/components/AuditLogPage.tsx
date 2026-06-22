@@ -73,7 +73,8 @@ export default function AuditLogPage() {
     return d.toLocaleTimeString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const getModelLabel = (modelName: string) => {
+  const getModelLabel = (modelName: string | null | undefined) => {
+    if (!modelName) return 'Silinmiş Kayıt';
     const key = `model_${modelName.toLowerCase()}`;
     const translation = t(key);
     return translation !== key ? translation : MODEL_LABELS[modelName] || modelName;
@@ -82,7 +83,7 @@ export default function AuditLogPage() {
   const filteredLogs = logs.filter(log => {
     const matchAction = !filterAction || log.action === filterAction;
     const matchSearch = !searchTerm || 
-      log.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (log.username && log.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
       getModelLabel(log.model_name).toLowerCase().includes(searchTerm.toLowerCase());
     return matchAction && matchSearch;
   });
