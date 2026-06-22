@@ -35,10 +35,9 @@ export default function RegisterPage() {
     setError('');
     
     try {
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const apiBase = isLocal
-        ? `http://${window.location.hostname}:8000`
-        : 'https://yasca-dental-clinic-pbbo.onrender.com';
+      const apiBase = import.meta.env.VITE_API_URL
+        ? (import.meta.env.VITE_API_URL as string).replace(/\/api\/?$/, '')
+        : `http://${window.location.hostname}:8000`;
       
       const res = await fetch(`${apiBase}/api/public/register/`, {
         method: 'POST',

@@ -15,7 +15,7 @@ RUN apt-get update \
 # Bağımlılıkları kopyala ve kur
 COPY requirements*.txt /app/
 RUN pip install --upgrade pip
-RUN pip install -r requirements-dev.txt
+RUN pip install -r requirements.txt
 
 # Proje dosyalarını kopyala
 COPY . /app/

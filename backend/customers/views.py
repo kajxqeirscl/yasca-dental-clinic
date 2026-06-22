@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django_tenants.utils import schema_context
+from django.conf import settings
 from .models import Client, Domain
 from api.models import CustomUser
 
@@ -38,11 +39,12 @@ class RegisterClinicView(APIView):
                 defaults={'tenant': tenant, 'is_primary': True}
             )
             
-            # 3. Production domain (Render icin)
-            Domain.objects.get_or_create(
-                domain=f"{subdomain}.yasca-dental-clinic.onrender.com",
-                defaults={'tenant': tenant, 'is_primary': False}
-            )
+            # 3. Production domain (Railway / custom domain)
+            if settings.PRODUCTION_DOMAIN != 'localhost':
+                Domain.objects.get_or_create(
+                    domain=f"{subdomain}.{settings.PRODUCTION_DOMAIN}",
+                    defaults={'tenant': tenant, 'is_primary': False}
+                )
             
             # 4. Sadece bu klinigin veritabanina gir ve Admin hesabini olustur
             with schema_context(tenant.schema_name):

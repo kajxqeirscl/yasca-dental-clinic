@@ -41,10 +41,17 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-neoy(wlrx5y($j_7^mai5$)q8=0hvl*t5etqpv)qjl#dqpsu&z'  # local dev fallback only
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+# Production domain (Railway URL or custom domain) — used by django-tenants to register domains
+# Example: api.yascadental.com
+PRODUCTION_DOMAIN = os.environ.get('PRODUCTION_DOMAIN', 'localhost')
 
 ALLOWED_HOSTS = ['*']  # django-tenants zaten domain doğrulaması yapıyor
 

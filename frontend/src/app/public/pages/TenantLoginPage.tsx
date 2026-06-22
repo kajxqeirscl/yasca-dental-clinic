@@ -18,10 +18,10 @@ export default function TenantLoginPage() {
     setError('');
 
     try {
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const checkUrl = isLocal
-        ? `http://${window.location.hostname}:8000/api/public/check-domain/?subdomain=${subdomain}`
-        : `https://yasca-dental-clinic-pbbo.onrender.com/api/public/check-domain/?subdomain=${subdomain}`;
+      const apiBase = import.meta.env.VITE_API_URL
+        ? (import.meta.env.VITE_API_URL as string).replace(/\/api\/?$/, '')
+        : `http://${window.location.hostname}:8000`;
+      const checkUrl = `${apiBase}/api/public/check-domain/?subdomain=${subdomain}`;
       
       const res = await fetch(checkUrl);
       if (!res.ok) {

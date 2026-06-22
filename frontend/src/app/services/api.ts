@@ -6,21 +6,30 @@
 // ---------------------------------------------------------------------------
 // API Base URL & Tenant Detection
 // ---------------------------------------------------------------------------
-// Lokalde: ali.localhost:8000 -> django-tenants Host header ile tenant bulur
-// Canlıda: Tek Render URL kullanılır, tenant bilgisi X-Tenant header ile gönderilir
+// Lokalde: localhost:8000 -> django-tenants Host header ile tenant bulur
+// Canlıda: VITE_API_URL env var'dan okunur (Railway backend URL)
 const HOSTNAME = window.location.hostname;
 
-let API_BASE = import.meta.env.VITE_API_URL;
+const isLocal = HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1';
+
+let API_BASE: string = import.meta.env.VITE_API_URL || '';
 let TENANT_SUBDOMAIN = ''; // Canlı ortamda backend'e gönderilecek tenant adı
 
 if (!API_BASE) {
-  if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
-    // Lokal geliştirme - django-tenants Host header ile çalışır
-    API_BASE = `http://${HOSTNAME}:8000/api`;
-  } else {
-    // Canlı ortam - Tüm istekler tek Render URL'ine gider
-    API_BASE = 'https://yasca-dental-clinic-4ato.onrender.com/api';
+  // VITE_API_URL tanımlı değilse lokal geliştirme moduna geç
+  API_BASE = `http://${HOSTNAME}:8000/api`;
+}
+
+/**
+ * Backend base URL'ini döndürür (sadece origin kısmı, /api olmadan).
+ * Dosya URL'leri (media) gibi durumlarda kullanılır.
+ */
+export function getApiOrigin(): string {
+  if (import.meta.env.VITE_API_URL) {
+    // https://api.yascadental.com/api -> https://api.yascadental.com
+    return (import.meta.env.VITE_API_URL as string).replace(/\/api\/?$/, '');
   }
+  return `http://${HOSTNAME}:8000`;
 }
 
 /**
