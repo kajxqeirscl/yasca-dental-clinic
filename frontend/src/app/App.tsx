@@ -32,18 +32,12 @@ export default function App() {
     );
   }
 
-  // Canlı ortam + lokal ana sayfa: path tabanlı routing
+  // Canlı ortam + lokal ana sayfa: single-tenant routing
   return (
     <BrowserRouter>
       <Routes>
-        {/* Şifre sıfırlama rotalarını auth'a takılmadan en üstte yakala */}
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
-        <Route path="/app/:slug/reset-password/:uid/:token" element={<ResetPasswordPage />} />
-        
-        {/* /app/:slug altındaki her şey klinik paneline gider */}
-        <Route path="/app/:slug/*" element={<ClinicAppWrapper />} />
-        {/* Diğer her şey PublicApp (tanıtım sitesi) */}
-        <Route path="/*" element={<PublicApp />} />
+        <Route path="/*" element={<ClinicApp tenantSlug="rimahalloum" forceRootPath={true} />} />
       </Routes>
     </BrowserRouter>
   );

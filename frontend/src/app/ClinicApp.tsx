@@ -16,12 +16,13 @@ import { useLocation } from 'react-router-dom';
 
 interface ClinicAppProps {
   tenantSlug: string; // 'ali', 'yildiz' vb. — boşsa lokal subdomain modu
+  forceRootPath?: boolean; // Canlıda '/app/slug' yerine '/' kullanmaya zorlar
 }
 
 /**
  * Klinik Yönetim Paneli
  */
-export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
+export default function ClinicApp({ tenantSlug, forceRootPath }: ClinicAppProps) {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const location = useLocation();
@@ -50,7 +51,7 @@ export default function ClinicApp({ tenantSlug }: ClinicAppProps) {
   const userName = `${user.first_name} ${user.last_name}`.trim() || user.username;
 
   // Canlı ortamda basePath = '/app/ali', lokalde basePath = ''
-  const basePath = tenantSlug ? `/app/${tenantSlug}` : '';
+  const basePath = (tenantSlug && !forceRootPath) ? `/app/${tenantSlug}` : '';
 
   return (
     <Layout userName={userName} userRole={userRole} onLogout={logout} isAdmin={isAdmin} basePath={basePath}>
