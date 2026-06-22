@@ -7,14 +7,8 @@ import { TENANT_SUBDOMAIN } from '../services/api';
  */
 export function useClinicNavigate() {
   const navigate = useReactNavigate();
-  const basePath = TENANT_SUBDOMAIN ? `/app/${TENANT_SUBDOMAIN}` : '';
   
   return (path: string) => {
-    // Mutlak path ise basePath ekle, değilse olduğu gibi bırak
-    if (path.startsWith('/')) {
-      navigate(`${basePath}${path}`);
-    } else {
-      navigate(path);
-    }
+    navigate(path);
   };
 }
