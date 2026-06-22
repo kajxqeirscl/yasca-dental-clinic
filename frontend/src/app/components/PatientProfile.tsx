@@ -1158,17 +1158,39 @@ export default function PatientProfile() {
                 <div>
                   <CardTitle>{t('patients:profile.documents.title')}</CardTitle>
                 </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <div className="text-[11px] bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200">
-                    Bulut depolama bekleniyor
+                <div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="text-[11px] bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200">
+                      Bulut depolama bekleniyor
+                    </div>
+                    <button 
+                      disabled
+                      className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all rounded-lg shadow-sm bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                    >
+                      <Plus className="w-4 h-4 mr-1.5" />
+                      {t('patients:profile.documents.upload')}
+                    </button>
                   </div>
-                  <button 
-                    disabled
-                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all rounded-lg shadow-sm bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                  {/* ORIGINAL UPLOAD LOGIC (TEMPORARILY DISABLED PENDING CLOUD STORAGE):
+                  <label 
+                    htmlFor="file-upload" 
+                    className={`cursor-pointer inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium transition-all rounded-lg shadow-sm ${
+                      uploadingDoc 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                    }`}
                   >
                     <Plus className="w-4 h-4 mr-1.5" />
-                    {t('patients:profile.documents.upload')}
-                  </button>
+                    {uploadingDoc ? t('patients:profile.loading') : t('patients:profile.documents.upload')}
+                  </label>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={uploadingDoc}
+                  />
+                  */}
                 </div>
               </div>
             </CardHeader>
@@ -1176,6 +1198,8 @@ export default function PatientProfile() {
               <div 
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
+                // ORIGINAL DRAG & DROP LOGIC:
+                // onDrop={handleDrop}
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragging(false);
