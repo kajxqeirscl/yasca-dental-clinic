@@ -22,8 +22,9 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Plus } from 'lucide-react';
 import PatientDialog from './PatientDialog';
+import TreatmentAddDialog from './TreatmentAddDialog';
 
 interface Appointment {
   id: number;
@@ -121,6 +122,9 @@ export default function AppointmentDialog({
 
   // --- Patient creation dialog state ---
   const [showPatientDialog, setShowPatientDialog] = useState(false);
+
+  // --- Treatment creation dialog state ---
+  const [showTreatmentDialog, setShowTreatmentDialog] = useState(false);
 
   const debouncedSearch = useDebounce(patientSearch, 300);
 
@@ -553,9 +557,19 @@ return (
              </p>
           )}
           {selectedPatient && patientTreatments.length === 0 && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 mt-1 mb-2">
               {t('appointments:dialog.fields.treatment_empty', 'Bu hastanın kayıtlı tedavisi yok.')}
             </p>
+          )}
+          {selectedPatient && (
+            <button
+              type="button"
+              onClick={() => setShowTreatmentDialog(true)}
+              className="w-full flex items-center gap-2 px-3 py-2.5 mt-2 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border border-emerald-100 rounded-md transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Yeni Tedavi Ekle</span>
+            </button>
           )}
         </div>
 
@@ -620,6 +634,21 @@ return (
         .catch(() => {});
     }}
   />
+
+  {selectedPatient && (
+    <TreatmentAddDialog
+      isOpen={showTreatmentDialog}
+      onClose={() => setShowTreatmentDialog(false)}
+      patientId={selectedPatient.id}
+      onSuccess={() => {
+        setShowTreatmentDialog(false);
+        // Re-fetch treatments to update the dropdown list
+        fetchTreatments(selectedPatient.id.toString())
+          .then((list) => setPatientTreatments(list))
+          .catch(() => {});
+      }}
+    />
+  )}
   </>
 );
 }
