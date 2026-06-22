@@ -537,7 +537,8 @@ class DashboardView(APIView):
         user = request.user
         today = timezone.localdate()
         appointments = Appointment.objects.filter(
-            date=today
+            date=today,
+            is_active=True
         ).exclude(status=Appointment.Status.CANCELLED)
         patients_qs = Patient.objects.all()
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
