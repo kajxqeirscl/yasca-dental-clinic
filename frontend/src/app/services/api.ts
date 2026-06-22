@@ -10,15 +10,17 @@
 // Canlıda: Tek Render URL kullanılır, tenant bilgisi X-Tenant header ile gönderilir
 const HOSTNAME = window.location.hostname;
 
-let API_BASE = '';
+let API_BASE = import.meta.env.VITE_API_URL;
 let TENANT_SUBDOMAIN = ''; // Canlı ortamda backend'e gönderilecek tenant adı
 
-if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
-  // Lokal geliştirme - django-tenants Host header ile çalışır
-  API_BASE = `http://${HOSTNAME}:8000/api`;
-} else {
-  // Canlı ortam - Tüm istekler tek Render URL'ine gider
-  API_BASE = 'https://yasca-dental-clinic-pbbo.onrender.com/api';
+if (!API_BASE) {
+  if (HOSTNAME.endsWith('localhost') || HOSTNAME === '127.0.0.1') {
+    // Lokal geliştirme - django-tenants Host header ile çalışır
+    API_BASE = `http://${HOSTNAME}:8000/api`;
+  } else {
+    // Canlı ortam - Tüm istekler tek Render URL'ine gider
+    API_BASE = 'https://yasca-dental-clinic-4ato.onrender.com/api';
+  }
 }
 
 /**
