@@ -211,8 +211,10 @@ export default function AppointmentDialog({
     }
     setPatientLoading(true);
     fetchPatients(debouncedSearch.trim())
-      .then((results: PatientOption[]) => {
-        setPatientResults(results);
+      .then((data: any) => {
+        // Handle paginated response ({ count, results }) or fallback to array
+        const resultsArray = data.results || data;
+        setPatientResults(resultsArray);
         setPatientDropdownOpen(true);
       })
       .catch(() => setPatientResults([]))
