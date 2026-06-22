@@ -392,7 +392,7 @@ class TreatmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         # Kontrol: Bağlı aktif randevu var mı?
-        linked_appointments = instance.appointments.filter(is_active=True).count()
+        linked_appointments = instance.appointments.filter(is_active=True).exclude(status='cancelled').count()
         if linked_appointments:
             raise ValidationError(
                 f"Bu tedaviye bağlı {linked_appointments} adet randevu var. Önce randevuyu iptal edin veya silin."
