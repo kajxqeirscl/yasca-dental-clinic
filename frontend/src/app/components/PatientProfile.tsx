@@ -906,7 +906,11 @@ export default function PatientProfile() {
 
                           return (
                             <div key={tr.id} className="border rounded-lg bg-white overflow-hidden shadow-sm">
-                              <div className="flex items-center justify-between p-4 bg-gray-50 border-b">
+                              <div 
+                                className="flex items-center justify-between p-4 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleTreatmentEdit(tr)}
+                                title={t('patients:profile.treatments.edit', 'Tedaviyi Düzenle')}
+                              >
                                 <div className="flex items-center gap-4">
                                   <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg shrink-0">
                                     <Stethoscope className="w-6 h-6 text-blue-600" />
