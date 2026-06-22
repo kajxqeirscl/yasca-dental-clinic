@@ -67,6 +67,8 @@ export default function TreatmentAddDialog({
   initialToothNumber,
   initialCategory,
   treatmentToEdit,
+  defaultStatus = 'completed',
+  showAppointmentWarning = false,
 }: TreatmentAddDialogProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -77,7 +79,7 @@ export default function TreatmentAddDialog({
   const [treatmentName, setTreatmentName] = useState('');
   const [toothNumber, setToothNumber] = useState(initialToothNumber?.toString() || '');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState('completed');
+  const [status, setStatus] = useState(defaultStatus);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,6 +100,7 @@ export default function TreatmentAddDialog({
         setPrice(treatmentToEdit.price?.toString() || '');
       } else {
         setToothNumber(initialToothNumber?.toString() || '');
+        setStatus(defaultStatus);
         if (initialCategory) {
           // Find the first active treatment type with matching category — no string matching.
           const match = treatmentTypes.find((t) => t.category === initialCategory);
@@ -152,7 +155,7 @@ export default function TreatmentAddDialog({
     setTreatmentName('');
     setToothNumber('');
     setNotes('');
-    setStatus('completed');
+    setStatus(defaultStatus);
     setDate(new Date().toISOString().split('T')[0]);
     setPrice('');
     setError('');
@@ -330,6 +333,11 @@ export default function TreatmentAddDialog({
                 <option value="completed">{t('treatments:dialog.status_completed')}</option>
                 <option value="planned">{t('treatments:dialog.status_planned')}</option>
               </select>
+              {showAppointmentWarning && status === 'completed' && (
+                <p className="text-xs text-amber-600 font-medium mt-1 leading-tight">
+                  {t('treatments:dialog.appointment_warning', 'Uyarı: Randevu ancak "Yapılacak" işlemlere bağlanmalıdır. İşlem zaten tamamlandıysa randevuya eklemenize gerek yoktur. Yine de devam etmek istiyor musunuz?')}
+                </p>
+              )}
             </div>
           </div>
 

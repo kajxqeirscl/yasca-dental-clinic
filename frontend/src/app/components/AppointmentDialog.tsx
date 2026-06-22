@@ -640,6 +640,8 @@ return (
       isOpen={showTreatmentDialog}
       onClose={() => setShowTreatmentDialog(false)}
       patientId={selectedPatient.id}
+      defaultStatus="planned"
+      showAppointmentWarning={true}
       onSuccess={() => {
         setShowTreatmentDialog(false);
         // Re-fetch treatments to update the dropdown list
