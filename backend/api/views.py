@@ -303,11 +303,11 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.annotate(
-                full_name=Concat('first_name', Value(' '), 'last_name')
+                search_full_name=Concat('first_name', Value(' '), 'last_name')
             )
             for term in search.split():
                 qs = qs.filter(
-                    Q(full_name__tr_icontains=term)
+                    Q(search_full_name__tr_icontains=term)
                     | Q(phone__tr_icontains=term)
                     | Q(tckn__tr_icontains=term)
                 )
