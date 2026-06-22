@@ -304,11 +304,13 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if search:
             qs = qs.annotate(
                 full_name=Concat('first_name', Value(' '), 'last_name')
-            ).filter(
-                Q(full_name__tr_icontains=search)
-                | Q(phone__tr_icontains=search)
-                | Q(tckn__tr_icontains=search)
             )
+            for term in search.split():
+                qs = qs.filter(
+                    Q(full_name__tr_icontains=term)
+                    | Q(phone__tr_icontains=term)
+                    | Q(tckn__tr_icontains=term)
+                )
             
         # Default ordering is handled by NullsLastOrderingFilter, but we can set a fallback here if no ordering param is provided
         ordering = self.request.query_params.get("ordering")
