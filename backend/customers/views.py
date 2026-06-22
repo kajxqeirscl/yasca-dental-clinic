@@ -67,6 +67,9 @@ class RegisterClinicView(APIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            from django.db import IntegrityError
+            if isinstance(e, IntegrityError) and 'customers_client_schema_name_key' in str(e):
+                return Response({"error": "Bu klinik adresi (subdomain) zaten kullanılıyor. Lütfen başka bir isim deneyin."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CheckDomainView(APIView):
