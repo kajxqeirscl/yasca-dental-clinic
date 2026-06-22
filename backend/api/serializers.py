@@ -18,16 +18,19 @@ class PatientListSerializer(serializers.ModelSerializer):
     """Hasta listesi için kısa serializer."""
 
     full_name = serializers.ReadOnlyField()
-    last_visit = serializers.SerializerMethodField()
+    # Annotated fields for sorting and dynamic columns
+    appointments_count = serializers.IntegerField(read_only=True, required=False)
+    total_payments = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, required=False)
+    total_debt = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, required=False)
+    last_visit_date = serializers.DateTimeField(read_only=True, required=False)
 
     class Meta:
         model = Patient
-        fields = ["id", "first_name", "last_name", "full_name", "phone", "tckn", "last_visit"]
-
-    def get_last_visit(self, obj):
-        from .models import Appointment
-        last = obj.appointments.filter(status=Appointment.Status.COMPLETED).order_by("-date").first()
-        return last.date.isoformat() if last else None
+        fields = [
+            "id", "first_name", "last_name", "full_name", "phone", "tckn", 
+            "birth_date", "created_at", "appointments_count", 
+            "total_payments", "total_debt", "last_visit_date"
+        ]
 
 
 class AnamnesisSerializer(serializers.ModelSerializer):

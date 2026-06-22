@@ -224,9 +224,10 @@ export async function fetchPublicClinicInfo() {
 }
 
 // --- Patients ---
-export async function fetchPatients(search = '', page = 1) {
+export async function fetchPatients(search = '', page = 1, ordering = '') {
   const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-  const res = await fetchWithAuth(`${API_BASE}/patients/?page=${page}${searchParam}`);
+  const orderParam = ordering ? `&ordering=${encodeURIComponent(ordering)}` : '';
+  const res = await fetchWithAuth(`${API_BASE}/patients/?page=${page}${searchParam}${orderParam}`);
   if (!res.ok) throw new Error('Hastalar yüklenemedi');
   const data = await res.json();
   // Return the full paginated object (with .count and .results) so the UI can do remote pagination

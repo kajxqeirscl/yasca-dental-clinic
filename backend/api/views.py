@@ -1,6 +1,7 @@
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Max, Value, DecimalField, IntegerField
+from django.db.models.functions import Coalesce
 from django.utils import timezone
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -244,6 +245,8 @@ class PasswordResetConfirmView(APIView):
 class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Hasta CRUD. F-003, F-004, F-005."""
     permission_classes = [IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['first_name', 'last_name', 'created_at', 'birth_date', 'phone', 'tckn', 'appointments_count', 'last_visit_date', 'total_payments', 'total_debt']
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -252,7 +255,15 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Patient.objects.all()
+        qs = Patient.objects.annotate(
+            appointments_count=Count('appointments', distinct=True),
+            last_visit_date=Max('appointments__date', filter=Q(appointments__status='completed')),
+            total_payments=Coalesce(Sum('payments__amount', filter=Q(payments__is_active=True)), Value(0, output_field=DecimalField())),
+            total_treatments=Coalesce(Sum('treatments__price', filter=Q(treatments__is_active=True, treatments__status='completed')), Value(0, output_field=DecimalField())),
+        ).annotate(
+            total_debt=Coalesce('total_treatments', Value(0, output_field=DecimalField())) - Coalesce('total_payments', Value(0, output_field=DecimalField()))
+        )
+        
         search = self.request.query_params.get("search", "").strip()
         if search:
             qs = qs.filter(
@@ -261,7 +272,13 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
                 | Q(phone__tr_icontains=search)
                 | Q(tckn__tr_icontains=search)
             )
-        return qs.order_by("last_name", "first_name")
+            
+        # Default ordering is handled by OrderingFilter, but we can set a fallback here if no ordering param is provided
+        ordering = self.request.query_params.get("ordering")
+        if not ordering:
+            qs = qs.order_by("-created_at")
+            
+        return qs
 
     def perform_destroy(self, instance):
         # Kontrol: Aktif (planlanmış) randevu var mı?
