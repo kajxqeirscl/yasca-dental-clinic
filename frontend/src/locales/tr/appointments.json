@@ -30,10 +30,10 @@
       "selected": "seçildi",
       "doctor": "Hekim *",
       "select_doctor": "Hekim seçin",
-      "doctor_empty": "Henüz hekim tanımlanmamış. Admin panelinden ekleyebilirsiniz.",
+      "doctor_empty": "Sistemde kayıtlı hekim bulunamadı. Lütfen Kullanıcı Yönetimi sayfasından ekleyin.",
       "treatment": "İşlem",
       "select_treatment": "İşlem seçin (opsiyonel)",
-      "treatment_empty": "Henüz tedavi türü tanımlanmamış. Admin panelinden ekleyebilirsiniz.",
+      "treatment_empty": "Bu hastanın henüz kayıtlı bir işlemi/tedavisi bulunmamaktadır.",
       "notes": "Notlar",
       "notes_placeholder": "Ek bilgiler..."
     },
