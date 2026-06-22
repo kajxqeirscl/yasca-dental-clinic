@@ -44,7 +44,7 @@ export default function PatientSearch() {
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPatients, setTotalPatients] = useState(0);
-  const itemsPerPage = 50; // Django PAGE_SIZE
+  const itemsPerPage = 15; // Django PAGE_SIZE
 
   const loadPatients = async () => {
     setLoading(true);
