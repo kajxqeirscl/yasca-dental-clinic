@@ -63,7 +63,7 @@ describe('TreatmentAddDialog — Render', () => {
     });
   });
 
-  it('initialToothNumber prop\'u tooth number alanını pre-fill eder', async () => {
+  it('initialTeeth prop\'u tooth number alanını pre-fill eder', async () => {
     defaultHandlers();
     renderWithProviders(
       <TreatmentAddDialog
@@ -71,7 +71,7 @@ describe('TreatmentAddDialog — Render', () => {
         onClose={vi.fn()}
         patientId={1}
         onSuccess={vi.fn()}
-        initialToothNumber="21"
+        initialTeeth={["21"]}
       />,
       { authenticated: true },
     );

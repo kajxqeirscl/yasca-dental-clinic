@@ -33,7 +33,8 @@ interface TreatmentAddDialogProps {
   onClose: () => void;
   patientId: number;
   onSuccess?: () => void;
-  initialToothNumber?: string | number;
+  initialTeeth?: string[];
+  initialRegion?: string;
   /** Pre-selects the first treatment type matching this category. Replaces the old string-matching approach. */
   initialCategory?: TreatmentCategory;
   treatmentToEdit?: Treatment | null;
@@ -64,7 +65,8 @@ export default function TreatmentAddDialog({
   onClose,
   patientId,
   onSuccess,
-  initialToothNumber,
+  initialTeeth,
+  initialRegion,
   initialCategory,
   treatmentToEdit,
   defaultStatus = 'completed',
@@ -78,10 +80,8 @@ export default function TreatmentAddDialog({
   const [selectedTypeId, setSelectedTypeId] = useState<number | ''>('');
   const [treatmentName, setTreatmentName] = useState('');
   const [selectionMode, setSelectionMode] = useState<'teeth' | 'region'>('teeth');
-  const [selectedTeeth, setSelectedTeeth] = useState<string[]>(
-    initialToothNumber ? [initialToothNumber.toString()] : []
-  );
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedTeeth, setSelectedTeeth] = useState<string[]>(initialTeeth || []);
+  const [selectedRegion, setSelectedRegion] = useState<string>(initialRegion || '');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState(defaultStatus);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -100,7 +100,7 @@ export default function TreatmentAddDialog({
     }
   }, [selectedTeeth, selectedRegion, selectionMode, basePrice]);
 
-  // Dialog her açıldığında varsayılanı resetlerken initialToothNumber ve initialCategory'yi de uyguluyoruz
+  // Dialog her açıldığında varsayılanı resetlerken prop değerlerini uyguluyoruz
   useEffect(() => {
     if (isOpen) {
       if (treatmentToEdit) {
@@ -110,7 +110,7 @@ export default function TreatmentAddDialog({
         
         // Determine if existing teeth are regions or tooth numbers
         const regions = ['tum_agiz', 'ust_cene', 'alt_cene', 'sag_ust', 'sol_ust', 'sag_alt', 'sol_alt'];
-        const existingTeeth = treatmentToEdit.teeth || (treatmentToEdit.tooth_number ? [treatmentToEdit.tooth_number] : []);
+        const existingTeeth = treatmentToEdit.teeth || [];
         
         if (existingTeeth.length === 1 && regions.includes(existingTeeth[0])) {
           setSelectionMode('region');
@@ -128,9 +128,13 @@ export default function TreatmentAddDialog({
         setPrice(treatmentToEdit.price?.toString() || '');
         setBasePrice(0); // Can't easily infer base price for editing without fetching type
       } else {
-        if (initialToothNumber) {
+        if (initialRegion) {
+          setSelectionMode('region');
+          setSelectedRegion(initialRegion);
+          setSelectedTeeth([]);
+        } else if (initialTeeth && initialTeeth.length > 0) {
           setSelectionMode('teeth');
-          setSelectedTeeth([initialToothNumber.toString()]);
+          setSelectedTeeth(initialTeeth);
           setSelectedRegion('');
         } else {
           setSelectionMode('teeth');
@@ -166,7 +170,7 @@ export default function TreatmentAddDialog({
       setBasePrice(0);
       setError('');
     }
-  }, [isOpen, treatmentToEdit, initialToothNumber, initialCategory, treatmentTypes]);
+  }, [isOpen, treatmentToEdit, initialTeeth, initialRegion, initialCategory, treatmentTypes]);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -167,7 +167,8 @@ export default function PatientProfile() {
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [isTreatmentAddOpen, setIsTreatmentAddOpen] = useState(false);
   const [isPaymentAddOpen, setIsPaymentAddOpen] = useState(false);
-  const [selectedToothForTreatment, setSelectedToothForTreatment] = useState<number | ''>('');
+  const [selectedTeethForTreatment, setSelectedTeethForTreatment] = useState<string[]>([]);
+  const [selectedRegionForTreatment, setSelectedRegionForTreatment] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<import('./TreatmentTypesPage').TreatmentCategory | undefined>(undefined);
   const [treatmentToEdit, setTreatmentToEdit] = useState<any>(null);
   const [paymentToEdit, setPaymentToEdit] = useState<any>(null);
@@ -1156,11 +1157,17 @@ export default function PatientProfile() {
             <CardContent>
               <DentalChart 
                 treatments={treatments}
-                onToothSelect={(toothNum, category) => {
-                  setSelectedToothForTreatment(toothNum);
-                  setSelectedCategory(category);
+                onToothSelect={(teeth, region) => {
+                  setSelectedTeethForTreatment(teeth.map(t => t.toString()));
+                  setSelectedRegionForTreatment(region || '');
+                  setSelectedCategory(undefined);
+                  setTreatmentToEdit(null);
                   setIsTreatmentAddOpen(true);
-                }} 
+                }}
+                onEditTreatment={(treatment) => {
+                  setTreatmentToEdit(treatment);
+                  setIsTreatmentAddOpen(true);
+                }}
               />
             </CardContent>
           </Card>
@@ -1326,7 +1333,8 @@ export default function PatientProfile() {
         isOpen={isTreatmentAddOpen}
         onClose={() => { 
           setIsTreatmentAddOpen(false); 
-          setSelectedToothForTreatment('');
+          setSelectedTeethForTreatment([]);
+          setSelectedRegionForTreatment('');
           setSelectedCategory(undefined);
           setTreatmentToEdit(null);
         }}
@@ -1336,7 +1344,8 @@ export default function PatientProfile() {
           setSelectedCategory(undefined);
           setTreatmentToEdit(null);
         }}
-        initialToothNumber={selectedToothForTreatment}
+        initialTeeth={selectedTeethForTreatment.length > 0 ? selectedTeethForTreatment : undefined}
+        initialRegion={selectedRegionForTreatment || undefined}
         initialCategory={selectedCategory}
         treatmentToEdit={treatmentToEdit}
       />
