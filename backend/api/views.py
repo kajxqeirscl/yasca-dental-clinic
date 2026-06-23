@@ -286,13 +286,13 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
         ).values('total')
         
         last_visit_subquery = Appointment.objects.filter(
-            patient=OuterRef('pk'), status='completed'
+            patient=OuterRef('pk'), is_active=True, status='completed'
         ).values('patient').annotate(
             max_date=Max('date')
         ).values('max_date')
 
-        qs = Patient.objects.annotate(
-            appointments_count=Count('appointments', distinct=True),
+        qs = Patient.objects.filter(is_active=True).annotate(
+            appointments_count=Count('appointments', filter=Q(appointments__is_active=True), distinct=True),
             last_visit_date=Subquery(last_visit_subquery),
             total_payments=Coalesce(Subquery(payments_subquery), Value(0, output_field=DecimalField())),
             total_treatments=Coalesce(Subquery(treatments_subquery), Value(0, output_field=DecimalField())),
@@ -540,7 +540,7 @@ class DashboardView(APIView):
             date=today,
             is_active=True
         ).exclude(status=Appointment.Status.CANCELLED)
-        patients_qs = Patient.objects.all()
+        patients_qs = Patient.objects.filter(is_active=True)
         if user.role == CustomUser.Role.DOCTOR and not user.is_superuser:
             appointments = appointments.filter(doctor=user)
             patients_qs = patients_qs.filter(

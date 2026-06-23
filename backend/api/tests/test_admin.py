@@ -34,7 +34,7 @@ _EXPECTED = {
         "list_filter": ("status", "date"),
     },
     Treatment: {
-        "list_display": ("patient", "treatment_type", "tooth_number", "status", "date"),
+        "list_display": ("patient", "treatment_type", "teeth", "status", "date"),
     },
     TreatmentType: {
         "list_display": ("name", "default_price", "is_active"),
