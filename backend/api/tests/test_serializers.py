@@ -246,7 +246,7 @@ class TestTreatmentSerializerValidation:
             patient=patient,
             doctor=doctor,
             treatment_type=ttype,
-            tooth_number="11",
+            teeth=["11"],
             date=date(2026, 6, 1),
         )
         return treatment, doctor, patient, ttype
@@ -257,7 +257,7 @@ class TestTreatmentSerializerValidation:
             "patient": patient.pk,
             "doctor": doctor.pk,
             "treatment_type": ttype.pk,
-            "tooth_number": "21",  # farklı diş → çakışma yok
+            "teeth": ["21"],  # farklı diş → çakışma yok
             "date": "2026-06-01",
             "status": "completed",
             "price": "150.00",
@@ -271,7 +271,7 @@ class TestTreatmentSerializerValidation:
             "patient": patient.pk,
             "doctor": doctor.pk,
             "treatment_type": ttype.pk,
-            "tooth_number": "11",  # aynı diş + aynı gün + aynı tür → çakışma
+            "teeth": ["11"],  # aynı diş + aynı gün + aynı tür → çakışma
             "date": "2026-06-01",
             "status": "completed",
             "price": "150.00",

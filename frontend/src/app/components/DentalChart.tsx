@@ -62,27 +62,38 @@ const STATUS_DISPLAY = (t: any): { status: ToothStatus; label: string }[] => [
 ];
 
 interface Treatment {
-  tooth_number?: string;
+  id: number;
+  teeth?: string[];
   treatment_type_category?: string;
+  treatment_name?: string;
+  treatment_type_name?: string;
 }
 
 interface DentalChartProps {
-  /** Called when user clicks "Yeni Tedavi Ekle" on a tooth. */
-  onToothSelect?: (toothNumber: number, category?: TreatmentCategory) => void;
+  /** Called when user clicks "Yeni Tedavi Ekle" for selected teeth. */
+  onToothSelect?: (toothNumbers: number[]) => void;
+  /** Called when user wants to edit an existing treatment. */
+  onEditTreatment?: (treatment: Treatment) => void;
   treatments?: Treatment[];
 }
 
-export default function DentalChart({ onToothSelect, treatments = [] }: DentalChartProps) {
+export default function DentalChart({ onToothSelect, onEditTreatment, treatments = [] }: DentalChartProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'adult' | 'primary'>('adult');
+  const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
+
+  const toggleTooth = (number: number) => {
+    setSelectedTeeth((prev) =>
+      prev.includes(number) ? prev.filter((n) => n !== number) : [...prev, number]
+    );
+  };
 
   /**
    * Determine the status of a tooth purely from treatment_type_category.
-   * No string matching involved.
    */
   const getToothStatus = (toothNumber: number): ToothStatus => {
     const toothTreatments = treatments.filter(
-      (t) => t.tooth_number === toothNumber.toString()
+      (t) => t.teeth?.includes(toothNumber.toString())
     );
     if (toothTreatments.length === 0) return 'healthy';
 
@@ -92,48 +103,63 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
     return 'healthy';
   };
 
+  const getToothTreatments = (toothNumber: number) => {
+    return treatments.filter((t) => t.teeth?.includes(toothNumber.toString()));
+  };
+
   const ToothButton = ({ number, isPrimary = false }: { number: number; isPrimary?: boolean }) => {
     const status = getToothStatus(number);
+    const isSelected = selectedTeeth.includes(number);
 
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className={`w-12 h-16 p-1 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 ${statusColors[status]} ${isPrimary ? 'opacity-90' : ''}`}
-          >
-            <span className={`text-xs ${isPrimary ? 'font-semibold text-blue-600' : ''}`}>{number}</span>
-            <svg
-              viewBox="0 0 24 36"
-              className={`${isPrimary ? 'w-5 h-7' : 'w-6 h-9'}`}
-              fill="currentColor"
-            >
-              <path d="M12 0 C6 0 3 4 3 8 L3 24 C3 30 6 36 12 36 C18 36 21 30 21 24 L21 8 C21 4 18 0 12 0 Z M12 2 C17 2 19 5 19 8 L19 24 C19 29 17 34 12 34 C7 34 5 29 5 24 L5 8 C5 5 7 2 12 2 Z" />
-            </svg>
+      <Button
+        variant="outline"
+        onClick={() => toggleTooth(number)}
+        className={`w-12 h-16 p-1 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 ${statusColors[status]} ${isPrimary ? 'opacity-90' : ''} ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2 scale-105' : ''}`}
+      >
+        <span className={`text-xs ${isPrimary ? 'font-semibold text-blue-600' : ''}`}>{number}</span>
+        <svg
+          viewBox="0 0 24 36"
+          className={`${isPrimary ? 'w-5 h-7' : 'w-6 h-9'}`}
+          fill="currentColor"
+        >
+          <path d="M12 0 C6 0 3 4 3 8 L3 24 C3 30 6 36 12 36 C18 36 21 30 21 24 L21 8 C21 4 18 0 12 0 Z M12 2 C17 2 19 5 19 8 L19 24 C19 29 17 34 12 34 C7 34 5 29 5 24 L5 8 C5 5 7 2 12 2 Z" />
+        </svg>
+      </Button>
+    );
+  };
+
+  const renderSelectedTeethActions = () => {
+    if (selectedTeeth.length === 0) return null;
+
+    // If exactly 1 tooth is selected, show its existing treatments
+    const singleToothTreatments = selectedTeeth.length === 1 ? getToothTreatments(selectedTeeth[0]) : [];
+
+    return (
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border rounded-xl p-4 flex flex-col gap-4 z-50 min-w-[320px] max-w-[90vw]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="font-medium text-gray-800">
+            {selectedTeeth.length} diş seçili
+          </div>
+          <Button onClick={() => onToothSelect?.(selectedTeeth)} className="bg-blue-600 hover:bg-blue-700">
+            {t('treatments:chart.new', 'Yeni Tedavi Ekle')}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="center">
-          <DropdownMenuLabel>{t('treatments:chart.select', { number })}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {/* Primary action: open TreatmentAddDialog without pre-selecting a category */}
-          <DropdownMenuItem
-            onClick={() => onToothSelect?.(number, undefined)}
-            className="font-medium text-blue-600 focus:text-blue-700 cursor-pointer"
-          >
-            {t('treatments:chart.new')}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {/* Secondary actions: open dialog pre-filtered to a specific category */}
-          {CATEGORY_OPTIONS.map((cat) => (
-            <DropdownMenuItem
-              key={cat.value}
-              onClick={() => onToothSelect?.(number, cat.value as TreatmentCategory)}
-            >
-              {t(cat.labelKey)}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </div>
+        
+        {singleToothTreatments.length > 0 && (
+          <div className="border-t pt-3 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Mevcut Tedaviler</p>
+            {singleToothTreatments.map(tr => (
+              <div key={tr.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                <span className="text-sm font-medium">{tr.treatment_type_name || tr.treatment_name}</span>
+                <Button variant="ghost" size="sm" onClick={() => onEditTreatment?.(tr)} className="text-blue-600 hover:bg-blue-100 h-8 px-2">
+                  Düzenle
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -204,6 +230,8 @@ export default function DentalChart({ onToothSelect, treatments = [] }: DentalCh
           </div>
         ))}
       </div>
+
+      {renderSelectedTeethActions()}
     </div>
   );
 }

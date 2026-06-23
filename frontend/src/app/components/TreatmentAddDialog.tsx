@@ -77,14 +77,28 @@ export default function TreatmentAddDialog({
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
   const [selectedTypeId, setSelectedTypeId] = useState<number | ''>('');
   const [treatmentName, setTreatmentName] = useState('');
-  const [toothNumber, setToothNumber] = useState(initialToothNumber?.toString() || '');
+  const [selectionMode, setSelectionMode] = useState<'teeth' | 'region'>('teeth');
+  const [selectedTeeth, setSelectedTeeth] = useState<string[]>(
+    initialToothNumber ? [initialToothNumber.toString()] : []
+  );
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState(defaultStatus);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [basePrice, setBasePrice] = useState<number>(0);
   const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
+
+  // Update dynamic price based on teeth count
+  useEffect(() => {
+    if (selectionMode === 'teeth' && selectedTeeth.length > 0 && basePrice > 0) {
+      setPrice((basePrice * selectedTeeth.length).toString());
+    } else if (selectionMode === 'region' && selectedRegion && basePrice > 0) {
+      setPrice(basePrice.toString()); // 1x multiplier for regions
+    }
+  }, [selectedTeeth, selectedRegion, selectionMode, basePrice]);
 
   // Dialog her açıldığında varsayılanı resetlerken initialToothNumber ve initialCategory'yi de uyguluyoruz
   useEffect(() => {
@@ -93,20 +107,48 @@ export default function TreatmentAddDialog({
         setSelectedDoctorId(treatmentToEdit.doctor);
         setSelectedTypeId(treatmentToEdit.treatment_type || '');
         setTreatmentName(treatmentToEdit.treatment_name || '');
-        setToothNumber(treatmentToEdit.tooth_number || '');
+        
+        // Determine if existing teeth are regions or tooth numbers
+        const regions = ['tum_agiz', 'ust_cene', 'alt_cene', 'sag_ust', 'sol_ust', 'sag_alt', 'sol_alt'];
+        const existingTeeth = treatmentToEdit.teeth || (treatmentToEdit.tooth_number ? [treatmentToEdit.tooth_number] : []);
+        
+        if (existingTeeth.length === 1 && regions.includes(existingTeeth[0])) {
+          setSelectionMode('region');
+          setSelectedRegion(existingTeeth[0]);
+          setSelectedTeeth([]);
+        } else {
+          setSelectionMode('teeth');
+          setSelectedTeeth(existingTeeth);
+          setSelectedRegion('');
+        }
+        
         setNotes(treatmentToEdit.notes || '');
         setStatus(treatmentToEdit.status);
         setDate(treatmentToEdit.date);
         setPrice(treatmentToEdit.price?.toString() || '');
+        setBasePrice(0); // Can't easily infer base price for editing without fetching type
       } else {
-        setToothNumber(initialToothNumber?.toString() || '');
+        if (initialToothNumber) {
+          setSelectionMode('teeth');
+          setSelectedTeeth([initialToothNumber.toString()]);
+          setSelectedRegion('');
+        } else {
+          setSelectionMode('teeth');
+          setSelectedTeeth([]);
+          setSelectedRegion('');
+        }
         setStatus(defaultStatus);
         if (initialCategory) {
-          // Find the first active treatment type with matching category — no string matching.
+          // Find the first active treatment type with matching category
           const match = treatmentTypes.find((t) => t.category === initialCategory);
           if (match) {
             setSelectedTypeId(match.id);
-            setPrice(match.default_price);
+            setBasePrice(Number(match.default_price));
+            if (selectionMode === 'teeth' && selectedTeeth.length > 0) {
+              setPrice((Number(match.default_price) * selectedTeeth.length).toString());
+            } else {
+              setPrice(match.default_price);
+            }
           } else {
             setSelectedTypeId('');
           }
@@ -115,11 +157,13 @@ export default function TreatmentAddDialog({
           setSelectedTypeId('');
           setTreatmentName('');
           setPrice('');
+          setBasePrice(0);
         }
       }
     } else {
       // Dialog closed, reset state
       setPrice('');
+      setBasePrice(0);
       setError('');
     }
   }, [isOpen, treatmentToEdit, initialToothNumber, initialCategory, treatmentTypes]);
@@ -153,11 +197,13 @@ export default function TreatmentAddDialog({
   const resetForm = () => {
     setSelectedTypeId('');
     setTreatmentName('');
-    setToothNumber('');
+    setSelectedTeeth([]);
+    setSelectedRegion('');
     setNotes('');
     setStatus(defaultStatus);
     setDate(new Date().toISOString().split('T')[0]);
     setPrice('');
+    setBasePrice(0);
     setError('');
   };
 
@@ -178,7 +224,7 @@ export default function TreatmentAddDialog({
         doctor: selectedDoctorId as number,
         treatment_type: selectedTypeId ? (selectedTypeId as number) : null,
         treatment_name: treatmentName.trim() || undefined,
-        tooth_number: toothNumber || undefined,
+        teeth: selectionMode === 'teeth' ? (selectedTeeth.length > 0 ? selectedTeeth : undefined) : (selectedRegion ? [selectedRegion] : undefined),
         status,
         notes: notes.trim() || undefined,
         date,
@@ -306,21 +352,64 @@ export default function TreatmentAddDialog({
             </div>
           )}
 
-          {/* Diş No & Durum */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Diş / Bölge Seçimi & Durum */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="treat-tooth">{t('treatments:dialog.tooth')}</Label>
-              <select
-                id="treat-tooth"
-                className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={toothNumber}
-                onChange={(e) => setToothNumber(e.target.value)}
-              >
-                <option value="">{t('treatments:dialog.select_tooth')}</option>
-                {TOOTH_NUMBERS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+              <Label>Diş veya Bölge Seçimi</Label>
+              <div className="flex bg-gray-100 p-1 rounded-md mb-2">
+                <button
+                  type="button"
+                  className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${selectionMode === 'teeth' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setSelectionMode('teeth')}
+                >
+                  Diş Seçimi
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${selectionMode === 'region' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setSelectionMode('region')}
+                >
+                  Bölge Seçimi
+                </button>
+              </div>
+
+              {selectionMode === 'teeth' ? (
+                <select
+                  id="treat-tooth"
+                  multiple
+                  className="w-full h-24 px-3 py-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedTeeth}
+                  onChange={(e) => {
+                    const options = Array.from(e.target.selectedOptions, option => option.value);
+                    setSelectedTeeth(options);
+                  }}
+                >
+                  {TOOTH_NUMBERS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  id="treat-region"
+                  className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                >
+                  <option value="">Bölge Seçiniz</option>
+                  <option value="tum_agiz">Tüm Ağız</option>
+                  <option value="ust_cene">Üst Çene</option>
+                  <option value="alt_cene">Alt Çene</option>
+                  <option value="sag_ust">Sağ Üst</option>
+                  <option value="sol_ust">Sol Üst</option>
+                  <option value="sag_alt">Sağ Alt</option>
+                  <option value="sol_alt">Sol Alt</option>
+                </select>
+              )}
+              {selectionMode === 'teeth' && selectedTeeth.length > 0 && (
+                <p className="text-xs text-blue-600 font-medium">
+                  {selectedTeeth.length} diş seçili
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="treat-status">{t('treatments:dialog.status')}</Label>

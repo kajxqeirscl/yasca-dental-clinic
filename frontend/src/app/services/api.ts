@@ -371,16 +371,28 @@ export async function fetchTreatments(patientId?: string) {
   return fetchAllPages(`/treatments/${params}`, 'Tedaviler yüklenemedi');
 }
 
-export async function createTreatment(data: {
+export interface Treatment {
+  treatment_type_name?: string;
+  treatment_type_category?: string;
+  treatment_name?: string;
+  teeth?: string[];
+  status: 'completed' | 'planned';
+  date: string;
+  price?: string | number;
+}
+
+export interface TreatmentCreatePayload {
   patient: number;
   doctor: number;
-  treatment_type?: number | null;
+  treatment_type: number | null;
   treatment_name?: string;
-  tooth_number?: string;
+  teeth?: string[];
   status?: string;
   notes?: string;
   date: string;
-}) {
+}
+
+export async function createTreatment(data: TreatmentCreatePayload) {
   const res = await fetchWithAuth(`${API_BASE}/treatments/`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -636,7 +648,7 @@ export async function getAuditLogs(page = 1) {
 
 // --- Helper for traversing paginated endpoints ---
 export async function fetchAllPages(endpoint: string, errorMessage = 'Veriler yüklenemedi') {
-  let allResults: any[] = [];
+  const allResults: any[] = [];
   let nextUrl: string | null = `${API_BASE}${endpoint}`;
 
   while (nextUrl) {

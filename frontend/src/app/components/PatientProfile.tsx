@@ -74,7 +74,7 @@ interface Treatment {
   date: string;
   treatment_type_name: string;
   treatment_name: string;
-  tooth_number: string;
+  teeth: string[];
   doctor_name: string;
   notes: string;
   status: string;
@@ -775,9 +775,17 @@ export default function PatientProfile() {
                                       <h4 className="font-semibold text-gray-900">
                                         {tr.treatment_type_name || tr.treatment_name}
                                       </h4>
-                                      {tr.tooth_number && (
+                                      {tr.teeth && tr.teeth.length > 0 && (
                                         <Badge variant="outline" className="text-[10px]">
-                                          {t('patients:profile.treatments.tooth')}: {tr.tooth_number}
+                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => 
+                                            t === 'tum_agiz' ? 'Tüm Ağız' : 
+                                            t === 'ust_cene' ? 'Üst Çene' : 
+                                            t === 'alt_cene' ? 'Alt Çene' : 
+                                            t === 'sag_ust' ? 'Sağ Üst' : 
+                                            t === 'sol_ust' ? 'Sol Üst' : 
+                                            t === 'sag_alt' ? 'Sağ Alt' : 
+                                            t === 'sol_alt' ? 'Sol Alt' : t
+                                          ).join(', ')}
                                         </Badge>
                                       )}
                                       <Badge className={`${tr.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
@@ -1013,9 +1021,17 @@ export default function PatientProfile() {
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
-                                      {tr.tooth_number && (
+                                      {tr.teeth && tr.teeth.length > 0 && (
                                         <Badge variant="outline" className="text-[10px]">
-                                          {t('patients:profile.treatments.tooth', 'Diş')}: {tr.tooth_number}
+                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => 
+                                            t === 'tum_agiz' ? 'Tüm Ağız' : 
+                                            t === 'ust_cene' ? 'Üst Çene' : 
+                                            t === 'alt_cene' ? 'Alt Çene' : 
+                                            t === 'sag_ust' ? 'Sağ Üst' : 
+                                            t === 'sol_ust' ? 'Sol Üst' : 
+                                            t === 'sag_alt' ? 'Sağ Alt' : 
+                                            t === 'sol_alt' ? 'Sol Alt' : t
+                                          ).join(', ')}
                                         </Badge>
                                       )}
                                       {isPaid ? (

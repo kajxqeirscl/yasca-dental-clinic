@@ -236,7 +236,7 @@ describe('TreatmentAddDialog — Edit modu', () => {
           doctor: 1,
           treatment_type: 1,
           treatment_name: 'Edit Test',
-          tooth_number: '36',
+          teeth: ['36'],
           notes: 'Edit notları',
           status: 'planned',
           date: '2026-07-15',

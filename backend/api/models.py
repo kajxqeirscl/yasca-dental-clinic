@@ -206,7 +206,7 @@ class Treatment(models.Model):
         related_name="treatments",
     )
     treatment_name = models.CharField("İşlem Adı", max_length=200, blank=True)
-    tooth_number = models.CharField("Diş No (FDI)", max_length=10, blank=True)
+    teeth = models.JSONField("Dişler/Bölgeler", default=list, blank=True)
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.COMPLETED
     )

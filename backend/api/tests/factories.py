@@ -113,7 +113,7 @@ class TreatmentFactory(DjangoModelFactory):
     doctor = factory.SubFactory(DoctorUserFactory)
     treatment_type = None
     treatment_name = factory.Sequence(lambda n: f"İşlem {n}")
-    tooth_number = ""
+    teeth = factory.LazyFunction(list)
     status = Treatment.Status.COMPLETED
     date = factory.LazyFunction(lambda: timezone.localdate())
 

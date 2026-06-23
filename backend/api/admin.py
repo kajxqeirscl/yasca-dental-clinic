@@ -49,8 +49,8 @@ class AppointmentAdmin(admin.ModelAdmin):
 
 @admin.register(Treatment)
 class TreatmentAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'treatment_type', 'tooth_number', 'status', 'date')
-    list_filter = ('status', 'date')
+    list_display = ('patient', 'treatment_type', 'teeth', 'status', 'date')
+    list_filter = ('status', 'date', 'treatment_type')
 
 
 @admin.register(TreatmentType)

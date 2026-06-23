@@ -260,7 +260,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "treatment_type_name",
             "treatment_type_category",
             "treatment_name",
-            "tooth_number",
+            "teeth",
             "status",
             "notes",
             "date",
@@ -271,25 +271,26 @@ class TreatmentSerializer(serializers.ModelSerializer):
     def validate(self, data):
         patient = data.get("patient", getattr(self.instance, "patient", None))
         date = data.get("date", getattr(self.instance, "date", None))
-        tooth_number = data.get("tooth_number", getattr(self.instance, "tooth_number", None))
+        teeth = data.get("teeth", getattr(self.instance, "teeth", []))
         treatment_type = data.get("treatment_type", getattr(self.instance, "treatment_type", None))
         
-        # Aynı hastaya, aynı gün, aynı dişe, aynı tedavi türü eklenmesini engelle
-        if patient and date and treatment_type and tooth_number:
+        # Aynı hastaya, aynı gün, aynı dişe/bölgeye, aynı tedavi türü eklenmesini engelle
+        if patient and date and treatment_type and teeth:
             qs = Treatment.objects.filter(
                 patient=patient,
                 date=date,
-                tooth_number=tooth_number,
                 treatment_type=treatment_type,
                 is_active=True
             )
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
             
-            if qs.exists():
-                raise serializers.ValidationError(
-                    "Bu hastaya aynı gün aynı dişe bu tedavi zaten eklenmiş."
-                )
+            # Check for intersection
+            for existing in qs:
+                if set(existing.teeth).intersection(set(teeth)):
+                    raise serializers.ValidationError(
+                        "Bu hastaya aynı gün seçili diş(ler)/bölge(ler) için bu tedavi zaten eklenmiş."
+                    )
                 
         return data
 
