@@ -190,14 +190,14 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
     <div className="space-y-16 py-8">
       {/* Üst Çene */}
       <div className="space-y-6">
-        <div className="flex justify-center gap-4">
-          <Button variant={selectedRegion === 'sag_ust' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sag_ust')}>
+        <div className="flex justify-center gap-12">
+          <Button variant={selectedRegion === 'sag_ust' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sag_ust')} className="w-24">
             Sağ Üst
           </Button>
-          <Button variant={selectedRegion === 'ust_cene' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('ust_cene')}>
+          <Button variant={selectedRegion === 'ust_cene' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('ust_cene')} className="w-24">
             Üst Çene
           </Button>
-          <Button variant={selectedRegion === 'sol_ust' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sol_ust')}>
+          <Button variant={selectedRegion === 'sol_ust' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sol_ust')} className="w-24">
             Sol Üst
           </Button>
         </div>
@@ -229,14 +229,14 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
             ))}
           </div>
         </div>
-        <div className="flex justify-center gap-4 mt-6">
-          <Button variant={selectedRegion === 'sag_alt' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sag_alt')}>
+        <div className="flex justify-center gap-12 mt-6">
+          <Button variant={selectedRegion === 'sag_alt' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sag_alt')} className="w-24">
             Sağ Alt
           </Button>
-          <Button variant={selectedRegion === 'alt_cene' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('alt_cene')}>
+          <Button variant={selectedRegion === 'alt_cene' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('alt_cene')} className="w-24">
             Alt Çene
           </Button>
-          <Button variant={selectedRegion === 'sol_alt' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sol_alt')}>
+          <Button variant={selectedRegion === 'sol_alt' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('sol_alt')} className="w-24">
             Sol Alt
           </Button>
         </div>
