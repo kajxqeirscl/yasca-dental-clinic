@@ -362,18 +362,13 @@ export async function fetchDashboardToday() {
 
 // --- Doctors ---
 export async function fetchDoctors() {
-  const res = await fetchWithAuth(`${API_BASE}/doctors/`);
-  if (!res.ok) throw new Error('Hekimler yüklenemedi');
-  return res.json();
+  return fetchAllPages(`/doctors/`, 'Hekimler yüklenemedi');
 }
 
 // --- Treatments ---
 export async function fetchTreatments(patientId?: string) {
   const params = patientId ? `?patient=${patientId}` : '';
-  const res = await fetchWithAuth(`${API_BASE}/treatments/${params}`);
-  if (!res.ok) throw new Error('Tedaviler yüklenemedi');
-  const data = await res.json();
-  return data.results ? data.results : data;
+  return fetchAllPages(`/treatments/${params}`, 'Tedaviler yüklenemedi');
 }
 
 export async function createTreatment(data: {
@@ -590,6 +585,7 @@ export async function deleteDocument(documentId: number) {
 
 
 // --- Kullanici Yonetimi ---
+
 export async function fetchUsers() {
   const res = await fetchWithAuth(`${API_BASE}/users/`);
   if (!res.ok) throw new Error('Kullanıcılar yüklenemedi');
@@ -636,5 +632,25 @@ export async function getAuditLogs(page = 1) {
   const res = await fetchWithAuth(`${API_BASE}/audit-logs/?page=${page}`);
   if (!res.ok) throw new Error('İşlem geçmişi yüklenemedi');
   return res.json();
+}
+
+// --- Helper for traversing paginated endpoints ---
+export async function fetchAllPages(endpoint: string, errorMessage = 'Veriler yüklenemedi') {
+  let allResults: any[] = [];
+  let nextUrl: string | null = `${API_BASE}${endpoint}`;
+
+  while (nextUrl) {
+    const res = await fetchWithAuth(nextUrl);
+    if (!res.ok) throw new Error(errorMessage);
+    const data = await res.json();
+    
+    if (data && data.results !== undefined) {
+      allResults.push(...data.results);
+      nextUrl = data.next ? data.next.replace(/^http:/i, 'https:') : null; // enforce https if proxy drops it
+    } else {
+      return data;
+    }
+  }
+  return allResults;
 }
 
