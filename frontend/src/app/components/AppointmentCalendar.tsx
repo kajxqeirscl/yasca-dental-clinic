@@ -123,7 +123,10 @@ export default function AppointmentCalendar() {
         const data = await fetchAppointments(formatApiDate(day));
         all.push(...data);
       }
-      setAppointments(all);
+      console.log("FETCHED TOTAL APPOINTMENTS:", all.length);
+      
+      let filtered = all;
+      setAppointments(filtered);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('appointments:calendar.error_load'));
       setAppointments([]);

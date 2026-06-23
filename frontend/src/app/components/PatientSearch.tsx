@@ -115,7 +115,7 @@ export default function PatientSearch() {
             </div>
             <div className="w-full sm:w-[320px] flex gap-2">
               <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
-                <SelectTrigger className="bg-gray-50/50 border-gray-200/60 flex-1">
+                <SelectTrigger aria-label="Sıralama ölçütü seçin" className="bg-gray-50/50 border-gray-200/60 flex-1">
                   <SelectValue placeholder="Sıralama" />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,6 +131,7 @@ export default function PatientSearch() {
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
                 onClick={() => {
                   setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
                   setCurrentPage(1);

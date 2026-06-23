@@ -65,25 +65,25 @@ describe('useClinicNavigate', () => {
   });
 
   describe('canlı path modu (TENANT_SUBDOMAIN dolu)', () => {
-    it('absolute path /app/{slug} prefix\'i ile navigate edilir', () => {
+    it('absolute path prefix eklenmeden olduğu gibi geçirilir (router basename halleder)', () => {
       mockTenantSubdomain = 'ali';
       const { result } = renderHook(() => useClinicNavigate(), { wrapper });
 
       act(() => result.current('/dashboard'));
 
-      expect(navigateMock).toHaveBeenCalledWith('/app/ali/dashboard');
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard');
     });
 
-    it('kök path "/" basePath\'e karşılık gelir', () => {
+    it('kök path "/" olduğu gibi geçirilir', () => {
       mockTenantSubdomain = 'beta';
       const { result } = renderHook(() => useClinicNavigate(), { wrapper });
 
       act(() => result.current('/'));
 
-      expect(navigateMock).toHaveBeenCalledWith('/app/beta/');
+      expect(navigateMock).toHaveBeenCalledWith('/');
     });
 
-    it('relative path tenant prefix EKLENMEDEN navigate edilir', () => {
+    it('relative path olduğu gibi geçirilir', () => {
       mockTenantSubdomain = 'ali';
       const { result } = renderHook(() => useClinicNavigate(), { wrapper });
 
@@ -92,13 +92,13 @@ describe('useClinicNavigate', () => {
       expect(navigateMock).toHaveBeenCalledWith('patients/1');
     });
 
-    it('birden fazla nested path düzgün birleştirilir', () => {
+    it('birden fazla nested path olduğu gibi geçirilir', () => {
       mockTenantSubdomain = 'standard';
       const { result } = renderHook(() => useClinicNavigate(), { wrapper });
 
       act(() => result.current('/patients/123/edit'));
 
-      expect(navigateMock).toHaveBeenCalledWith('/app/standard/patients/123/edit');
+      expect(navigateMock).toHaveBeenCalledWith('/patients/123/edit');
     });
   });
 });

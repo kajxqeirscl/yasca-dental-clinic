@@ -89,8 +89,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('Unutulan şifre butonu alert gösterir', async () => {
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+  it('Unutulan şifre butonu modal gösterir', async () => {
     renderWithProviders(<LoginPage />);
 
     const forgotBtn = await screen.findByRole('button', {
@@ -98,7 +97,7 @@ describe('LoginPage', () => {
     });
     await userEvent.click(forgotBtn);
 
-    expect(alertSpy).toHaveBeenCalled();
-    alertSpy.mockRestore();
+    // Modal should appear
+    expect(await screen.findByText(/Şifre Sıfırlama|Reset/i)).toBeInTheDocument();
   });
 });

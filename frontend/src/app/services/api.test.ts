@@ -111,20 +111,21 @@ describe('fetchWithAuth() Authorization header', () => {
 describe('fetchPatients()', () => {
   beforeEach(() => setTokens('tok', 'ref'));
 
-  it('extracts .results from a paginated DRF response', async () => {
+  it('returns paginated response from DRF', async () => {
     const patients = await fetchPatients();
-    expect(Array.isArray(patients)).toBe(true);
-    expect(patients[0].first_name).toBe('Ali');
+    expect(Array.isArray(patients.results)).toBe(true);
+    expect(patients.results[0].first_name).toBe('Ali');
   });
 
-  it('works when response is a plain array (non-paginated)', async () => {
+  it('works when response is a plain array (non-paginated) and wraps it', async () => {
     server.use(
       http.get(`${BASE}/patients/`, () =>
         HttpResponse.json([{ id: 2, first_name: 'Fatma', last_name: 'Kaya', phone: '0555' }])
       )
     );
     const patients = await fetchPatients();
-    expect(patients[0].first_name).toBe('Fatma');
+    expect(patients.results[0].first_name).toBe('Fatma');
+    expect(patients.count).toBe(1);
   });
 
   it('passes search param in query string', async () => {
