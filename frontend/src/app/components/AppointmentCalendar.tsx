@@ -70,7 +70,11 @@ export default function AppointmentCalendar() {
       });
   }, []);
 
-  const hours = Array.from({ length: endHour - startHour }, (_, i) => i + startHour);
+  const maxAptHour = appointments.length > 0 
+    ? Math.max(...appointments.map(a => parseInt(a.time.split(':')[0], 10))) 
+    : endHour;
+  const effectiveEndHour = Math.max(endHour, maxAptHour);
+  const hours = Array.from({ length: effectiveEndHour - startHour + 1 }, (_, i) => i + startHour);
 
   const getWeekDays = () => {
     const days: Date[] = [];
