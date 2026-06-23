@@ -177,7 +177,7 @@ class Appointment(models.Model):
     class Meta:
         verbose_name = "Randevu"
         verbose_name_plural = "Randevular"
-        ordering = ["date", "time"]
+        ordering = ["date", "time", "id"]
 
     def __str__(self):
         return f"{self.patient} - {self.date} {self.time}"
