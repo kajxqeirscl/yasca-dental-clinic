@@ -1069,9 +1069,6 @@ export default function PatientProfile() {
                                     size="sm" 
                                     className="bg-blue-600 hover:bg-blue-700"
                                     onClick={() => {
-                                      setPaymentToEdit(null);
-                                      setSelectedToothForTreatment(tr.id); // Hack: Using a state or we can just pass it to PaymentDialog directly. Wait, we need new states for defaultTreatmentId and defaultAmount.
-                                      // Actually, I can just use handleNewPaymentWithDefaults
                                       handleNewPaymentWithDefaults(tr.id, remaining);
                                     }}
                                   >
