@@ -327,6 +327,7 @@ export default function TreatmentAddDialog({
                   const found = treatmentTypes.find((t) => t.id === val);
                   if (found) {
                     setTreatmentName('');
+                    setBasePrice(Number(found.default_price));
                     setPrice(found.default_price);
                   }
                 } else {

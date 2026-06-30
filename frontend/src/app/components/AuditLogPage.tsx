@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAuditLogs } from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Shield, ChevronLeft, ChevronRight, Search, Filter, Clock, User, FileText } from 'lucide-react';
@@ -167,7 +167,7 @@ export default function AuditLogPage() {
                   const hasChanges = log.changes && Object.keys(log.changes).length > 0;
 
                   return (
-                    <tr key={log.id} className="contents">
+                    <React.Fragment key={log.id}>
                       <tr
                         className={`hover:bg-gray-50/80 transition-colors ${isExpanded ? 'bg-indigo-50/30' : ''}`}
                       >
@@ -244,7 +244,7 @@ export default function AuditLogPage() {
                           </td>
                         </tr>
                       )}
-                    </tr>
+                    </React.Fragment>
                   );
                 })}
               </tbody>

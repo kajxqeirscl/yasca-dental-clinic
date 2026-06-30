@@ -150,9 +150,26 @@ export default function AppointmentCalendar() {
   };
 
   const handleSlotClick = (date: Date, hour: number) => {
+    const slotAppointments = getAppointmentsForSlot(date, hour);
+    let minute = 0;
+    
+    if (slotAppointments.length > 0) {
+      const takenMinutes = slotAppointments.map(apt => {
+        const aptMin = parseInt(apt.time.split(':')[1], 10);
+        return Math.floor(aptMin / 15) * 15;
+      });
+      
+      for (const m of [0, 15, 30, 45]) {
+        if (!takenMinutes.includes(m)) {
+          minute = m;
+          break;
+        }
+      }
+    }
+
     setSelectedSlot({
       date: formatApiDate(date),
-      time: `${hour.toString().padStart(2, '0')}:00:00`,
+      time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`,
     });
     setIsDialogOpen(true);
   };

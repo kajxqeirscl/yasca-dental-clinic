@@ -700,6 +700,9 @@ export default function PatientProfile() {
               <div className="flex items-center justify-between">
                 <CardTitle>{t('patients:profile.treatments.title', 'Tedavi Bazlı Geçmiş')}</CardTitle>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setIsAppointmentAddOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                  </Button>
                   <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
                     <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.treatments.new', 'Yeni Tedavi Ekle')}
                   </Button>
@@ -808,11 +811,9 @@ export default function PatientProfile() {
                                 {trAppointments.length === 0 ? (
                                   <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
                                     <span className="text-sm text-gray-500 italic ml-2">Bu tedavi için randevu bulunmuyor.</span>
-                                    {tr.status !== 'completed' && (
-                                      <Button size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)} className="bg-blue-600 hover:bg-blue-700">
-                                        <Plus className="w-4 h-4 mr-1" /> Randevu Ekle
-                                      </Button>
-                                    )}
+                                    <Button size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)} className="bg-blue-600 hover:bg-blue-700">
+                                      <Plus className="w-4 h-4 mr-1" /> Randevu Ekle
+                                    </Button>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
@@ -845,11 +846,9 @@ export default function PatientProfile() {
                                       </div>
                                     ))}
                                     <div className="mt-2 flex justify-end">
-                                      {tr.status !== 'completed' && (
-                                        <Button variant="outline" size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)}>
-                                          <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
-                                        </Button>
-                                      )}
+                                      <Button variant="outline" size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)}>
+                                        <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                                      </Button>
                                     </div>
                                   </div>
                                 )}
