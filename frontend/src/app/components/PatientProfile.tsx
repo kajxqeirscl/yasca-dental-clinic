@@ -700,7 +700,7 @@ export default function PatientProfile() {
               <div className="flex items-center justify-between">
                 <CardTitle>{t('patients:profile.treatments.title', 'Tedavi Bazlı Geçmiş')}</CardTitle>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setIsAppointmentAddOpen(true)}>
+                  <Button size="sm" variant="outline" onClick={handleNewAppointment}>
                     <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
                   </Button>
                   <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
