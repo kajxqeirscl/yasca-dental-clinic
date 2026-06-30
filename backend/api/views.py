@@ -33,7 +33,7 @@ from .permissions import IsAdminUser, IsAdminOrDoctorUser
 
 
 from .mixins import AuditLogMixin
-from .pagination import StandardResultsSetPagination
+from .pagination import PatientPagination, AuditLogPagination
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.contenttypes.models import ContentType
@@ -266,7 +266,7 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [NullsLastOrderingFilter]
     ordering_fields = ['first_name', 'last_name', 'created_at', 'birth_date', 'phone', 'tckn', 'appointments_count', 'last_visit_date', 'total_payments', 'total_debt']
-    pagination_class = StandardResultsSetPagination
+    pagination_class = PatientPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -605,5 +605,5 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """Sadece yoneticilerin erisebilecegi islem gecmisi."""
     permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = AuditLogSerializer
-    pagination_class = StandardResultsSetPagination
+    pagination_class = AuditLogPagination
     queryset = AuditLog.objects.select_related("user", "content_type").order_by("-created_at")
