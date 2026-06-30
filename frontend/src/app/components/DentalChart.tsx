@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,11 +83,30 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
 
-  const toggleTooth = (number: number) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragMode, setDragMode] = useState<'select' | 'deselect' | null>(null);
+
+  useEffect(() => {
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      setDragMode(null);
+    };
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => window.removeEventListener('pointerup', handlePointerUp);
+  }, []);
+
+  const toggleTooth = (number: number, forceState?: boolean) => {
     setSelectedRegion(''); // Clear region selection when selecting a tooth
-    setSelectedTeeth((prev) =>
-      prev.includes(number) ? prev.filter((n) => n !== number) : [...prev, number]
-    );
+    setSelectedTeeth((prev) => {
+      const isSelected = prev.includes(number);
+      const newState = forceState !== undefined ? forceState : !isSelected;
+      if (newState && !isSelected) {
+        return [...prev, number];
+      } else if (!newState && isSelected) {
+        return prev.filter((n) => n !== number);
+      }
+      return prev;
+    });
   };
 
   const handleRegionClick = (region: string) => {
@@ -121,8 +140,19 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
     return (
       <Button
         variant="outline"
-        onClick={() => toggleTooth(number)}
-        className={`w-12 h-16 p-1 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 ${statusColors[status]} ${isPrimary ? 'opacity-90' : ''} ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2 scale-105' : ''}`}
+        onPointerDown={(e) => {
+          // Release pointer capture so pointerenter fires on other elements during drag
+          (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+          setIsDragging(true);
+          setDragMode(isSelected ? 'deselect' : 'select');
+          toggleTooth(number, !isSelected);
+        }}
+        onPointerEnter={() => {
+          if (isDragging && dragMode) {
+            toggleTooth(number, dragMode === 'select');
+          }
+        }}
+        className={`w-12 h-16 p-1 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 touch-none ${statusColors[status]} ${isPrimary ? 'opacity-90' : ''} ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2 scale-105' : ''}`}
       >
         <span className={`text-xs ${isPrimary ? 'font-semibold text-blue-600' : ''}`}>{number}</span>
         <svg
