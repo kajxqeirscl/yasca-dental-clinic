@@ -643,7 +643,8 @@ export async function deleteUser(id: number) {
 export async function getAuditLogs(page = 1) {
   const res = await fetchWithAuth(`${API_BASE}/audit-logs/?page=${page}`);
   if (!res.ok) throw new Error('İşlem geçmişi yüklenemedi');
-  return res.json();
+  const data = await res.json();
+  return data.results ? data : { results: data, count: data.length };
 }
 
 // --- Helper for traversing paginated endpoints ---
