@@ -259,8 +259,8 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
+      <div className="flex flex-col xl:flex-row gap-8">
+        <div className="flex-1 min-w-0 overflow-x-auto pb-4">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'adult' | 'primary')}>
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
               <TabsTrigger value="adult">{t('treatments:chart.adult')}</TabsTrigger>
@@ -286,7 +286,7 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
           </div>
         </div>
 
-        <div className="w-full lg:w-80 shrink-0">
+        <div className="w-full xl:w-64 shrink-0">
           {renderSelectedTeethActions()}
         </div>
       </div>
