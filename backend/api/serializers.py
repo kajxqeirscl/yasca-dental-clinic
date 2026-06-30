@@ -378,11 +378,20 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.get_full_name', read_only=True, default='Sistem')
-    user_email = serializers.CharField(source='user.email', read_only=True, default='')
-    model_name = serializers.CharField(source='content_type.model', read_only=True)
+    username = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    model_name = serializers.SerializerMethodField()
     
     class Meta:
         model = AuditLog
         fields = ['id', 'username', 'user_email', 'action', 'model_name', 'object_id', 'changes', 'ip_address', 'created_at']
+
+    def get_username(self, obj):
+        return obj.user.get_full_name() or obj.user.username if obj.user else 'Sistem'
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else ''
+
+    def get_model_name(self, obj):
+        return obj.content_type.model if obj.content_type else None
 
