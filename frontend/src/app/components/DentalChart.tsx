@@ -157,16 +157,16 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
 
     return (
       <div className="lg:mt-0 mt-6 p-4 border rounded-lg bg-gray-50/50">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="font-medium text-gray-800">
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="font-medium text-gray-800 text-center text-lg pb-2 border-b border-gray-100">
             {selectedRegion ? `${regionLabels[selectedRegion]} seçili` : `${selectedTeeth.length} diş seçili`}
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setSelectedTeeth([]); setSelectedRegion(''); }}>
-              Temizle
-            </Button>
-            <Button size="sm" onClick={() => onToothSelect?.(selectedTeeth, selectedRegion)} className="bg-blue-600 hover:bg-blue-700">
+          <div className="flex flex-col gap-2 mt-1">
+            <Button size="sm" onClick={() => onToothSelect?.(selectedTeeth, selectedRegion)} className="bg-blue-600 hover:bg-blue-700 w-full">
               {t('treatments:chart.new', 'Yeni Tedavi Ekle')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => { setSelectedTeeth([]); setSelectedRegion(''); }} className="w-full">
+              Temizle
             </Button>
           </div>
         </div>
