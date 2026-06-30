@@ -146,6 +146,7 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
         : [];
 
     const regionLabels: Record<string, string> = {
+      tum_agiz: 'Tüm Ağız',
       ust_cene: 'Üst Çene',
       alt_cene: 'Alt Çene',
       sag_ust: 'Sağ Üst',
@@ -160,9 +161,14 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
           <div className="font-medium text-gray-800">
             {selectedRegion ? `${regionLabels[selectedRegion]} seçili` : `${selectedTeeth.length} diş seçili`}
           </div>
-          <Button onClick={() => onToothSelect?.(selectedTeeth, selectedRegion)} className="bg-blue-600 hover:bg-blue-700">
-            {t('treatments:chart.new', 'Yeni Tedavi Ekle')}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => { setSelectedTeeth([]); setSelectedRegion(''); }}>
+              Temizle
+            </Button>
+            <Button size="sm" onClick={() => onToothSelect?.(selectedTeeth, selectedRegion)} className="bg-blue-600 hover:bg-blue-700">
+              {t('treatments:chart.new', 'Yeni Tedavi Ekle')}
+            </Button>
+          </div>
         </div>
         
         {singleToothTreatments.length > 0 && (
@@ -187,7 +193,14 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
     lowerTeeth: number[][],
     isPrimary: boolean = false
   ) => (
-    <div className="space-y-16 py-8">
+    <div className="space-y-12 py-8 relative">
+      {/* Tüm Ağız */}
+      <div className="flex justify-center -mt-4 mb-4">
+        <Button variant={selectedRegion === 'tum_agiz' ? 'default' : 'outline'} size="sm" onClick={() => handleRegionClick('tum_agiz')} className="w-32">
+          Tüm Ağız
+        </Button>
+      </div>
+
       {/* Üst Çene */}
       <div className="space-y-6">
         <div className="flex justify-center gap-12">
