@@ -155,7 +155,7 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
     };
 
     return (
-      <div className="mt-6 p-4 border rounded-lg bg-gray-50/50">
+      <div className="lg:mt-0 mt-6 p-4 border rounded-lg bg-gray-50/50">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="font-medium text-gray-800">
             {selectedRegion ? `${regionLabels[selectedRegion]} seçili` : `${selectedTeeth.length} diş seçili`}
@@ -246,31 +246,37 @@ export default function DentalChart({ onToothSelect, onEditTreatment, treatments
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'adult' | 'primary')}>
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="adult">{t('treatments:chart.adult')}</TabsTrigger>
-          <TabsTrigger value="primary">{t('treatments:chart.primary')}</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex-1">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'adult' | 'primary')}>
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsTrigger value="adult">{t('treatments:chart.adult')}</TabsTrigger>
+              <TabsTrigger value="primary">{t('treatments:chart.primary')}</TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="adult" className="mt-6">
-          {renderTeethChart(upperTeethAdult, lowerTeethAdult, false)}
-        </TabsContent>
+            <TabsContent value="adult" className="mt-6">
+              {renderTeethChart(upperTeethAdult, lowerTeethAdult, false)}
+            </TabsContent>
 
-        <TabsContent value="primary" className="mt-6">
-          {renderTeethChart(upperTeethPrimary, lowerTeethPrimary, true)}
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="primary" className="mt-6">
+              {renderTeethChart(upperTeethPrimary, lowerTeethPrimary, true)}
+            </TabsContent>
+          </Tabs>
 
-      <div className="flex flex-wrap justify-center gap-4 pt-6 border-t">
-        {STATUS_DISPLAY(t).map(({ status, label }) => (
-          <div key={status} className="flex items-center gap-2">
-            <div className={`w-6 h-6 border-2 rounded ${statusColors[status]}`} />
-            <span className="text-xs text-gray-600">{label}</span>
+          <div className="flex flex-wrap justify-center gap-4 pt-6 border-t mt-6">
+            {STATUS_DISPLAY(t).map(({ status, label }) => (
+              <div key={status} className="flex items-center gap-2">
+                <div className={`w-6 h-6 border-2 rounded ${statusColors[status]}`} />
+                <span className="text-xs text-gray-600">{label}</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {renderSelectedTeethActions()}
+        <div className="w-full lg:w-80 shrink-0">
+          {renderSelectedTeethActions()}
+        </div>
+      </div>
     </div>
   );
 }
