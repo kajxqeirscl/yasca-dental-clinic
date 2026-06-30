@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
 from django_tenants.utils import schema_context
 from django.conf import settings
 from .models import Client, Domain
@@ -77,6 +78,7 @@ class CheckDomainView(APIView):
     Girilen domainin sistemde var olup olmadığını kontrol eder.
     """
     permission_classes = []
+    renderer_classes = [JSONRenderer]
 
     def get(self, request):
         subdomain = request.query_params.get('subdomain', '').lower().strip()
