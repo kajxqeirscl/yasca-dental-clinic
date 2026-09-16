@@ -13,10 +13,12 @@ import { createPayment, fetchTreatments, updatePayment, deletePayment } from '..
 import { formatDate } from '../utils/date';
 import { useTranslation } from 'react-i18next';
 import { DatePicker } from './ui/date-picker';
+import { formatCurrency } from '../utils/currency';
 
 interface Payment {
   id: number;
   amount: number | string;
+  currency?: string;
   description: string;
   payment_date: string;
 }
@@ -42,6 +44,7 @@ export default function PaymentDialog({
 }: PaymentDialogProps) {
   const { t } = useTranslation();
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('TRY');
   const [description, setDescription] = useState('');
   const [paymentDate, setPaymentDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -63,6 +66,7 @@ export default function PaymentDialog({
 
   const resetForm = () => {
     setAmount(defaultAmount ? defaultAmount.toString() : '');
+    setCurrency('TRY');
     setDescription('');
     setTreatmentId(defaultTreatmentId || '');
     setPaymentDate(new Date().toISOString().split('T')[0]);
@@ -74,12 +78,22 @@ export default function PaymentDialog({
   useEffect(() => {
     if (isOpen && paymentToEdit) {
       setAmount(paymentToEdit.amount.toString());
+      setCurrency(paymentToEdit.currency || 'TRY');
       setDescription(paymentToEdit.description || '');
       setPaymentDate(paymentToEdit.payment_date);
     } else if (isOpen) {
       resetForm();
     }
   }, [isOpen, paymentToEdit, defaultTreatmentId, defaultAmount]);
+
+  useEffect(() => {
+    if (defaultTreatmentId && treatments.length > 0) {
+      const tr = treatments.find((t) => t.id === defaultTreatmentId);
+      if (tr?.currency) {
+        setCurrency(tr.currency);
+      }
+    }
+  }, [defaultTreatmentId, treatments]);
 
   const handleSave = async () => {
     const parsedAmount = parseFloat(amount.toString().replace(',', '.'));
@@ -89,7 +103,7 @@ export default function PaymentDialog({
     }
     
     if (maxAmount !== null && parsedAmount > maxAmount) {
-      setError(`Ödeme tutarı kalan borcu (${maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺) aşamaz.`);
+      setError(`Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.`);
       return;
     }
 
@@ -100,6 +114,7 @@ export default function PaymentDialog({
         patient: patientId,
         treatment: treatmentId ? (treatmentId as number) : undefined,
         amount: parsedAmount,
+        currency,
         description: description.trim() || undefined,
         payment_date: paymentDate,
       };
@@ -164,10 +179,15 @@ export default function PaymentDialog({
               onChange={(e) => {
                 const val = Number(e.target.value) || '';
                 setTreatmentId(val);
-                if (val && !paymentToEdit && !defaultAmount) {
+                if (val) {
                   const selectedTr = treatments.find((t) => t.id === val);
-                  if (selectedTr && selectedTr.price) {
-                    setAmount(selectedTr.price.toString());
+                  if (selectedTr) {
+                    if (selectedTr.currency) {
+                      setCurrency(selectedTr.currency);
+                    }
+                    if (!paymentToEdit && !defaultAmount && selectedTr.price) {
+                      setAmount(selectedTr.price.toString());
+                    }
                   }
                 }
               }}
@@ -176,7 +196,7 @@ export default function PaymentDialog({
               <option value="">{t('payments:dialog.select_treatment')}</option>
               {treatments.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.treatment_type_name || t.treatment_name} - {formatDate(t.date)}
+                  {t.treatment_type_name || t.treatment_name} ({formatCurrency(t.price, t.currency || 'TRY')}) - {formatDate(t.date)}
                 </option>
               ))}
             </select>
@@ -187,28 +207,42 @@ export default function PaymentDialog({
               <Label htmlFor="pay-amount">{t('payments:dialog.amount')}</Label>
               {maxAmount !== null && (
                 <span className="text-[10px] text-gray-500 font-medium">
-                  Maks: {maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  Maks: {formatCurrency(maxAmount, currency)}
                 </span>
               )}
             </div>
-            <Input
-              id="pay-amount"
-              type="number"
-              min="0"
-              max={maxAmount !== null ? maxAmount : undefined}
-              step="0.01"
-              placeholder="0.00"
-              value={amount}
-              className={maxAmount !== null && parseFloat(amount.toString() || '0') > maxAmount ? 'border-red-500 focus-visible:ring-red-500' : ''}
-              onChange={(e) => {
-                setAmount(e.target.value);
-                if (maxAmount !== null && parseFloat(e.target.value || '0') > maxAmount) {
-                  setError(`Ödeme tutarı kalan borcu (${maxAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺) aşamaz.`);
-                } else if (error.includes('aşamaz')) {
-                  setError('');
-                }
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="pay-amount"
+                type="number"
+                min="0"
+                max={maxAmount !== null ? maxAmount : undefined}
+                step="0.01"
+                placeholder="0.00"
+                value={amount}
+                className={`flex-1 ${maxAmount !== null && parseFloat(amount.toString() || '0') > maxAmount ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  if (maxAmount !== null && parseFloat(e.target.value || '0') > maxAmount) {
+                    setError(`Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.`);
+                  } else if (error.includes('aşamaz')) {
+                    setError('');
+                  }
+                }}
+              />
+              <select
+                id="pay-currency"
+                className="h-10 px-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0 font-medium disabled:opacity-75 disabled:bg-gray-100"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                disabled={!!treatmentId}
+                title={treatmentId ? 'Tedavi para birimi ile kilitlendi' : undefined}
+                aria-label={t('payments:dialog.currency', 'Para Birimi')}
+              >
+                <option value="TRY">₺ TRY</option>
+                <option value="USD">$ USD</option>
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">

@@ -54,6 +54,7 @@ import { DatePicker } from './ui/date-picker';
 import { PhoneInput } from './ui/phone-input';
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import { formatDate, formatTimeStr } from '../utils/date';
+import { formatCurrency } from '../utils/currency';
 import { useTranslation } from 'react-i18next';
 
 interface Anamnesis {
@@ -920,29 +921,63 @@ export default function PatientProfile() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                  <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
-                  <p className="text-xl font-bold text-gray-900 mt-1">
-                    {treatments.filter(tr => tr.status === 'completed').reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                  </p>
-                </div>
-                <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
-                  <p className="text-xl font-bold text-green-800 mt-1">
-                    {payments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                  </p>
-                </div>
-                <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-                  <span className="text-sm font-medium text-red-600">{t('patients:profile.payments.balance')}</span>
-                  <p className="text-xl font-bold text-red-700 mt-1">
-                    {(
-                      treatments.filter(tr => tr.status === 'completed').reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0) -
-                      payments.reduce((sum, p) => sum + parseFloat(p.amount), 0)
-                    ).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const completedTreatments = treatments.filter(tr => tr.status === 'completed');
+                const tryTreatments = completedTreatments.filter(tr => (tr as any).currency !== 'USD');
+                const usdTreatments = completedTreatments.filter(tr => (tr as any).currency === 'USD');
+
+                const tryPayments = payments.filter(p => (p as any).currency !== 'USD');
+                const usdPayments = payments.filter(p => (p as any).currency === 'USD');
+
+                const totalTryTreatment = tryTreatments.reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0);
+                const totalUsdTreatment = usdTreatments.reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0);
+
+                const totalTryPaid = tryPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                const totalUsdPaid = usdPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+                const tryBalance = totalTryTreatment - totalTryPaid;
+                const usdBalance = totalUsdTreatment - totalUsdPaid;
+
+                const hasUsd = usdTreatments.length > 0 || usdPayments.length > 0;
+
+                return (
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="p-4 bg-gray-50 rounded-lg border">
+                      <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
+                      <p className="text-xl font-bold text-gray-900 mt-1">
+                        {formatCurrency(totalTryTreatment, 'TRY')}
+                      </p>
+                      {hasUsd && totalUsdTreatment > 0 && (
+                        <p className="text-sm font-bold text-blue-600 mt-0.5">
+                          {formatCurrency(totalUsdTreatment, 'USD')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+                      <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
+                      <p className="text-xl font-bold text-green-800 mt-1">
+                        {formatCurrency(totalTryPaid, 'TRY')}
+                      </p>
+                      {hasUsd && totalUsdPaid > 0 && (
+                        <p className="text-sm font-bold text-green-700 mt-0.5">
+                          {formatCurrency(totalUsdPaid, 'USD')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+                      <span className="text-sm font-medium text-red-600">{t('patients:profile.payments.balance')}</span>
+                      <p className="text-xl font-bold text-red-700 mt-1">
+                        {formatCurrency(tryBalance, 'TRY')}
+                      </p>
+                      {hasUsd && (totalUsdTreatment > 0 || totalUsdPaid > 0) && (
+                        <p className={`text-sm font-bold mt-0.5 ${usdBalance > 0 ? 'text-red-600' : 'text-green-700'}`}>
+                          {formatCurrency(usdBalance, 'USD')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               {(() => {
                 // Determine paid vs pending status for treatments
                 const treatmentsWithPaymentStatus = treatments
@@ -1048,7 +1083,7 @@ export default function PatientProfile() {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-lg font-bold text-gray-900">{trPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</div>
+                                  <div className="text-lg font-bold text-gray-900">{formatCurrency(trPrice, (tr as any).currency || 'TRY')}</div>
                                   <div className="text-sm text-gray-500">Toplam Tutar</div>
                                 </div>
                               </div>
@@ -1056,11 +1091,11 @@ export default function PatientProfile() {
                                 <div className="flex gap-6">
                                   <div>
                                     <div className="text-sm font-medium text-green-700">Ödenen</div>
-                                    <div className="font-semibold text-gray-900">{totalPaidForTr.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</div>
+                                    <div className="font-semibold text-gray-900">{formatCurrency(totalPaidForTr, (tr as any).currency || 'TRY')}</div>
                                   </div>
                                   <div>
                                     <div className="text-sm font-medium text-red-600">Kalan Borç</div>
-                                    <div className="font-semibold text-gray-900">{remaining > 0 ? remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : '0,00'} ₺</div>
+                                    <div className="font-semibold text-gray-900">{formatCurrency(remaining > 0 ? remaining : 0, (tr as any).currency || 'TRY')}</div>
                                   </div>
                                 </div>
                                 {remaining > 0 && (
@@ -1083,7 +1118,7 @@ export default function PatientProfile() {
                                     <div key={pay.id} className="flex items-center justify-between bg-white p-2 px-3 rounded border text-sm hover:shadow-sm transition-shadow cursor-pointer" onClick={() => handlePaymentEdit(pay)}>
                                       <div className="flex items-center gap-2">
                                         <CreditCard className="w-4 h-4 text-green-600" />
-                                        <span className="font-medium text-gray-900">{parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</span>
+                                        <span className="font-medium text-gray-900">{formatCurrency(pay.amount, (pay as any).currency || (tr as any).currency || 'TRY')}</span>
                                         {pay.description && <span className="text-gray-500 text-xs ml-2">- {pay.description}</span>}
                                       </div>
                                       <span className="text-gray-400 text-xs">{formatDate(pay.payment_date)}</span>
@@ -1118,7 +1153,7 @@ export default function PatientProfile() {
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {parseFloat(pay.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                  {formatCurrency(pay.amount, (pay as any).currency || 'TRY')}
                                 </p>
                                 {pay.description && (
                                   <p className="text-sm text-gray-500">{pay.description}</p>

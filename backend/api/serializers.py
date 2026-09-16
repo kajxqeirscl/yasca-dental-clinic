@@ -265,6 +265,7 @@ class TreatmentSerializer(serializers.ModelSerializer):
             "notes",
             "date",
             "price",
+            "currency",
             "created_at",
         ]
 
@@ -301,20 +302,26 @@ class TreatmentSerializer(serializers.ModelSerializer):
 class ClinicSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClinicSettings
-        fields = ["id", "work_start_time", "work_end_time", "work_days", "allow_international_numbers", "default_country"]
+        fields = ["id", "work_start_time", "work_end_time", "work_days", "allow_international_numbers", "default_country", "default_currency"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ["id", "patient", "treatment", "amount", "description", "payment_date", "created_at"]
+        fields = ["id", "patient", "treatment", "amount", "currency", "description", "payment_date", "created_at"]
 
     def validate(self, data):
         """Tedaviye bağlı ödemelerde toplam ödemenin tedavi fiyatını aşmasını engelle."""
         treatment = data.get("treatment", getattr(self.instance, "treatment", None))
         amount = data.get("amount", getattr(self.instance, "amount", 0))
+        currency = data.get("currency", getattr(self.instance, "currency", "TRY"))
 
         if treatment and amount:
+            if currency != treatment.currency:
+                raise serializers.ValidationError({
+                    "currency": f"Ödeme para birimi ({currency}), tedavi para birimi ({treatment.currency}) ile eşleşmelidir."
+                })
+
             from decimal import Decimal
             treatment_price = treatment.price or Decimal("0")
             # Bu tedaviye yapılmış mevcut ödemelerin toplamını hesapla
@@ -330,8 +337,9 @@ class PaymentSerializer(serializers.ModelSerializer):
             remaining = treatment_price - total_paid
 
             if amount > remaining:
+                curr_symbol = "$" if treatment.currency == "USD" else "₺"
                 raise serializers.ValidationError({
-                    "amount": f"Ödeme tutarı kalan borcu ({remaining:.2f} ₺) aşamaz."
+                    "amount": f"Ödeme tutarı kalan borcu ({remaining:.2f} {curr_symbol}) aşamaz."
                 })
 
         return data

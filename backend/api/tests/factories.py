@@ -116,6 +116,8 @@ class TreatmentFactory(DjangoModelFactory):
     teeth = factory.LazyFunction(list)
     status = Treatment.Status.COMPLETED
     date = factory.LazyFunction(lambda: timezone.localdate())
+    price = 1000
+    currency = "TRY"
 
 
 class PaymentFactory(DjangoModelFactory):
@@ -126,5 +128,6 @@ class PaymentFactory(DjangoModelFactory):
     amount = factory.Faker(
         "pydecimal", left_digits=4, right_digits=2, positive=True
     )
+    currency = "TRY"
     description = factory.Faker("sentence", locale="tr_TR")
     payment_date = factory.LazyFunction(lambda: timezone.localdate())

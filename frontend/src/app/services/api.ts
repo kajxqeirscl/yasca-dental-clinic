@@ -390,6 +390,8 @@ export interface TreatmentCreatePayload {
   status?: string;
   notes?: string;
   date: string;
+  price?: string | number;
+  currency?: string;
 }
 
 export async function createTreatment(data: TreatmentCreatePayload) {
@@ -410,10 +412,13 @@ export async function updateTreatment(
     doctor: number;
     treatment_type: number | null;
     treatment_name: string;
+    teeth: string[];
     tooth_number: string;
     status: string;
     notes: string;
     date: string;
+    price: string | number;
+    currency: string;
   }>
 ) {
   const res = await fetchWithAuth(`${API_BASE}/treatments/${id}/`, {
@@ -518,6 +523,7 @@ export async function createPayment(data: {
   patient: number;
   treatment?: number;
   amount: number | string;
+  currency?: string;
   description?: string;
   payment_date: string;
 }) {
@@ -545,6 +551,7 @@ export async function updateClinicSettings(data: {
   work_days?: number[];
   allow_international_numbers?: boolean;
   default_country?: string;
+  default_currency?: string;
 }) {
   const res = await fetchWithAuth(`${API_BASE}/settings/clinic/`, {
     method: 'PUT',

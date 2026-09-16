@@ -26,6 +26,7 @@ interface ClinicSettingsData {
   work_days: number[];
   allow_international_numbers: boolean;
   default_country: string;
+  default_currency: string;
 }
 
 const generateTimeOptions = () => {
@@ -54,6 +55,7 @@ export default function ClinicSettingsPage() {
     work_days: [1, 2, 3, 4, 5, 6],
     allow_international_numbers: false,
     default_country: 'TR',
+    default_currency: 'TRY',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,6 +72,7 @@ export default function ClinicSettingsPage() {
           work_days: data.work_days?.map(Number) || [1, 2, 3, 4, 5, 6],
           allow_international_numbers: data.allow_international_numbers || false,
           default_country: data.default_country || 'TR',
+          default_currency: data.default_currency || 'TRY',
         });
       })
       .catch(() => setError(t('settings:error_load')))
@@ -97,6 +100,7 @@ export default function ClinicSettingsPage() {
         work_days: settings.work_days,
         allow_international_numbers: settings.allow_international_numbers,
         default_country: settings.default_country,
+        default_currency: settings.default_currency,
       });
       setSettings({
         work_start_time: data.work_start_time?.substring(0, 5) || settings.work_start_time,
@@ -104,6 +108,7 @@ export default function ClinicSettingsPage() {
         work_days: data.work_days?.map(Number) || settings.work_days,
         allow_international_numbers: data.allow_international_numbers ?? settings.allow_international_numbers,
         default_country: data.default_country || settings.default_country,
+        default_currency: data.default_currency || settings.default_currency,
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -253,15 +258,27 @@ export default function ClinicSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Telefon Ayarları */}
+      {/* Para Birimi & Ülke Ayarları */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Globe className="w-4 h-4" /> Telefon & Ülke Ayarları
+            <Globe className="w-4 h-4" /> Para Birimi & Ülke Ayarları
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Varsayılan Para Birimi</Label>
+              <select
+                className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                value={settings.default_currency}
+                disabled={!isAdmin}
+                onChange={(e) => setSettings((prev) => ({ ...prev, default_currency: e.target.value }))}
+              >
+                <option value="TRY">Türk Lirası (₺ TRY)</option>
+                <option value="USD">Amerikan Doları ($ USD)</option>
+              </select>
+            </div>
             <div className="space-y-2">
               <Label>Varsayılan Ülke</Label>
               <select

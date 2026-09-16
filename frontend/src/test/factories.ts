@@ -60,6 +60,7 @@ export interface MockTreatment {
   status: 'planned' | 'completed' | 'cancelled';
   date: string;
   price: string;
+  currency?: string;
 }
 
 export interface MockPayment {
@@ -67,6 +68,7 @@ export interface MockPayment {
   patient: number;
   treatment?: number;
   amount: string;
+  currency?: string;
   description: string;
   payment_date: string;
 }
@@ -76,6 +78,7 @@ export interface MockClinicSettings {
   work_start_time: string;
   work_end_time: string;
   work_days: number[];
+  default_currency?: string;
 }
 
 export function makeUser(overrides: Partial<MockUser> = {}): MockUser {

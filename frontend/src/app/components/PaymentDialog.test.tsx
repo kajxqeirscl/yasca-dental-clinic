@@ -262,4 +262,87 @@ describe('PaymentDialog — Successful submit', () => {
       );
     }
   });
+
+  it('USD currency selection and payload verification', async () => {
+    let postedPayload: any = null;
+    server.use(
+      http.get(`${BASE}/treatments/`, () =>
+        HttpResponse.json({ count: 0, results: [] }),
+      ),
+      http.post(`${BASE}/payments/`, async ({ request }) => {
+        postedPayload = await request.json();
+        return HttpResponse.json({ id: 99, ...postedPayload }, { status: 201 });
+      }),
+    );
+
+    renderWithProviders(
+      <PaymentDialog
+        isOpen
+        onClose={vi.fn()}
+        patientId={1}
+        onSuccess={vi.fn()}
+        defaultAmount="300"
+      />,
+      { authenticated: true },
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Select USD
+    const currencySelect = screen.getByLabelText(/Para Birimi|Currency/i) as HTMLSelectElement;
+    expect(currencySelect).toBeInTheDocument();
+    expect(currencySelect.value).toBe('TRY');
+
+    await userEvent.selectOptions(currencySelect, 'USD');
+    expect(currencySelect.value).toBe('USD');
+
+    const buttons = screen.getAllByRole('button');
+    const saveBtn = buttons.find((b) =>
+      /Kaydet|Save/i.test(b.textContent || ''),
+    );
+
+    if (saveBtn) {
+      await userEvent.click(saveBtn);
+      await waitFor(() => {
+        expect(postedPayload).not.toBeNull();
+        expect(postedPayload.currency).toBe('USD');
+        expect(postedPayload.amount).toBe(300);
+      });
+    }
+  });
+
+  it('treatment with USD locks currency select to USD', async () => {
+    server.use(
+      http.get(`${BASE}/treatments/`, () =>
+        HttpResponse.json({
+          count: 1,
+          results: [{ id: 42, treatment_name: 'Implant', price: '600.00', currency: 'USD' }],
+        }),
+      ),
+    );
+
+    renderWithProviders(
+      <PaymentDialog
+        isOpen
+        onClose={vi.fn()}
+        patientId={1}
+        onSuccess={vi.fn()}
+      />,
+      { authenticated: true },
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    const treatmentSelect = screen.getByLabelText(/İlgili Tedavi|Related Treatment/i) as HTMLSelectElement;
+    await userEvent.selectOptions(treatmentSelect, '42');
+
+    const currencySelect = screen.getByLabelText(/Para Birimi|Currency/i) as HTMLSelectElement;
+    expect(currencySelect.value).toBe('USD');
+    expect(currencySelect).toBeDisabled();
+  });
 });
+

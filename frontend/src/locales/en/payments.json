@@ -10,6 +10,7 @@
     "treatment": "Related Treatment (Optional)",
     "select_treatment": "General Payment (No treatment selected)",
     "amount": "Amount *",
+    "currency": "Currency",
     "date": "Payment Date *",
     "description": "Description",
     "description_placeholder": "e.g., Canal treatment payment",

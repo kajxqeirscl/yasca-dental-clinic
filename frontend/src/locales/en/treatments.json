@@ -21,6 +21,7 @@
     "status_completed": "Completed",
     "status_planned": "Planned",
     "price": "Applied Price",
+    "currency": "Currency",
     "notes": "Notes",
     "notes_placeholder": "Additional notes if any...",
     "delete": "Delete Record",

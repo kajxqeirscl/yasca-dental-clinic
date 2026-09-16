@@ -390,6 +390,9 @@ class TreatmentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
+        currency = self.request.query_params.get("currency")
+        if currency:
+            qs = qs.filter(currency=currency)
         return qs.filter(is_active=True).order_by("-date")
 
     def perform_destroy(self, instance):
@@ -512,6 +515,9 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         patient_id = self.request.query_params.get("patient")
         if patient_id:
             qs = qs.filter(patient_id=patient_id)
+        currency = self.request.query_params.get("currency")
+        if currency:
+            qs = qs.filter(currency=currency)
         return qs.filter(is_active=True).order_by("-payment_date")
 
     def perform_destroy(self, instance):

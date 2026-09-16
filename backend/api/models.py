@@ -183,6 +183,11 @@ class Appointment(models.Model):
         return f"{self.patient} - {self.date} {self.time}"
 
 
+class Currency(models.TextChoices):
+    TRY = "TRY", "Türk Lirası (₺)"
+    USD = "USD", "Amerikan Doları ($)"
+
+
 class Treatment(models.Model):
     """Tedavi kaydı. F-010, F-011, F-018."""
 
@@ -213,6 +218,7 @@ class Treatment(models.Model):
     notes = models.TextField("Notlar", blank=True)
     date = models.DateField("Tarih")
     price = models.DecimalField("Uygulanan Fiyat", max_digits=10, decimal_places=2, default=0)
+    currency = models.CharField("Para Birimi", max_length=3, choices=Currency.choices, default=Currency.TRY)
     is_active = models.BooleanField("Aktif", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -245,6 +251,12 @@ class ClinicSettings(models.Model):
         choices=[('TR', 'Türkiye')], 
         default='TR'
     )
+    default_currency = models.CharField(
+        "Varsayılan Para Birimi",
+        max_length=3,
+        choices=Currency.choices,
+        default=Currency.TRY
+    )
 
     class Meta:
         verbose_name = "Klinik Ayarı"
@@ -272,6 +284,7 @@ class Payment(models.Model):
         Treatment, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments"
     )
     amount = models.DecimalField("Tutar", max_digits=10, decimal_places=2)
+    currency = models.CharField("Para Birimi", max_length=3, choices=Currency.choices, default=Currency.TRY)
     description = models.CharField("Açıklama", max_length=255, blank=True)
     payment_date = models.DateField("Ödeme Tarihi")
     is_active = models.BooleanField("Aktif", default=True)
@@ -283,7 +296,8 @@ class Payment(models.Model):
         ordering = ["-payment_date"]
 
     def __str__(self):
-        return f"{self.patient} - {self.amount} TL ({self.payment_date})"
+        curr_sym = "$" if self.currency == "USD" else "TL"
+        return f"{self.patient} - {self.amount} {curr_sym} ({self.payment_date})"
 
 def patient_directory_path(instance, filename):
     return 'patients/patient_{0}/{1}'.format(instance.patient.id, filename)

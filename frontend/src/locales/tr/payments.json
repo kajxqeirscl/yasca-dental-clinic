@@ -10,6 +10,7 @@
     "treatment": "İlgili Tedavi (Opsiyonel)",
     "select_treatment": "Genel Ödeme (Tedavi seçilmedi)",
     "amount": "Tutar *",
+    "currency": "Para Birimi",
     "date": "Ödeme Tarihi *",
     "description": "Açıklama",
     "description_placeholder": "Örn: Kanal tedavisi ödemesi",

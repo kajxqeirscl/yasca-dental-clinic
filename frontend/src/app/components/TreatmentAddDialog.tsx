@@ -26,6 +26,7 @@ interface Treatment {
   status: string;
   date: string;
   price?: number | string;
+  currency?: string;
 }
 
 interface TreatmentAddDialogProps {
@@ -87,6 +88,7 @@ export default function TreatmentAddDialog({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [basePrice, setBasePrice] = useState<number>(0);
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState('TRY');
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
@@ -126,6 +128,7 @@ export default function TreatmentAddDialog({
         setStatus(treatmentToEdit.status);
         setDate(treatmentToEdit.date);
         setPrice(treatmentToEdit.price?.toString() || '');
+        setCurrency(treatmentToEdit.currency || 'TRY');
         setBasePrice(0); // Can't easily infer base price for editing without fetching type
       } else {
         if (initialRegion) {
@@ -142,6 +145,7 @@ export default function TreatmentAddDialog({
           setSelectedRegion('');
         }
         setStatus(defaultStatus);
+        setCurrency('TRY');
         if (initialCategory) {
           // Find the first active treatment type with matching category
           const match = treatmentTypes.find((t) => t.category === initialCategory);
@@ -167,6 +171,7 @@ export default function TreatmentAddDialog({
     } else {
       // Dialog closed, reset state
       setPrice('');
+      setCurrency('TRY');
       setBasePrice(0);
       setError('');
     }
@@ -180,15 +185,9 @@ export default function TreatmentAddDialog({
           (a.full_name || a.username).localeCompare(b.full_name || b.username, 'tr')
         );
         setDoctors(sorted);
-        if (sorted.length > 0) {
-          // Only auto-select doctor if we are NOT editing an existing treatment
-          if (!treatmentToEdit) {
-            const doc =
-              user?.role === 'doctor'
-                ? sorted.find((d) => d.id === user.id) || sorted[0]
-                : sorted[0];
-            setSelectedDoctorId(doc.id);
-          }
+        // Default to logged-in user if they are a doctor
+        if (user?.role === 'doctor' && user?.id) {
+          setSelectedDoctorId(user.id);
         }
       })
       .catch(() => setDoctors([]));
@@ -207,6 +206,7 @@ export default function TreatmentAddDialog({
     setStatus(defaultStatus);
     setDate(new Date().toISOString().split('T')[0]);
     setPrice('');
+    setCurrency('TRY');
     setBasePrice(0);
     setError('');
   };
@@ -233,6 +233,7 @@ export default function TreatmentAddDialog({
         notes: notes.trim() || undefined,
         date,
         price: price || undefined,
+        currency,
       };
 
       if (treatmentToEdit) {
@@ -435,17 +436,30 @@ export default function TreatmentAddDialog({
             </div>
           </div>
 
-          {/* Fiyat & Notlar */}
+          {/* Fiyat & Para Birimi & Notlar */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="treat-price">{t('treatments:dialog.price')}</Label>
-              <Input
-                id="treat-price"
-                type="number"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="treat-price"
+                  type="number"
+                  placeholder="0.00"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="flex-1"
+                />
+                <select
+                  id="treat-currency"
+                  className="h-10 px-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0 font-medium"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  aria-label={t('treatments:dialog.currency', 'Para Birimi')}
+                >
+                  <option value="TRY">₺ TRY</option>
+                  <option value="USD">$ USD</option>
+                </select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="treat-notes">{t('treatments:dialog.notes')}</Label>

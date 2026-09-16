@@ -13,6 +13,7 @@ from api.serializers import (
     AppointmentSerializer,
     PatientListSerializer,
     PatientSerializer,
+    PaymentSerializer,
     TreatmentSerializer,
 )
 from api.models import Anamnesis, Appointment
@@ -20,6 +21,7 @@ from api.tests.factories import (
     AppointmentFactory,
     DoctorUserFactory,
     PatientFactory,
+    PaymentFactory,
     TreatmentFactory,
     TreatmentTypeFactory,
 )
@@ -279,3 +281,54 @@ class TestTreatmentSerializerValidation:
         serializer = TreatmentSerializer(data=data)
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+@pytest.mark.django_db
+class TestPaymentSerializer:
+    def test_creates_payment_with_usd(self):
+        patient = PatientFactory()
+        data = {
+            "patient": patient.pk,
+            "amount": "250.00",
+            "currency": "USD",
+            "description": "USD Payment",
+            "payment_date": "2026-06-01",
+        }
+        serializer = PaymentSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        payment = serializer.save()
+        assert payment.currency == "USD"
+        assert str(payment.amount) == "250.00"
+
+    def test_rejects_currency_mismatch_with_treatment(self):
+        patient = PatientFactory()
+        treatment = TreatmentFactory(patient=patient, price=500, currency="USD")
+        data = {
+            "patient": patient.pk,
+            "treatment": treatment.pk,
+            "amount": "100.00",
+            "currency": "TRY",  # Mismatch: treatment is USD
+            "payment_date": "2026-06-01",
+        }
+        serializer = PaymentSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "currency" in serializer.errors
+
+    def test_validates_remaining_balance_in_usd(self):
+        patient = PatientFactory()
+        treatment = TreatmentFactory(patient=patient, price=500, currency="USD")
+        PaymentFactory(patient=patient, treatment=treatment, amount=400, currency="USD")
+
+        # Paying 150 when remaining is 100
+        data = {
+            "patient": patient.pk,
+            "treatment": treatment.pk,
+            "amount": "150.00",
+            "currency": "USD",
+            "payment_date": "2026-06-01",
+        }
+        serializer = PaymentSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "amount" in serializer.errors
+        assert "$" in str(serializer.errors["amount"])
+

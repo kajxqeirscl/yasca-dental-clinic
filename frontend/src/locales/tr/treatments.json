@@ -21,6 +21,7 @@
     "status_completed": "Tamamlandı",
     "status_planned": "Yapılacak",
     "price": "Uygulanan Fiyat",
+    "currency": "Para Birimi",
     "notes": "Notlar",
     "notes_placeholder": "Varsa ek bilgiler...",
     "delete": "Kaydı Sil",
