@@ -89,6 +89,7 @@ class TreatmentTypeFactory(DjangoModelFactory):
         "pydecimal", left_digits=4, right_digits=2, positive=True
     )
     category = TreatmentType.Category.OTHER
+    currency = "TRY"
     is_active = True
 
 

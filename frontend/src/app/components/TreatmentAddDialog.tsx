@@ -52,6 +52,7 @@ interface TreatmentTypeOption {
   name: string;
   category: string;
   default_price: string;
+  currency?: string;
 }
 
 const TOOTH_NUMBERS = [
@@ -152,6 +153,9 @@ export default function TreatmentAddDialog({
           if (match) {
             setSelectedTypeId(match.id);
             setBasePrice(Number(match.default_price));
+            if (match.currency) {
+              setCurrency(match.currency);
+            }
             if (selectionMode === 'teeth' && selectedTeeth.length > 0) {
               setPrice((Number(match.default_price) * selectedTeeth.length).toString());
             } else {
@@ -330,6 +334,9 @@ export default function TreatmentAddDialog({
                     setTreatmentName('');
                     setBasePrice(Number(found.default_price));
                     setPrice(found.default_price);
+                    if (found.currency) {
+                      setCurrency(found.currency);
+                    }
                   }
                 } else {
                   setPrice('');

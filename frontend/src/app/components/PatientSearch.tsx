@@ -14,8 +14,9 @@ import {
   TableRow,
 } from './ui/table';
 import PatientDialog from './PatientDialog';
-import { fetchPatients } from '../services/api';
+import { fetchPatients, fetchClinicSettings } from '../services/api';
 import { formatDate } from '../utils/date';
+import { formatCurrency } from '../utils/currency';
 import { useTranslation } from 'react-i18next';
 import {
   Pagination,
@@ -31,6 +32,7 @@ export default function PatientSearch() {
   const { t } = useTranslation();
   const navigate = useClinicNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [clinicCurrency, setClinicCurrency] = useState('TRY');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [patients, setPatients] = useState<
     Array<{
@@ -77,6 +79,14 @@ export default function PatientSearch() {
     const timer = setTimeout(loadPatients, 300);
     return () => clearTimeout(timer);
   }, [searchQuery, currentPage, ordering]);
+
+  useEffect(() => {
+    fetchClinicSettings()
+      .then((s) => {
+        if (s?.default_currency) setClinicCurrency(s.default_currency);
+      })
+      .catch(() => {});
+  }, []);
 
   const totalPages = Math.ceil(totalPatients / itemsPerPage);
   const paginatedPatients = patients;
@@ -214,12 +224,12 @@ export default function PatientSearch() {
                     )}
                     {sortField === 'total_debt' && (
                       <TableCell className="font-bold text-red-600">
-                        {parseFloat(patient.total_debt || '0').toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                        {formatCurrency(patient.total_debt, clinicCurrency)}
                       </TableCell>
                     )}
                     {sortField === 'total_payments' && (
                       <TableCell className="font-bold text-green-600">
-                        {parseFloat(patient.total_payments || '0').toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                        {formatCurrency(patient.total_payments, clinicCurrency)}
                       </TableCell>
                     )}
                     {sortField === 'birth_date' && (

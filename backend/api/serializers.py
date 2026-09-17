@@ -217,7 +217,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
 class TreatmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TreatmentType
-        fields = ["id", "name", "category", "default_price", "is_active"]
+        fields = ["id", "name", "category", "default_price", "currency", "is_active"]
 
     def validate(self, data):
         name = data.get("name", getattr(self.instance, "name", None))

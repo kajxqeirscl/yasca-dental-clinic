@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedSearch } from '../hooks/useLocalizedSearch';
+import { formatCurrency } from '../utils/currency';
 import {
   Pagination,
   PaginationContent,
@@ -44,6 +45,7 @@ interface TreatmentType {
   name: string;
   category: TreatmentCategory;
   default_price: string;
+  currency?: string;
   is_active: boolean;
 }
 
@@ -65,6 +67,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
     name: '',
     category: 'other' as TreatmentCategory,
     default_price: '',
+    currency: 'TRY',
   });
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -91,10 +94,20 @@ export default function TreatmentTypesPage({ userRole }: Props) {
   const handleOpenDialog = (type?: TreatmentType) => {
     if (type) {
       setEditingType(type);
-      setFormData({ name: type.name, category: type.category, default_price: type.default_price });
+      setFormData({
+        name: type.name,
+        category: type.category,
+        default_price: type.default_price,
+        currency: type.currency || 'TRY',
+      });
     } else {
       setEditingType(null);
-      setFormData({ name: '', category: 'other', default_price: '' });
+      setFormData({
+        name: '',
+        category: 'other',
+        default_price: '',
+        currency: 'TRY',
+      });
     }
     setIsDialogOpen(true);
   };
@@ -251,7 +264,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
                           <span>{catLabel}</span>
                         </span>
                       </TableCell>
-                      <TableCell>{type.default_price} TL</TableCell>
+                      <TableCell>{formatCurrency(type.default_price, type.currency || 'TRY')}</TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(type)}>
@@ -360,14 +373,27 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('treatments:page.form_price')}</label>
-              <Input
-                type="number"
-                value={formData.default_price}
-                onChange={(e) => setFormData({ ...formData, default_price: e.target.value })}
-                placeholder="0.00"
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2 space-y-2">
+                <label className="text-sm font-medium">{t('treatments:page.form_price')}</label>
+                <Input
+                  type="number"
+                  value={formData.default_price}
+                  onChange={(e) => setFormData({ ...formData, default_price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Para Birimi</label>
+                <select
+                  className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.currency}
+                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                >
+                  <option value="TRY">₺ TRY</option>
+                  <option value="USD">$ USD</option>
+                </select>
+              </div>
             </div>
           </div>
           <DialogFooter>

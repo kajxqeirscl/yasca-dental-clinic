@@ -15,6 +15,7 @@ from api.serializers import (
     PatientSerializer,
     PaymentSerializer,
     TreatmentSerializer,
+    TreatmentTypeSerializer,
 )
 from api.models import Anamnesis, Appointment
 from api.tests.factories import (
@@ -331,4 +332,21 @@ class TestPaymentSerializer:
         assert not serializer.is_valid()
         assert "amount" in serializer.errors
         assert "$" in str(serializer.errors["amount"])
+
+
+@pytest.mark.django_db
+class TestTreatmentTypeSerializer:
+    def test_creates_treatment_type_with_usd_currency(self):
+        data = {
+            "name": "İmplant (USD)",
+            "category": "implant",
+            "default_price": "500.00",
+            "currency": "USD",
+        }
+        serializer = TreatmentTypeSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        tt = serializer.save()
+        assert tt.currency == "USD"
+        assert str(tt.default_price) == "500.00"
+
 

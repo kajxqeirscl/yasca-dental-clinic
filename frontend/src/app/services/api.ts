@@ -473,7 +473,7 @@ export async function fetchTreatmentTypes() {
   return data.results ? data.results : data;
 }
 
-export async function createTreatmentType(data: { name: string; default_price: number | string }) {
+export async function createTreatmentType(data: { name: string; default_price: number | string; category?: string; currency?: string }) {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -487,7 +487,7 @@ export async function createTreatmentType(data: { name: string; default_price: n
 
 export async function updateTreatmentType(
   id: number,
-  data: Partial<{ name: string; default_price: number | string; is_active: boolean }>
+  data: Partial<{ name: string; default_price: number | string; category?: string; currency?: string; is_active: boolean }>
 ) {
   const res = await fetchWithAuth(`${API_BASE}/treatment-types/${id}/`, {
     method: 'PATCH',

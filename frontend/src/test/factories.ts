@@ -176,6 +176,30 @@ export function makeClinicSettings(
   };
 }
 
+export interface MockTreatmentType {
+  id: number;
+  name: string;
+  category: string;
+  default_price: string;
+  currency?: string;
+  is_active: boolean;
+}
+
+export function makeTreatmentType(
+  overrides: Partial<MockTreatmentType> = {},
+): MockTreatmentType {
+  const id = overrides.id ?? nextId();
+  return {
+    id,
+    name: 'Kompozit Dolgu',
+    category: 'filling',
+    default_price: '1000.00',
+    currency: 'TRY',
+    is_active: true,
+    ...overrides,
+  };
+}
+
 /** Test'ler arasında sequence sayacını sıfırla (deterministik ID'ler için). */
 export function resetSequence() {
   _seq = 0;

@@ -97,6 +97,11 @@ class Anamnesis(models.Model):
         return f"Anamnez: {self.patient}"
 
 
+class Currency(models.TextChoices):
+    TRY = "TRY", "Türk Lirası (₺)"
+    USD = "USD", "Amerikan Doları ($)"
+
+
 class TreatmentType(models.Model):
     """Tedavi türleri ve varsayılan fiyatları. F-020."""
 
@@ -127,6 +132,12 @@ class TreatmentType(models.Model):
     )
     default_price = models.DecimalField(
         "Varsayılan Fiyat", max_digits=10, decimal_places=2, default=0
+    )
+    currency = models.CharField(
+        "Para Birimi",
+        max_length=3,
+        choices=Currency.choices,
+        default=Currency.TRY,
     )
     is_active = models.BooleanField("Aktif", default=True)
 
@@ -181,11 +192,6 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.date} {self.time}"
-
-
-class Currency(models.TextChoices):
-    TRY = "TRY", "Türk Lirası (₺)"
-    USD = "USD", "Amerikan Doları ($)"
 
 
 class Treatment(models.Model):
@@ -296,7 +302,7 @@ class Payment(models.Model):
         ordering = ["-payment_date"]
 
     def __str__(self):
-        curr_sym = "$" if self.currency == "USD" else "TL"
+        curr_sym = "$" if self.currency == "USD" else "₺"
         return f"{self.patient} - {self.amount} {curr_sym} ({self.payment_date})"
 
 def patient_directory_path(instance, filename):
