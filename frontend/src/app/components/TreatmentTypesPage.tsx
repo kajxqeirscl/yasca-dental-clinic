@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedSearch } from '../hooks/useLocalizedSearch';
 import { formatCurrency } from '../utils/currency';
+import { CurrencySelect } from './ui/CurrencySelect';
 import {
   Pagination,
   PaginationContent,
@@ -385,14 +386,11 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Para Birimi</label>
-                <select
-                  className="w-full h-10 px-3 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <CurrencySelect
+                  className="w-full"
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                >
-                  <option value="TRY">₺ TRY</option>
-                  <option value="USD">$ USD</option>
-                </select>
+                />
               </div>
             </div>
           </div>

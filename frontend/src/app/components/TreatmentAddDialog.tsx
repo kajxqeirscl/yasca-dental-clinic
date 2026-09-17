@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { type TreatmentCategory } from './TreatmentTypesPage';
 import { DatePicker } from './ui/date-picker';
 import { useTranslation } from 'react-i18next';
+import { CurrencySelect } from './ui/CurrencySelect';
 
 interface Treatment {
   id: number;
@@ -456,16 +457,13 @@ export default function TreatmentAddDialog({
                   onChange={(e) => setPrice(e.target.value)}
                   className="flex-1"
                 />
-                <select
+                <CurrencySelect
                   id="treat-currency"
-                  className="h-10 px-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0 font-medium"
+                  className="h-10 px-2 shrink-0"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   aria-label={t('treatments:dialog.currency', 'Para Birimi')}
-                >
-                  <option value="TRY">₺ TRY</option>
-                  <option value="USD">$ USD</option>
-                </select>
+                />
               </div>
             </div>
             <div className="space-y-2">

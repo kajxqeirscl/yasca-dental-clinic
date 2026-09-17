@@ -79,13 +79,17 @@ interface Treatment {
   doctor_name: string;
   notes: string;
   status: string;
+  price?: string;
+  currency?: string;
 }
 
 interface Payment {
   id: number;
   amount: string;
+  currency?: string;
   description: string;
   payment_date: string;
+  treatment?: number;
 }
 
 interface Appointment {
@@ -923,57 +927,79 @@ export default function PatientProfile() {
             <CardContent>
               {(() => {
                 const completedTreatments = treatments.filter(tr => tr.status === 'completed');
-                const tryTreatments = completedTreatments.filter(tr => (tr as any).currency !== 'USD');
-                const usdTreatments = completedTreatments.filter(tr => (tr as any).currency === 'USD');
 
-                const tryPayments = payments.filter(p => (p as any).currency !== 'USD');
-                const usdPayments = payments.filter(p => (p as any).currency === 'USD');
+                // Map by currency: code -> { treatments, payments, balance }
+                const currencyTotals: Record<string, { treatments: number; payments: number; balance: number }> = {};
+                
+                // Always ensure primary 'TRY' exists
+                currencyTotals['TRY'] = { treatments: 0, payments: 0, balance: 0 };
 
-                const totalTryTreatment = tryTreatments.reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0);
-                const totalUsdTreatment = usdTreatments.reduce((sum, tr) => sum + parseFloat((tr as any).price || '0'), 0);
+                completedTreatments.forEach(tr => {
+                  const curr = tr.currency || 'TRY';
+                  if (!currencyTotals[curr]) {
+                    currencyTotals[curr] = { treatments: 0, payments: 0, balance: 0 };
+                  }
+                  currencyTotals[curr].treatments += parseFloat(tr.price || '0');
+                });
 
-                const totalTryPaid = tryPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-                const totalUsdPaid = usdPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                payments.forEach(p => {
+                  const curr = p.currency || 'TRY';
+                  if (!currencyTotals[curr]) {
+                    currencyTotals[curr] = { treatments: 0, payments: 0, balance: 0 };
+                  }
+                  currencyTotals[curr].payments += parseFloat(p.amount || '0');
+                });
 
-                const tryBalance = totalTryTreatment - totalTryPaid;
-                const usdBalance = totalUsdTreatment - totalUsdPaid;
+                Object.keys(currencyTotals).forEach(curr => {
+                  currencyTotals[curr].balance = currencyTotals[curr].treatments - currencyTotals[curr].payments;
+                });
 
-                const hasUsd = usdTreatments.length > 0 || usdPayments.length > 0;
+                // Additional currencies with activity besides TRY
+                const extraCurrencies = Object.keys(currencyTotals).filter(
+                  curr => curr !== 'TRY' && (currencyTotals[curr].treatments > 0 || currencyTotals[curr].payments > 0)
+                );
 
                 return (
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="p-4 bg-gray-50 rounded-lg border">
                       <span className="text-sm font-medium text-gray-500">{t('patients:profile.payments.total_treatment')}</span>
                       <p className="text-xl font-bold text-gray-900 mt-1">
-                        {formatCurrency(totalTryTreatment, 'TRY')}
+                        {formatCurrency(currencyTotals['TRY'].treatments, 'TRY')}
                       </p>
-                      {hasUsd && totalUsdTreatment > 0 && (
-                        <p className="text-sm font-bold text-blue-600 mt-0.5">
-                          {formatCurrency(totalUsdTreatment, 'USD')}
-                        </p>
-                      )}
+                      {extraCurrencies.map(curr => (
+                        currencyTotals[curr].treatments > 0 && (
+                          <p key={curr} className="text-sm font-bold text-blue-600 mt-0.5">
+                            {formatCurrency(currencyTotals[curr].treatments, curr)}
+                          </p>
+                        )
+                      ))}
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg border border-green-100">
                       <span className="text-sm font-medium text-green-700">{t('patients:profile.payments.total_paid')}</span>
                       <p className="text-xl font-bold text-green-800 mt-1">
-                        {formatCurrency(totalTryPaid, 'TRY')}
+                        {formatCurrency(currencyTotals['TRY'].payments, 'TRY')}
                       </p>
-                      {hasUsd && totalUsdPaid > 0 && (
-                        <p className="text-sm font-bold text-green-700 mt-0.5">
-                          {formatCurrency(totalUsdPaid, 'USD')}
-                        </p>
-                      )}
+                      {extraCurrencies.map(curr => (
+                        currencyTotals[curr].payments > 0 && (
+                          <p key={curr} className="text-sm font-bold text-green-700 mt-0.5">
+                            {formatCurrency(currencyTotals[curr].payments, curr)}
+                          </p>
+                        )
+                      ))}
                     </div>
                     <div className="p-4 bg-red-50 rounded-lg border border-red-100">
                       <span className="text-sm font-medium text-red-600">{t('patients:profile.payments.balance')}</span>
                       <p className="text-xl font-bold text-red-700 mt-1">
-                        {formatCurrency(tryBalance, 'TRY')}
+                        {formatCurrency(currencyTotals['TRY'].balance, 'TRY')}
                       </p>
-                      {hasUsd && (totalUsdTreatment > 0 || totalUsdPaid > 0) && (
-                        <p className={`text-sm font-bold mt-0.5 ${usdBalance > 0 ? 'text-red-600' : 'text-green-700'}`}>
-                          {formatCurrency(usdBalance, 'USD')}
-                        </p>
-                      )}
+                      {extraCurrencies.map(curr => {
+                        const bal = currencyTotals[curr].balance;
+                        return (
+                          <p key={curr} className={`text-sm font-bold mt-0.5 ${bal > 0 ? 'text-red-600' : 'text-green-700'}`}>
+                            {formatCurrency(bal, curr)}
+                          </p>
+                        );
+                      })}
                     </div>
                   </div>
                 );

@@ -19,6 +19,8 @@ from api.tests.factories import (
     AssistantUserFactory,
     DoctorUserFactory,
     PatientFactory,
+    PaymentFactory,
+    TreatmentFactory,
     TreatmentTypeFactory,
 )
 
@@ -144,6 +146,44 @@ class TestPatientCRUD:
             .status_code
             == 401
         )
+
+    def test_patient_list_filters_debt_and_payments_by_currency(self):
+        patient_usd = PatientFactory(first_name="USD", last_name="Patient")
+        patient_try = PatientFactory(first_name="TRY", last_name="Patient")
+
+        # USD transactions
+        TreatmentFactory(patient=patient_usd, price=500, currency="USD", status="completed")
+        PaymentFactory(patient=patient_usd, amount=100, currency="USD")
+
+        # TRY transactions
+        TreatmentFactory(patient=patient_try, price=1000, currency="TRY", status="completed")
+        PaymentFactory(patient=patient_try, amount=200, currency="TRY")
+
+        # Query USD currency
+        res_usd = self.client.get("/api/patients/?currency=USD&ordering=-total_debt")
+        results_usd = self._results(res_usd)
+        row_usd_patient = next(r for r in results_usd if r["id"] == patient_usd.id)
+        row_try_patient = next(r for r in results_usd if r["id"] == patient_try.id)
+
+        assert float(row_usd_patient["total_debt"]) == 400.0
+        assert float(row_usd_patient["total_payments"]) == 100.0
+        assert float(row_try_patient["total_debt"]) == 0.0
+        assert float(row_try_patient["total_payments"]) == 0.0
+        # USD patient should be ordered first when sorted by -total_debt in USD
+        assert results_usd[0]["id"] == patient_usd.id
+
+        # Query TRY currency
+        res_try = self.client.get("/api/patients/?currency=TRY&ordering=-total_debt")
+        results_try = self._results(res_try)
+        row_usd_patient_try = next(r for r in results_try if r["id"] == patient_usd.id)
+        row_try_patient_try = next(r for r in results_try if r["id"] == patient_try.id)
+
+        assert float(row_try_patient_try["total_debt"]) == 800.0
+        assert float(row_try_patient_try["total_payments"]) == 200.0
+        assert float(row_usd_patient_try["total_debt"]) == 0.0
+        assert float(row_usd_patient_try["total_payments"]) == 0.0
+        # TRY patient should be ordered first when sorted by -total_debt in TRY
+        assert results_try[0]["id"] == patient_try.id
 
 
 # ---------------------------------------------------------------------------

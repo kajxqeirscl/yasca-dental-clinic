@@ -275,14 +275,19 @@ class PatientViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        currency = self.request.query_params.get("currency")
+        if not currency:
+            clinic_settings = ClinicSettings.get_settings()
+            currency = getattr(clinic_settings, "default_currency", None) or "TRY"
+
         payments_subquery = Payment.objects.filter(
-            patient=OuterRef('pk'), is_active=True
+            patient=OuterRef('pk'), is_active=True, currency=currency
         ).values('patient').annotate(
             total=Sum('amount')
         ).values('total')
         
         treatments_subquery = Treatment.objects.filter(
-            patient=OuterRef('pk'), is_active=True, status='completed'
+            patient=OuterRef('pk'), is_active=True, status='completed', currency=currency
         ).values('patient').annotate(
             total=Sum('price')
         ).values('total')

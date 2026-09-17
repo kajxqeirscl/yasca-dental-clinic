@@ -14,6 +14,7 @@ import { formatDate } from '../utils/date';
 import { useTranslation } from 'react-i18next';
 import { DatePicker } from './ui/date-picker';
 import { formatCurrency } from '../utils/currency';
+import { CurrencySelect } from './ui/CurrencySelect';
 
 interface Payment {
   id: number;
@@ -230,18 +231,15 @@ export default function PaymentDialog({
                   }
                 }}
               />
-              <select
+              <CurrencySelect
                 id="pay-currency"
-                className="h-10 px-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0 font-medium disabled:opacity-75 disabled:bg-gray-100"
+                className="h-10 px-2 shrink-0"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
                 disabled={!!treatmentId}
                 title={treatmentId ? 'Tedavi para birimi ile kilitlendi' : undefined}
                 aria-label={t('payments:dialog.currency', 'Para Birimi')}
-              >
-                <option value="TRY">₺ TRY</option>
-                <option value="USD">$ USD</option>
-              </select>
+              />
             </div>
           </div>
 

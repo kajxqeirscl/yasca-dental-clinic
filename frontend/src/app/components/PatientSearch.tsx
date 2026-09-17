@@ -17,6 +17,7 @@ import PatientDialog from './PatientDialog';
 import { fetchPatients, fetchClinicSettings } from '../services/api';
 import { formatDate } from '../utils/date';
 import { formatCurrency } from '../utils/currency';
+import { CurrencySelect } from './ui/CurrencySelect';
 import { useTranslation } from 'react-i18next';
 import {
   Pagination,
@@ -33,6 +34,7 @@ export default function PatientSearch() {
   const navigate = useClinicNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [clinicCurrency, setClinicCurrency] = useState('TRY');
+  const [selectedCurrency, setSelectedCurrency] = useState('TRY');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [patients, setPatients] = useState<
     Array<{
@@ -63,7 +65,7 @@ export default function PatientSearch() {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchPatients(searchQuery, currentPage, ordering);
+      const data = await fetchPatients(searchQuery, currentPage, ordering, selectedCurrency);
       setPatients(data.results);
       setTotalPatients(data.count);
     } catch (err) {
@@ -78,12 +80,15 @@ export default function PatientSearch() {
   useEffect(() => {
     const timer = setTimeout(loadPatients, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, currentPage, ordering]);
+  }, [searchQuery, currentPage, ordering, selectedCurrency]);
 
   useEffect(() => {
     fetchClinicSettings()
       .then((s) => {
-        if (s?.default_currency) setClinicCurrency(s.default_currency);
+        if (s?.default_currency) {
+          setClinicCurrency(s.default_currency);
+          setSelectedCurrency(s.default_currency);
+        }
       })
       .catch(() => {});
   }, []);
@@ -123,33 +128,49 @@ export default function PatientSearch() {
                 className="pl-9 bg-gray-50/50 border-gray-200/60 focus-visible:ring-indigo-500"
               />
             </div>
-            <div className="w-full sm:w-[320px] flex gap-2">
-              <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
-                <SelectTrigger aria-label="Sıralama ölçütü seçin" className="bg-gray-50/50 border-gray-200/60 flex-1">
-                  <SelectValue placeholder="Sıralama" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at">Kayıt Tarihi</SelectItem>
-                  <SelectItem value="first_name">İsim Soyisim</SelectItem>
-                  <SelectItem value="appointments_count">Randevu Sayısı</SelectItem>
-                  <SelectItem value="last_visit_date">Ziyaret Tarihi</SelectItem>
-                  <SelectItem value="total_debt">Toplam Borç</SelectItem>
-                  <SelectItem value="total_payments">Toplam Ödeme</SelectItem>
-                  <SelectItem value="birth_date">Doğum Tarihi / Yaş</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
-                onClick={() => {
-                  setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-                  setCurrentPage(1);
-                }}
-                className="bg-gray-50/50 border-gray-200/60 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
-              >
-                {sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-              </Button>
+            <div className="flex flex-wrap gap-2 items-center">
+              {(sortField === 'total_debt' || sortField === 'total_payments') && (
+                <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200/80">
+                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Para Birimi:</span>
+                  <CurrencySelect
+                    value={selectedCurrency}
+                    onChange={(e) => {
+                      setSelectedCurrency(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="h-8 text-xs border-0 bg-transparent focus:ring-0 cursor-pointer font-bold text-gray-700"
+                    aria-label="Para birimi seçin"
+                  />
+                </div>
+              )}
+              <div className="w-full sm:w-[240px] flex gap-2">
+                <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
+                  <SelectTrigger aria-label="Sıralama ölçütü seçin" className="bg-gray-50/50 border-gray-200/60 flex-1">
+                    <SelectValue placeholder="Sıralama" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="created_at">Kayıt Tarihi</SelectItem>
+                    <SelectItem value="first_name">İsim Soyisim</SelectItem>
+                    <SelectItem value="appointments_count">Randevu Sayısı</SelectItem>
+                    <SelectItem value="last_visit_date">Ziyaret Tarihi</SelectItem>
+                    <SelectItem value="total_debt">Toplam Borç</SelectItem>
+                    <SelectItem value="total_payments">Toplam Ödeme</SelectItem>
+                    <SelectItem value="birth_date">Doğum Tarihi / Yaş</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
+                  onClick={() => {
+                    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                    setCurrentPage(1);
+                  }}
+                  className="bg-gray-50/50 border-gray-200/60 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                >
+                  {sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -168,8 +189,8 @@ export default function PatientSearch() {
                 
                 {/* Dynamic Column Header based on Ordering */}
                 {sortField === 'appointments_count' && <TableHead>Randevu Sayısı</TableHead>}
-                {sortField === 'total_debt' && <TableHead>Toplam Borç</TableHead>}
-                {sortField === 'total_payments' && <TableHead>Toplam Ödeme</TableHead>}
+                {sortField === 'total_debt' && <TableHead>Toplam Borç ({selectedCurrency})</TableHead>}
+                {sortField === 'total_payments' && <TableHead>Toplam Ödeme ({selectedCurrency})</TableHead>}
                 {sortField === 'birth_date' && <TableHead>Doğum Tarihi</TableHead>}
                 {sortField === 'created_at' && <TableHead>Kayıt Tarihi</TableHead>}
                 {!['appointments_count', 'total_debt', 'total_payments', 'birth_date', 'created_at'].includes(sortField) && (
@@ -224,12 +245,12 @@ export default function PatientSearch() {
                     )}
                     {sortField === 'total_debt' && (
                       <TableCell className="font-bold text-red-600">
-                        {formatCurrency(patient.total_debt, clinicCurrency)}
+                        {formatCurrency(patient.total_debt, selectedCurrency)}
                       </TableCell>
                     )}
                     {sortField === 'total_payments' && (
                       <TableCell className="font-bold text-green-600">
-                        {formatCurrency(patient.total_payments, clinicCurrency)}
+                        {formatCurrency(patient.total_payments, selectedCurrency)}
                       </TableCell>
                     )}
                     {sortField === 'birth_date' && (

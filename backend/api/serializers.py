@@ -11,6 +11,7 @@ from .models import (
     CustomUser,
     Document,
     AuditLog,
+    get_currency_symbol,
 )
 
 
@@ -337,7 +338,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             remaining = treatment_price - total_paid
 
             if amount > remaining:
-                curr_symbol = "$" if treatment.currency == "USD" else "₺"
+                curr_symbol = get_currency_symbol(treatment.currency)
                 raise serializers.ValidationError({
                     "amount": f"Ödeme tutarı kalan borcu ({remaining:.2f} {curr_symbol}) aşamaz."
                 })

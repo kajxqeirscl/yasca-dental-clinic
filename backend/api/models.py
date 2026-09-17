@@ -100,6 +100,22 @@ class Anamnesis(models.Model):
 class Currency(models.TextChoices):
     TRY = "TRY", "Türk Lirası (₺)"
     USD = "USD", "Amerikan Doları ($)"
+    EUR = "EUR", "Euro (€)"
+    GBP = "GBP", "İngiliz Sterlini (£)"
+
+
+CURRENCY_SYMBOLS = {
+    "TRY": "₺",
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+}
+
+
+def get_currency_symbol(code: str) -> str:
+    if not code:
+        return "₺"
+    return CURRENCY_SYMBOLS.get(code.upper(), code)
 
 
 class TreatmentType(models.Model):
@@ -302,7 +318,7 @@ class Payment(models.Model):
         ordering = ["-payment_date"]
 
     def __str__(self):
-        curr_sym = "$" if self.currency == "USD" else "₺"
+        curr_sym = get_currency_symbol(self.currency)
         return f"{self.patient} - {self.amount} {curr_sym} ({self.payment_date})"
 
 def patient_directory_path(instance, filename):

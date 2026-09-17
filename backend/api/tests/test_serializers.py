@@ -333,6 +333,22 @@ class TestPaymentSerializer:
         assert "amount" in serializer.errors
         assert "$" in str(serializer.errors["amount"])
 
+    def test_validates_remaining_balance_in_eur(self):
+        patient = PatientFactory()
+        treatment = TreatmentFactory(patient=patient, price=300, currency="EUR")
+
+        data = {
+            "patient": patient.pk,
+            "treatment": treatment.pk,
+            "amount": "350.00",
+            "currency": "EUR",
+            "payment_date": "2026-06-01",
+        }
+        serializer = PaymentSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "amount" in serializer.errors
+        assert "€" in str(serializer.errors["amount"])
+
 
 @pytest.mark.django_db
 class TestTreatmentTypeSerializer:

@@ -9,6 +9,7 @@ import { fetchClinicSettings, updateClinicSettings } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatTimeStr } from '../utils/date';
 import { useTranslation } from 'react-i18next';
+import { CurrencySelect } from './ui/CurrencySelect';
 
 const DAYS = (t: any) => [
   { value: 1, label: t('settings:days.1'), short: t('settings:days.short_1') },
@@ -269,15 +270,12 @@ export default function ClinicSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Varsayılan Para Birimi</Label>
-              <select
-                className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+              <CurrencySelect
+                className="w-full"
                 value={settings.default_currency}
                 disabled={!isAdmin}
                 onChange={(e) => setSettings((prev) => ({ ...prev, default_currency: e.target.value }))}
-              >
-                <option value="TRY">Türk Lirası (₺ TRY)</option>
-                <option value="USD">Amerikan Doları ($ USD)</option>
-              </select>
+              />
             </div>
             <div className="space-y-2">
               <Label>Varsayılan Ülke</Label>

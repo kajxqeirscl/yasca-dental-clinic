@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { server } from '../../mocks/server';
@@ -86,6 +86,44 @@ describe('PatientSearch', () => {
       expect(
         screen.getByText(/hata|error|yüklenemedi|alınamadı/i),
       ).toBeInTheDocument();
+    });
+  });
+
+  it('shows currency selector when total_debt is selected and queries with currency param', async () => {
+    let capturedCurrency = '';
+    server.use(
+      http.get(`${BASE}/patients/`, ({ request }) => {
+        const url = new URL(request.url);
+        capturedCurrency = url.searchParams.get('currency') ?? '';
+        return HttpResponse.json({ count: 0, results: [] });
+      }),
+      http.get(`${BASE}/clinic/settings/`, () =>
+        HttpResponse.json({ default_currency: 'TRY' }),
+      ),
+    );
+
+    renderWithProviders(<PatientSearch />, { authenticated: true });
+
+    // Initially currency selector should not be visible
+    expect(screen.queryByLabelText(/para birimi seçin/i)).not.toBeInTheDocument();
+
+    // Select "total_debt" from sorting select
+    const sortTrigger = screen.getByLabelText(/sıralama ölçütü seçin/i);
+    fireEvent.pointerDown(sortTrigger, { pointerId: 1, button: 0 });
+    fireEvent.keyDown(sortTrigger, { key: 'ArrowDown' });
+
+    const debtOption = await screen.findByRole('option', { name: /toplam borç/i });
+    fireEvent.click(debtOption);
+
+    // Now currency select should be visible
+    const currSelect = await screen.findByLabelText(/para birimi seçin/i);
+    expect(currSelect).toBeInTheDocument();
+
+    // Change currency to USD
+    await userEvent.selectOptions(currSelect, 'USD');
+
+    await waitFor(() => {
+      expect(capturedCurrency).toBe('USD');
     });
   });
 });
