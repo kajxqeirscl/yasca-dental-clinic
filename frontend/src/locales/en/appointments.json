@@ -19,6 +19,10 @@
     "description_edit": "Update appointment details.",
     "error_add": "Failed to add appointment",
     "saving": "Saving...",
+    "past_warning_title": "Past Date/Time Warning",
+    "past_warning_desc": "You are about to create an appointment for a past date or time. Do you want to continue?",
+    "create_new_patient": "Create New Patient",
+    "create_new_treatment": "Add New Treatment",
     "fields": {
       "date": "Date",
       "time": "Time",
@@ -32,8 +36,9 @@
       "select_doctor": "Select doctor",
       "doctor_empty": "No doctors defined yet. You can add them from the admin panel.",
       "treatment": "Treatment",
-      "select_treatment": "Select treatment (optional)",
-      "treatment_empty": "No treatment types defined yet. You can add them from the admin panel.",
+      "select_treatment": "Select Treatment (Optional)",
+      "treatment_empty": "No treatments registered for this patient yet.",
+      "treatment_need_patient": "You must select a patient before selecting a treatment.",
       "notes": "Notes",
       "notes_placeholder": "Additional information..."
     },
@@ -52,6 +57,7 @@
   "detail": {
     "title": "Appointment Detail",
     "description": "You can view appointment details and change its status.",
+    "error_delete": "Failed to delete appointment",
     "fields": {
       "date": "Date",
       "time": "Time",
@@ -65,7 +71,7 @@
       "scheduled": "Scheduled",
       "completed": "Completed",
       "cancelled": "Cancelled",
-      "no_show": "No Show"
+      "no_show": "No-show"
     },
     "actions": {
       "delete": "Delete",

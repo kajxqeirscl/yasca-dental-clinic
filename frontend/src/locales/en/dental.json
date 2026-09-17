@@ -1,0 +1,23 @@
+{
+  "chart_title": "Dental Chart",
+  "regions": {
+    "full_mouth": "Full Mouth",
+    "upper_jaw": "Upper Jaw",
+    "lower_jaw": "Lower Jaw",
+    "upper_right": "Upper Right",
+    "upper_left": "Upper Left",
+    "lower_right": "Lower Right",
+    "lower_left": "Lower Left"
+  },
+  "selection": {
+    "tooth_selection": "Tooth Selection",
+    "region_selection": "Region Selection",
+    "select_region": "Select Region",
+    "tooth_or_region": "Tooth or Region Selection",
+    "teeth_selected": "{{count}} teeth selected",
+    "region_selected": "{{region}} selected",
+    "clear": "Clear",
+    "current_treatments": "Current Treatments",
+    "edit": "Edit"
+  }
+}

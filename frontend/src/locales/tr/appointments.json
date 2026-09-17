@@ -19,6 +19,10 @@
     "description_edit": "Randevu bilgilerini güncelleyin.",
     "error_add": "Randevu eklenemedi",
     "saving": "Kaydediliyor...",
+    "past_warning_title": "Geçmiş Tarih/Saat Uyarısı",
+    "past_warning_desc": "Geçmiş bir tarihe veya saate randevu oluşturmak üzeresiniz. Devam etmek istiyor musunuz?",
+    "create_new_patient": "Yeni Hasta Oluştur",
+    "create_new_treatment": "Yeni Tedavi Ekle",
     "fields": {
       "date": "Tarih",
       "time": "Saat",
@@ -31,9 +35,10 @@
       "doctor": "Hekim *",
       "select_doctor": "Hekim seçin",
       "doctor_empty": "Sistemde kayıtlı hekim bulunamadı. Lütfen Kullanıcı Yönetimi sayfasından ekleyin.",
-      "treatment": "İşlem",
-      "select_treatment": "İşlem seçin (opsiyonel)",
+      "treatment": "İşlem (Tedavi)",
+      "select_treatment": "Tedavi Seçin (İsteğe Bağlı)",
       "treatment_empty": "Bu hastanın henüz kayıtlı bir işlemi/tedavisi bulunmamaktadır.",
+      "treatment_need_patient": "Tedavi seçmek için önce hasta seçmelisiniz.",
       "notes": "Notlar",
       "notes_placeholder": "Ek bilgiler..."
     },
@@ -52,12 +57,13 @@
   "detail": {
     "title": "Randevu Detayı",
     "description": "Randevu bilgilerini inceleyebilir, durumunu değiştirebilirsiniz.",
+    "error_delete": "Randevu silinemedi",
     "fields": {
       "date": "Tarih",
       "time": "Saat",
       "patient": "Hasta",
       "doctor": "Hekim",
-      "treatment": "İşlem",
+      "treatment": "İşlem (Tedavi)",
       "notes": "Notlar"
     },
     "change_status": "Durumu Değiştir",

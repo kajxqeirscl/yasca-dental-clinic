@@ -13,6 +13,40 @@
   "between": "between",
   "days_suffix": "days",
   "saving": "Saving...",
+  "tabs": {
+    "work_settings": "Work Settings",
+    "staff_management": "Staff Management"
+  },
+  "currency_country": {
+    "title": "Currency & Country Settings",
+    "default_currency": "Default Currency",
+    "default_country": "Default Country",
+    "turkey_option": "Turkey (+90)"
+  },
+  "users": {
+    "title": "Staff List",
+    "add_new": "New Staff Member",
+    "edit_title": "Edit Staff Member",
+    "create_title": "Add New Staff Member",
+    "load_error": "Failed to load users",
+    "delete_confirm": "Are you sure you want to delete this user?",
+    "th_name": "Full Name",
+    "th_username": "Username",
+    "th_role": "Role",
+    "th_actions": "Actions",
+    "role_admin": "Admin",
+    "role_doctor": "Doctor",
+    "role_assistant": "Assistant",
+    "field_first_name": "First Name",
+    "field_last_name": "Last Name",
+    "field_username": "Username (Email)",
+    "field_password": "Password",
+    "password_hint": "(Leave blank if you do not wish to change)",
+    "field_role": "Role",
+    "btn_cancel": "Cancel",
+    "btn_update": "Update",
+    "btn_save": "Save"
+  },
   "days": {
     "1": "Monday",
     "2": "Tuesday",

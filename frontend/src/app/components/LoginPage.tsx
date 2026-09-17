@@ -6,7 +6,7 @@ import { fetchPublicClinicInfo, requestPasswordReset } from '../services/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const { t, i18n } = useTranslation('login');
+  const { t, i18n } = useTranslation(['login', 'common']);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -122,7 +122,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-gray-500" aria-hidden="true" />
             <select
-              aria-label={t('language_select_label', 'Dil seçimi')}
+              aria-label={t('common:language_select_label', 'Dil seçimi')}
               value={i18n.language.startsWith('tr') ? 'tr' : 'en'}
               onChange={(e) => i18n.changeLanguage(e.target.value)}
               className="bg-transparent border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-gray-600 hover:text-indigo-600 transition-colors"

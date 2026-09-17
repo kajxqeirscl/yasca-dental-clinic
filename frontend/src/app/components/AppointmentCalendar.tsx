@@ -32,7 +32,7 @@ interface ClinicSettings {
 }
 
 export default function AppointmentCalendar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('calendarViewMode') as ViewMode) || 'weekly';
   });
@@ -106,7 +106,7 @@ export default function AppointmentCalendar() {
   };
 
   const formatDisplayDate = (date: Date) => {
-    return new Intl.DateTimeFormat('tr-TR', {
+    return new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-US' : 'tr-TR', {
       day: 'numeric',
       month: 'short',
       weekday: 'short',

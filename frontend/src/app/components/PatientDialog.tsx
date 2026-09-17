@@ -77,30 +77,37 @@ export default function PatientDialog({
   }, [isOpen, initialData]);
 
   const handleSave = async () => {
-    const newMissingFields = [];
-    if (!formData.first_name.trim()) newMissingFields.push('Ad');
-    if (!formData.last_name.trim()) newMissingFields.push('Soyad');
+    const newMissingFields: string[] = [];
+    if (!formData.first_name.trim()) newMissingFields.push('first_name');
+    if (!formData.last_name.trim()) newMissingFields.push('last_name');
     
     // Phone validation
     const phoneClean = formData.phone || '';
     if (!phoneClean) {
-      newMissingFields.push('Telefon');
+      newMissingFields.push('phone');
     } else if (!isValidPhoneNumber(phoneClean)) {
-      setError('Lütfen geçerli bir telefon numarası giriniz.');
-      setMissingFields(['Telefon']);
+      setError(t('patients:dialog.errors.phone_invalid', 'Lütfen geçerli bir telefon numarası giriniz.'));
+      setMissingFields(['phone']);
       return;
     }
 
     // TCKN validation (optional, but must be 11 digits if provided)
     if (formData.tckn.trim() && !/^[0-9]{11}$/.test(formData.tckn.trim())) {
-      setError('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.');
-      setMissingFields(['TC Kimlik No']);
+      setError(t('patients:dialog.errors.tckn_invalid', 'TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.'));
+      setMissingFields(['tckn']);
       return;
     }
 
     if (newMissingFields.length > 0) {
       setMissingFields(newMissingFields);
-      setError(`Lütfen eksik alanları doldurunuz: ${newMissingFields.join(', ')}`);
+      const fieldLabels: Record<string, string> = {
+        first_name: t('patients:dialog.fields.first_name'),
+        last_name: t('patients:dialog.fields.last_name'),
+        phone: t('patients:dialog.fields.phone'),
+        tckn: t('patients:dialog.fields.tckn'),
+      };
+      const missingLabels = newMissingFields.map(f => fieldLabels[f] || f);
+      setError(t('patients:dialog.errors.missing_fields', { fields: missingLabels.join(', '), defaultValue: `Lütfen eksik alanları doldurunuz: ${missingLabels.join(', ')}` }));
       return;
     }
     
@@ -193,10 +200,10 @@ export default function PatientDialog({
               <Input
                 id="name"
                 value={formData.first_name}
-                className={missingFields.includes('Ad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                className={missingFields.includes('first_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 onChange={(e) => {
                   setFormData({ ...formData, first_name: e.target.value });
-                  if (missingFields.includes('Ad')) setMissingFields(missingFields.filter(f => f !== 'Ad'));
+                  if (missingFields.includes('first_name')) setMissingFields(missingFields.filter(f => f !== 'first_name'));
                 }}
               />
             </div>
@@ -205,10 +212,10 @@ export default function PatientDialog({
               <Input
                 id="surname"
                 value={formData.last_name}
-                className={missingFields.includes('Soyad') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                className={missingFields.includes('last_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 onChange={(e) => {
                   setFormData({ ...formData, last_name: e.target.value });
-                  if (missingFields.includes('Soyad')) setMissingFields(missingFields.filter(f => f !== 'Soyad'));
+                  if (missingFields.includes('last_name')) setMissingFields(missingFields.filter(f => f !== 'last_name'));
                 }}
               />
             </div>
@@ -220,10 +227,10 @@ export default function PatientDialog({
               <PhoneInput
                 id="phone"
                 value={formData.phone}
-                className={missingFields.includes('Telefon') ? 'border-red-500 focus-within:ring-red-500' : ''}
+                className={missingFields.includes('phone') ? 'border-red-500 focus-within:ring-red-500' : ''}
                 onChange={(val) => {
                   setFormData({ ...formData, phone: val || '' });
-                  if (missingFields.includes('Telefon')) setMissingFields(missingFields.filter(f => f !== 'Telefon'));
+                  if (missingFields.includes('phone')) setMissingFields(missingFields.filter(f => f !== 'phone'));
                 }}
               />
             </div>
@@ -235,10 +242,10 @@ export default function PatientDialog({
                 placeholder={t('patients:dialog.fields.tckn_placeholder')}
                 maxLength={11}
                 value={formData.tckn}
-                className={missingFields.includes('TC Kimlik No') ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                className={missingFields.includes('tckn') ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 onChange={(e) => {
                   setFormData({ ...formData, tckn: e.target.value });
-                  if (missingFields.includes('TC Kimlik No')) setMissingFields(missingFields.filter(f => f !== 'TC Kimlik No'));
+                  if (missingFields.includes('tckn')) setMissingFields(missingFields.filter(f => f !== 'tckn'));
                 }}
               />
             </div>

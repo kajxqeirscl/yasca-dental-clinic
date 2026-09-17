@@ -5,11 +5,29 @@
     "search_title": "Search Patient",
     "search_placeholder": "Search by name, surname or phone...",
     "error_loading": "Failed to load patients",
+    "currency_label": "Currency:",
+    "currency_select_aria": "Select currency",
+    "sort_aria": "Select sort criteria",
+    "sort_placeholder": "Sort by",
+    "sort_created_at": "Created Date",
+    "sort_name": "Full Name",
+    "sort_appointment_count": "Appointment Count",
+    "sort_last_visit": "Visit Date",
+    "sort_total_debt": "Total Debt",
+    "sort_total_payments": "Total Payments",
+    "sort_birth_date": "Birth Date / Age",
+    "sort_asc": "Ascending order",
+    "sort_desc": "Descending order",
     "columns": {
       "name": "Full Name",
       "phone": "Phone",
       "tckn": "National ID",
       "last_visit": "Last Visit",
+      "appointment_count": "Appointments",
+      "total_debt": "Total Debt ({{currency}})",
+      "total_payments": "Total Payments ({{currency}})",
+      "birth_date": "Birth Date",
+      "created_at": "Created Date",
       "actions": "Actions"
     },
     "no_record": "No Record",
@@ -20,9 +38,16 @@
     "title_add": "Add New Patient",
     "title_edit": "Edit Patient",
     "description": "Enter patient details and save.",
+    "future_warning_title": "Future Date Warning",
+    "future_warning_desc": "You have selected a future date for birth date. Do you want to continue?",
     "error_required": "First Name, Last Name, and Phone are required.",
     "error_add": "Failed to add patient",
     "saving": "Saving...",
+    "errors": {
+      "phone_invalid": "Please enter a valid phone number.",
+      "tckn_invalid": "National ID must be 11 digits and contain numbers only.",
+      "missing_fields": "Please fill in the missing fields: {{fields}}"
+    },
     "fields": {
       "first_name": "First Name",
       "last_name": "Last Name",
@@ -45,6 +70,35 @@
     "saving": "Saving...",
     "first_name": "First Name",
     "last_name": "Last Name",
+    "future_warning_title": "Future Date Warning",
+    "future_warning_desc": "You have selected a future date for birth date. Do you want to continue?",
+    "errors": {
+      "file_upload_failed": "Failed to upload file",
+      "document_delete_failed": "Failed to delete document",
+      "tckn_invalid": "National ID must be 11 digits and contain numbers only.",
+      "phone_required": "Phone number is required.",
+      "phone_invalid": "Please enter a valid phone number.",
+      "names_required": "First name and last name fields cannot be blank."
+    },
+    "placeholders": {
+      "first_name": "Enter first name",
+      "last_name": "Enter last name",
+      "tckn": "11-digit ID number",
+      "general_notes": "General notes about patient...",
+      "chronic_diseases": "Chronic diseases, operations...",
+      "allergies": "Drug, food and other allergies..."
+    },
+    "filters": {
+      "status": "Status Filter",
+      "all_status": "All (Status)",
+      "completed_only": "Completed Only",
+      "planned_only": "Planned Only",
+      "all_payment_status": "All (Payment Status)",
+      "paid_only": "Paid Only",
+      "pending_only": "Pending Only"
+    },
+    "sort_oldest": "Oldest to Newest",
+    "sort_newest": "Newest to Oldest",
     "tabs": {
       "info": "Profile Info",
       "anamnesis": "Anamnesis",
@@ -78,41 +132,60 @@
     "appointments": {
       "title": "All Appointments",
       "new": "New Appointment",
-      "no_record": "No appointment records found.",
+      "new_appointment": "Add New Appointment",
+      "add_appointment": "Add Appointment",
+      "standalone": "Standalone Appointments",
+      "new_standalone": "New Standalone Appointment",
+      "no_record": "No appointments recorded yet.",
+      "no_treatment_appointment": "There are no appointments for this treatment.",
       "status": {
         "scheduled": "Scheduled",
         "completed": "Completed",
         "cancelled": "Cancelled",
-        "no_show": "No Show"
+        "no_show": "No-show"
       }
     },
     "treatments": {
       "title": "Treatment History",
+      "history_title": "Treatment-Based History",
       "new": "Add New Treatment",
-      "no_record": "No treatment records found.",
-      "tooth": "Tooth",
+      "edit": "Edit Treatment",
+      "no_record": "No treatment records yet.",
+      "tooth": "Tooth/Region",
       "status": {
         "completed": "Completed",
-        "todo": "To Do"
+        "todo": "Planned"
       }
     },
     "payments": {
       "title": "Payments",
       "new": "Add New Payment",
-      "no_record": "No payment records found.",
-      "total_treatment": "Total Treatment Cost",
+      "no_record": "No payment records yet.",
+      "total_treatment": "Total Treatment Amount",
       "total_paid": "Total Paid",
-      "balance": "Remaining Debt"
+      "balance": "Remaining Debt",
+      "status_paid": "Paid",
+      "status_pending": "Pending",
+      "total_amount": "Total Amount",
+      "paid": "Paid",
+      "remaining_debt": "Remaining Debt",
+      "add_payment": "Add Payment",
+      "made_payments": "Payments Made",
+      "treatment_payments": "Treatment-Based Payments",
+      "general_payments": "General / Standalone Payments",
+      "new_general_payment": "New Standalone Payment"
     },
     "documents": {
       "title": "Patient Documents",
       "upload": "Upload Document",
-      "no_record": "No documents found.",
-      "drag_drop": "Drag & drop files here or",
+      "no_record": "No documents yet.",
+      "drag_drop": "Drag and drop files here, or",
       "browse": "browse",
       "delete_confirm": "Are you sure you want to delete this document?",
       "delete": "Delete",
-      "download": "Download"
+      "download": "Download",
+      "cloud_pending": "Cloud storage pending",
+      "cloud_disabled_toast": "File upload is disabled until cloud storage integration is completed."
     }
   }
 }

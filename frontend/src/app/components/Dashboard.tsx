@@ -68,7 +68,7 @@ export default function Dashboard() {
     fetchDashboardToday()
       .then(setData)
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Veri yüklenemedi');
+        setError(err instanceof Error ? err.message : t('dashboard:error_load', 'Veri yüklenemedi'));
         setData(null);
       })
       .finally(() => setLoading(false));

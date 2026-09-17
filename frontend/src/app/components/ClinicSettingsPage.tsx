@@ -149,7 +149,7 @@ export default function ClinicSettingsPage() {
               activeTab === 'general' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Çalışma Ayarları
+            {t('settings:tabs.work_settings', 'Çalışma Ayarları')}
           </button>
           <button
             onClick={() => setActiveTab('users')}
@@ -157,7 +157,7 @@ export default function ClinicSettingsPage() {
               activeTab === 'users' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Personel Yönetimi
+            {t('settings:tabs.staff_management', 'Personel Yönetimi')}
           </button>
         </div>
       )}
@@ -263,13 +263,13 @@ export default function ClinicSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Globe className="w-4 h-4" /> Para Birimi & Ülke Ayarları
+            <Globe className="w-4 h-4" /> {t('settings:currency_country.title', 'Para Birimi & Ülke Ayarları')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Varsayılan Para Birimi</Label>
+              <Label>{t('settings:currency_country.default_currency', 'Varsayılan Para Birimi')}</Label>
               <CurrencySelect
                 className="w-full"
                 value={settings.default_currency}
@@ -278,14 +278,14 @@ export default function ClinicSettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Varsayılan Ülke</Label>
+              <Label>{t('settings:currency_country.default_country', 'Varsayılan Ülke')}</Label>
               <select
                 className="w-full h-10 px-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
                 value={settings.default_country}
                 disabled={!isAdmin}
                 onChange={(e) => setSettings((prev) => ({ ...prev, default_country: e.target.value }))}
               >
-                <option value="TR">Türkiye (+90)</option>
+                <option value="TR">{t('settings:currency_country.turkey_option', 'Türkiye (+90)')}</option>
               </select>
             </div>
           </div>

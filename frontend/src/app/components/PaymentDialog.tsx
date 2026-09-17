@@ -104,7 +104,7 @@ export default function PaymentDialog({
     }
     
     if (maxAmount !== null && parsedAmount > maxAmount) {
-      setError(`Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.`);
+      setError(t('payments:dialog.error_max_amount', { max: formatCurrency(maxAmount, currency), defaultValue: `Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.` }));
       return;
     }
 
@@ -208,7 +208,7 @@ export default function PaymentDialog({
               <Label htmlFor="pay-amount">{t('payments:dialog.amount')}</Label>
               {maxAmount !== null && (
                 <span className="text-[10px] text-gray-500 font-medium">
-                  Maks: {formatCurrency(maxAmount, currency)}
+                  {t('payments:dialog.max_label', { amount: formatCurrency(maxAmount, currency), defaultValue: `Maks: ${formatCurrency(maxAmount, currency)}` })}
                 </span>
               )}
             </div>
@@ -223,10 +223,11 @@ export default function PaymentDialog({
                 value={amount}
                 className={`flex-1 ${maxAmount !== null && parseFloat(amount.toString() || '0') > maxAmount ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (maxAmount !== null && parseFloat(e.target.value || '0') > maxAmount) {
-                    setError(`Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.`);
-                  } else if (error.includes('aşamaz')) {
+                  const val = e.target.value;
+                  setAmount(val);
+                  if (maxAmount !== null && parseFloat(val || '0') > maxAmount) {
+                    setError(t('payments:dialog.error_max_amount', { max: formatCurrency(maxAmount, currency), defaultValue: `Ödeme tutarı kalan borcu (${formatCurrency(maxAmount, currency)}) aşamaz.` }));
+                  } else {
                     setError('');
                   }
                 }}
@@ -237,7 +238,7 @@ export default function PaymentDialog({
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
                 disabled={!!treatmentId}
-                title={treatmentId ? 'Tedavi para birimi ile kilitlendi' : undefined}
+                title={treatmentId ? t('payments:dialog.treatment_locked_tooltip', 'Tedavi para birimi ile kilitlendi') : undefined}
                 aria-label={t('payments:dialog.currency', 'Para Birimi')}
               />
             </div>

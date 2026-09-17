@@ -13,6 +13,40 @@
   "between": "arası,",
   "days_suffix": "günleri",
   "saving": "Kaydediliyor...",
+  "tabs": {
+    "work_settings": "Çalışma Ayarları",
+    "staff_management": "Personel Yönetimi"
+  },
+  "currency_country": {
+    "title": "Para Birimi & Ülke Ayarları",
+    "default_currency": "Varsayılan Para Birimi",
+    "default_country": "Varsayılan Ülke",
+    "turkey_option": "Türkiye (+90)"
+  },
+  "users": {
+    "title": "Personel Listesi",
+    "add_new": "Yeni Personel",
+    "edit_title": "Personeli Düzenle",
+    "create_title": "Yeni Personel Ekle",
+    "load_error": "Kullanıcılar yüklenemedi",
+    "delete_confirm": "Bu kullanıcıyı silmek istediğinize emin misiniz?",
+    "th_name": "Ad Soyad",
+    "th_username": "Kullanıcı Adı",
+    "th_role": "Rol",
+    "th_actions": "İşlem",
+    "role_admin": "Yönetici",
+    "role_doctor": "Hekim",
+    "role_assistant": "Asistan",
+    "field_first_name": "Ad",
+    "field_last_name": "Soyad",
+    "field_username": "Kullanıcı Adı (E-posta)",
+    "field_password": "Şifre",
+    "password_hint": "(Değiştirmek istemiyorsanız boş bırakın)",
+    "field_role": "Rol",
+    "btn_cancel": "İptal",
+    "btn_update": "Güncelle",
+    "btn_save": "Kaydet"
+  },
   "days": {
     "1": "Pazartesi",
     "2": "Salı",

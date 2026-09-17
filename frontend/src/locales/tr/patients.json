@@ -5,11 +5,29 @@
     "search_title": "Hasta Ara",
     "search_placeholder": "Ad, soyad veya telefon ile ara...",
     "error_loading": "Hastalar yüklenemedi",
+    "currency_label": "Para Birimi:",
+    "currency_select_aria": "Para birimi seçin",
+    "sort_aria": "Sıralama ölçütü seçin",
+    "sort_placeholder": "Sıralama",
+    "sort_created_at": "Kayıt Tarihi",
+    "sort_name": "İsim Soyisim",
+    "sort_appointment_count": "Randevu Sayısı",
+    "sort_last_visit": "Ziyaret Tarihi",
+    "sort_total_debt": "Toplam Borç",
+    "sort_total_payments": "Toplam Ödeme",
+    "sort_birth_date": "Doğum Tarihi / Yaş",
+    "sort_asc": "Artan sıralama",
+    "sort_desc": "Azalan sıralama",
     "columns": {
       "name": "Ad Soyad",
       "phone": "Telefon",
       "tckn": "TC Kimlik No",
       "last_visit": "Son Ziyaret",
+      "appointment_count": "Randevu Sayısı",
+      "total_debt": "Toplam Borç ({{currency}})",
+      "total_payments": "Toplam Ödeme ({{currency}})",
+      "birth_date": "Doğum Tarihi",
+      "created_at": "Kayıt Tarihi",
       "actions": "İşlemler"
     },
     "no_record": "Kayıt Yok",
@@ -20,9 +38,16 @@
     "title_add": "Yeni Hasta Ekle",
     "title_edit": "Hastayı Düzenle",
     "description": "Hasta bilgilerini girin ve kaydedin.",
+    "future_warning_title": "Gelecek Tarih Uyarısı",
+    "future_warning_desc": "Doğum tarihi olarak gelecek bir tarih seçtiniz. Devam etmek istiyor musunuz?",
     "error_required": "Ad, Soyad ve Telefon zorunludur.",
     "error_add": "Hasta eklenemedi",
     "saving": "Kaydediliyor...",
+    "errors": {
+      "phone_invalid": "Lütfen geçerli bir telefon numarası giriniz.",
+      "tckn_invalid": "TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.",
+      "missing_fields": "Lütfen eksik alanları doldurunuz: {{fields}}"
+    },
     "fields": {
       "first_name": "Ad",
       "last_name": "Soyad",
@@ -45,6 +70,35 @@
     "saving": "Kaydediliyor...",
     "first_name": "Hasta Adı",
     "last_name": "Hasta Soyadı",
+    "future_warning_title": "Gelecek Tarih Uyarısı",
+    "future_warning_desc": "Doğum tarihi olarak gelecek bir tarih seçtiniz. Devam etmek istiyor musunuz?",
+    "errors": {
+      "file_upload_failed": "Dosya yüklenemedi",
+      "document_delete_failed": "Doküman silinemedi",
+      "tckn_invalid": "TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.",
+      "phone_required": "Telefon numarası zorunludur.",
+      "phone_invalid": "Lütfen geçerli bir telefon numarası giriniz.",
+      "names_required": "Ad ve soyad alanları boş bırakılamaz."
+    },
+    "placeholders": {
+      "first_name": "Adı girin",
+      "last_name": "Soyadı girin",
+      "tckn": "11 Haneli TC No",
+      "general_notes": "Hasta hakkında genel notlar...",
+      "chronic_diseases": "Kronik hastalıklar, operasyonlar...",
+      "allergies": "İlaç, gıda vb. alerjiler..."
+    },
+    "filters": {
+      "status": "Durum Filtresi",
+      "all_status": "Tümü (Durum)",
+      "completed_only": "Sadece Tamamlananlar",
+      "planned_only": "Sadece Planlananlar",
+      "all_payment_status": "Tümü (Ödeme Durumu)",
+      "paid_only": "Sadece Ödenenler",
+      "pending_only": "Sadece Bekleyenler"
+    },
+    "sort_oldest": "Eskiden Yeniye",
+    "sort_newest": "Yeniden Eskiye",
     "tabs": {
       "info": "Profil Bilgileri",
       "anamnesis": "Anamnez",
@@ -78,7 +132,12 @@
     "appointments": {
       "title": "Tüm Randevular",
       "new": "Yeni Randevu",
+      "new_appointment": "Yeni Randevu Ekle",
+      "add_appointment": "Randevu Ekle",
+      "standalone": "Bağımsız Randevular",
+      "new_standalone": "Yeni Bağımsız Randevu",
       "no_record": "Henüz randevu kaydı bulunmuyor.",
+      "no_treatment_appointment": "Bu tedavi için randevu bulunmuyor.",
       "status": {
         "scheduled": "Planlandı",
         "completed": "Tamamlandı",
@@ -88,9 +147,11 @@
     },
     "treatments": {
       "title": "Tedavi Geçmişi",
+      "history_title": "Tedavi Bazlı Geçmiş",
       "new": "Yeni Tedavi Ekle",
+      "edit": "Tedaviyi Düzenle",
       "no_record": "Henüz tedavi kaydı bulunmuyor.",
-      "tooth": "Diş",
+      "tooth": "Diş/Bölge",
       "status": {
         "completed": "Tamamlandı",
         "todo": "Yapılacak"
@@ -102,7 +163,17 @@
       "no_record": "Henüz ödeme kaydı bulunmuyor.",
       "total_treatment": "Toplam Tedavi Tutarı",
       "total_paid": "Toplam Ödenen",
-      "balance": "Kalan Borç"
+      "balance": "Kalan Borç",
+      "status_paid": "Ödendi",
+      "status_pending": "Bekliyor",
+      "total_amount": "Toplam Tutar",
+      "paid": "Ödenen",
+      "remaining_debt": "Kalan Borç",
+      "add_payment": "Tahsilat Ekle",
+      "made_payments": "Yapılan Ödemeler",
+      "treatment_payments": "Tedavi Bazlı Ödemeler",
+      "general_payments": "Genel / Bağımsız Ödemeler",
+      "new_general_payment": "Yeni Bağımsız Ödeme"
     },
     "documents": {
       "title": "Hasta Dokümanları",
@@ -112,7 +183,9 @@
       "browse": "seçin",
       "delete_confirm": "Bu dokümanı silmek istediğinize emin misiniz?",
       "delete": "Sil",
-      "download": "İndir"
+      "download": "İndir",
+      "cloud_pending": "Bulut depolama bekleniyor",
+      "cloud_disabled_toast": "Bulut depolama entegrasyonu tamamlanana kadar dosya yükleme devre dışıdır."
     }
   }
 }

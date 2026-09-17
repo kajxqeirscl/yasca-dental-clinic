@@ -75,7 +75,7 @@ export default function TreatmentAddDialog({
   defaultStatus = 'completed',
   showAppointmentWarning = false,
 }: TreatmentAddDialogProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['treatments', 'dental', 'common']);
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [treatmentTypes, setTreatmentTypes] = useState<TreatmentTypeOption[]>([]);
@@ -369,21 +369,21 @@ export default function TreatmentAddDialog({
           {/* Diş / Bölge Seçimi & Durum */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Diş veya Bölge Seçimi</Label>
+              <Label>{t('dental:selection.tooth_or_region', 'Diş veya Bölge Seçimi')}</Label>
               <div className="flex bg-gray-100 p-1 rounded-md mb-2">
                 <button
                   type="button"
                   className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${selectionMode === 'teeth' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                   onClick={() => setSelectionMode('teeth')}
                 >
-                  Diş Seçimi
+                  {t('dental:selection.tooth_selection', 'Diş Seçimi')}
                 </button>
                 <button
                   type="button"
                   className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${selectionMode === 'region' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                   onClick={() => setSelectionMode('region')}
                 >
-                  Bölge Seçimi
+                  {t('dental:selection.region_selection', 'Bölge Seçimi')}
                 </button>
               </div>
 
@@ -409,19 +409,19 @@ export default function TreatmentAddDialog({
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
                 >
-                  <option value="">Bölge Seçiniz</option>
-                  <option value="tum_agiz">Tüm Ağız</option>
-                  <option value="ust_cene">Üst Çene</option>
-                  <option value="alt_cene">Alt Çene</option>
-                  <option value="sag_ust">Sağ Üst</option>
-                  <option value="sol_ust">Sol Üst</option>
-                  <option value="sag_alt">Sağ Alt</option>
-                  <option value="sol_alt">Sol Alt</option>
+                  <option value="">{t('dental:selection.select_region', 'Bölge Seçiniz')}</option>
+                  <option value="tum_agiz">{t('dental:regions.full_mouth', 'Tüm Ağız')}</option>
+                  <option value="ust_cene">{t('dental:regions.upper_jaw', 'Üst Çene')}</option>
+                  <option value="alt_cene">{t('dental:regions.lower_jaw', 'Alt Çene')}</option>
+                  <option value="sag_ust">{t('dental:regions.upper_right', 'Sağ Üst')}</option>
+                  <option value="sol_ust">{t('dental:regions.upper_left', 'Sol Üst')}</option>
+                  <option value="sag_alt">{t('dental:regions.lower_right', 'Sağ Alt')}</option>
+                  <option value="sol_alt">{t('dental:regions.lower_left', 'Sol Alt')}</option>
                 </select>
               )}
               {selectionMode === 'teeth' && selectedTeeth.length > 0 && (
                 <p className="text-xs text-blue-600 font-medium">
-                  {selectedTeeth.length} diş seçili
+                  {t('dental:selection.teeth_selected', { count: selectedTeeth.length, defaultValue: `${selectedTeeth.length} diş seçili` })}
                 </p>
               )}
             </div>

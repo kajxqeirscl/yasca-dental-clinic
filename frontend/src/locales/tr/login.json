@@ -28,5 +28,6 @@
   "new_password_confirm": "Yeni Şifre (Tekrar)",
   "reset_button": "Şifreyi Güncelle",
   "reset_success": "Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz.",
-  "passwords_do_not_match": "Şifreler eşleşmiyor!"
+  "passwords_do_not_match": "Şifreler eşleşmiyor!",
+  "invalid_reset_link": "Geçersiz veya süresi dolmuş bağlantı."
 }

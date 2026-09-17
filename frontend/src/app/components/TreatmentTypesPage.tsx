@@ -209,12 +209,12 @@ export default function TreatmentTypesPage({ userRole }: Props) {
             <div className="w-full sm:w-[320px] flex gap-2">
               <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
                 <SelectTrigger className="bg-gray-50/50 border-gray-200/60 flex-1">
-                  <SelectValue placeholder="Sıralama" />
+                  <SelectValue placeholder={t('treatments:page.sort_placeholder', 'Sıralama')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Tedavi Adı</SelectItem>
-                  <SelectItem value="category">Kategori</SelectItem>
-                  <SelectItem value="default_price">Varsayılan Fiyat</SelectItem>
+                  <SelectItem value="name">{t('treatments:page.sort_name', 'Tedavi Adı')}</SelectItem>
+                  <SelectItem value="category">{t('treatments:page.sort_category', 'Kategori')}</SelectItem>
+                  <SelectItem value="default_price">{t('treatments:page.sort_price', 'Varsayılan Fiyat')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -341,7 +341,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
               {editingType ? t('treatments:page.dialog_title_edit') : t('treatments:page.dialog_title_add')}
             </DialogTitle>
             <DialogDescription>
-              {editingType ? 'Tedavi türü bilgilerini güncelleyin.' : 'Yeni tedavi türü eklemek için bilgileri doldurun.'}
+              {editingType ? t('treatments:page.dialog_desc_edit', 'Tedavi türü bilgilerini güncelleyin.') : t('treatments:page.dialog_desc_add', 'Yeni tedavi türü eklemek için bilgileri doldurun.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -385,7 +385,7 @@ export default function TreatmentTypesPage({ userRole }: Props) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Para Birimi</label>
+                <label className="text-sm font-medium">{t('treatments:page.form_currency', 'Para Birimi')}</label>
                 <CurrencySelect
                   className="w-full"
                   value={formData.currency}
@@ -411,15 +411,15 @@ export default function TreatmentTypesPage({ userRole }: Props) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600 font-semibold text-lg">
               <Trash2 className="w-5 h-5 animate-pulse" />
-              Tedavi Türünü Sil
+              {t('treatments:page.delete_dialog_title', 'Tedavi Türünü Sil')}
             </DialogTitle>
             <DialogDescription>
-              Bu işlem geri alınamaz.
+              {t('treatments:page.delete_dialog_desc', 'Bu işlem geri alınamaz.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-500 leading-relaxed">
-              Bu tedavi türünü pasif hale getirmek istediğinize emin misiniz?
+              {t('treatments:page.delete_dialog_body', 'Bu tedavi türünü pasif hale getirmek istediğinize emin misiniz?')}
             </p>
             {deleteError && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
@@ -429,14 +429,14 @@ export default function TreatmentTypesPage({ userRole }: Props) {
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => { setDeletingId(null); setDeleteError(''); }}>
-              Vazgeç
+              {t('treatments:page.delete_dialog_cancel', 'Vazgeç')}
             </Button>
             <Button
               variant="destructive"
               className="bg-red-600 hover:bg-red-700 active:bg-red-800"
               onClick={() => deletingId !== null && confirmDelete(deletingId)}
             >
-              Sil
+              {t('treatments:page.delete_dialog_confirm', 'Sil')}
             </Button>
           </DialogFooter>
         </DialogContent>

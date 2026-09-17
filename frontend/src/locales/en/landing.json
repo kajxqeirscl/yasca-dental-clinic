@@ -65,6 +65,28 @@
     "benefit_3": "Unlimited Patients & Appointments",
     "benefit_4": "No Credit Card Required"
   },
+  "saas_register": {
+    "page_title": "Yasca Dental - Sign Up Free & Manage Your Dental Clinic",
+    "page_desc": "Join now, your dental clinic database will be automatically set up in 1 second. Easily manage appointments and patients with Yasca Dental.",
+    "brand_title": "Yasca Dental SaaS",
+    "brand_subtitle": "Join the system, your clinic database is set up automatically in 1 second.",
+    "error_register": "An error occurred during registration.",
+    "success_title": "Registration Successful!",
+    "credentials_title": "Your Login Details",
+    "address_label": "Address:",
+    "username_label": "Username:",
+    "password_label": "Password:",
+    "password_hint": "The password you chose during registration",
+    "go_to_clinic": "🏥 Go to My Clinic",
+    "placeholder_clinic": "Clinic Name (e.g. Star Dental)",
+    "placeholder_subdomain": "System Address (e.g. star)",
+    "placeholder_first_name": "Admin First Name",
+    "placeholder_last_name": "Admin Last Name",
+    "placeholder_email": "Email Address",
+    "placeholder_password": "Admin Password",
+    "btn_loading": "Setting Up Clinic...",
+    "btn_submit": "Get Started"
+  },
   "tenant_login": {
     "title": "Log In to Your Clinic",
     "subtitle": "Enter your clinic's unique address to access the system.",

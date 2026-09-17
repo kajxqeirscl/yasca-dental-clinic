@@ -1,0 +1,23 @@
+{
+  "chart_title": "Diş Şeması",
+  "regions": {
+    "full_mouth": "Tüm Ağız",
+    "upper_jaw": "Üst Çene",
+    "lower_jaw": "Alt Çene",
+    "upper_right": "Sağ Üst",
+    "upper_left": "Sol Üst",
+    "lower_right": "Sağ Alt",
+    "lower_left": "Sol Alt"
+  },
+  "selection": {
+    "tooth_selection": "Diş Seçimi",
+    "region_selection": "Bölge Seçimi",
+    "select_region": "Bölge Seçiniz",
+    "tooth_or_region": "Diş veya Bölge Seçimi",
+    "teeth_selected": "{{count}} diş seçili",
+    "region_selected": "{{region}} seçili",
+    "clear": "Temizle",
+    "current_treatments": "Mevcut Tedaviler",
+    "edit": "Düzenle"
+  }
+}

@@ -74,7 +74,7 @@ export default function AuditLogPage() {
   };
 
   const getModelLabel = (modelName: string | null | undefined) => {
-    if (!modelName) return 'Silinmiş Kayıt';
+    if (!modelName) return t('deleted_record', 'Silinmiş Kayıt');
     const key = `model_${modelName.toLowerCase()}`;
     const translation = t(key);
     return translation !== key ? translation : MODEL_LABELS[modelName] || modelName;
@@ -186,7 +186,7 @@ export default function AuditLogPage() {
                               <User className="w-3.5 h-3.5 text-indigo-600" />
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{log.username || 'System'}</div>
+                              <div className="font-medium text-gray-900">{log.username || t('system_user', 'System')}</div>
                               {log.user_email && <div className="text-xs text-gray-400">{log.user_email}</div>}
                             </div>
                           </div>

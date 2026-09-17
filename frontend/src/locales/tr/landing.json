@@ -65,6 +65,28 @@
     "benefit_3": "Sınırsız Hasta ve Randevu Yönetimi",
     "benefit_4": "Kredi Kartı Gerektirmez"
   },
+  "saas_register": {
+    "page_title": "Yaşca Dental - Ücretsiz Kayıt Olun ve Diş Kliniğinizi Yönetin",
+    "page_desc": "Sisteme hemen katılın, diş kliniğinizin veritabanı 1 saniyede otomatik kurulsun. Yaşca Dental ile randevu ve hasta takibi çok kolay.",
+    "brand_title": "Yasca Dental SaaS",
+    "brand_subtitle": "Sisteme katılın, kliniğinizin veritabanı 1 saniyede otomatik kurulsun.",
+    "error_register": "Kayıt olurken bir hata oluştu.",
+    "success_title": "Kayıt Başarılı!",
+    "credentials_title": "Giriş Bilgileriniz",
+    "address_label": "Adres:",
+    "username_label": "Kullanıcı Adı:",
+    "password_label": "Şifre:",
+    "password_hint": "Kayıt sırasında belirlediğiniz şifre",
+    "go_to_clinic": "🏥 Kliniğime Git",
+    "placeholder_clinic": "Klinik Adı (Örn: Yıldız Diş)",
+    "placeholder_subdomain": "Sistem Adresi (Örn: yildiz)",
+    "placeholder_first_name": "Yönetici Adı",
+    "placeholder_last_name": "Yönetici Soyadı",
+    "placeholder_email": "E-Posta Adresi",
+    "placeholder_password": "Yönetici Şifresi",
+    "btn_loading": "Klinik Kuruluyor...",
+    "btn_submit": "Hemen Başla"
+  },
   "tenant_login": {
     "title": "Kliniğinize Giriş Yapın",
     "subtitle": "Sisteme giriş yapmak için kliniğinize özel adresinizi girin.",

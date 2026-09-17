@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './ui/button';
+import i18n from '../utils/i18n';
 
 interface Props {
   children: ReactNode;
@@ -46,10 +47,10 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <h1 className="text-xl font-bold text-slate-900 mb-2">
-              Bir Hata Oluştu
+              {i18n.t('common:error_boundary_title', 'Bir Hata Oluştu')}
             </h1>
             <p className="text-sm text-slate-500 mb-6">
-              Sistem beklenmeyen bir durumla karşılaştı. Sayfayı yenileyerek veya ana sayfaya dönerek devam edebilirsiniz.
+              {i18n.t('common:error_boundary_desc', 'Sistem beklenmeyen bir durumla karşılaştı. Sayfayı yenileyerek veya ana sayfaya dönerek devam edebilirsiniz.')}
             </p>
 
             {this.state.error && (
@@ -65,14 +66,14 @@ export default class ErrorBoundary extends Component<Props, State> {
                 className="flex items-center gap-2"
               >
                 <Home className="w-4 h-4" />
-                Ana Sayfa
+                {i18n.t('common:home', 'Ana Sayfa')}
               </Button>
               <Button
                 onClick={this.handleReload}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 shadow-lg shadow-indigo-100"
               >
                 <RefreshCw className="w-4 h-4" />
-                Yeniden Dene
+                {i18n.t('common:retry', 'Yeniden Dene')}
               </Button>
             </div>
           </div>

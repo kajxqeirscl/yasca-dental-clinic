@@ -85,7 +85,7 @@ export default function AppointmentDetailDialog({
       onUpdated?.();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Randevu silinemedi');
+      toast.error(err instanceof Error ? err.message : t('appointments:detail.error_delete', 'Randevu silinemedi'));
     } finally {
       setLoading(false);
       setConfirmDelete(false);

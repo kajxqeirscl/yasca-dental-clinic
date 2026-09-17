@@ -11,5 +11,6 @@
   "filter_all": "All",
   "filter_completed": "Completed",
   "filter_scheduled": "Scheduled",
-  "no_appointments": "No appointments match the filter."
+  "no_appointments": "No appointments match the filter.",
+  "error_load": "Failed to load dashboard data"
 }

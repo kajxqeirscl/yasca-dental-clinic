@@ -131,7 +131,7 @@ export default function PatientSearch() {
             <div className="flex flex-wrap gap-2 items-center">
               {(sortField === 'total_debt' || sortField === 'total_payments') && (
                 <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200/80">
-                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Para Birimi:</span>
+                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">{t('patients:search.currency_label', 'Para Birimi:')}</span>
                   <CurrencySelect
                     value={selectedCurrency}
                     onChange={(e) => {
@@ -139,29 +139,29 @@ export default function PatientSearch() {
                       setCurrentPage(1);
                     }}
                     className="h-8 text-xs border-0 bg-transparent focus:ring-0 cursor-pointer font-bold text-gray-700"
-                    aria-label="Para birimi seçin"
+                    aria-label={t('patients:search.currency_select_aria', 'Para birimi seçin')}
                   />
                 </div>
               )}
               <div className="w-full sm:w-[240px] flex gap-2">
                 <Select value={sortField} onValueChange={(val) => { setSortField(val); setCurrentPage(1); }}>
-                  <SelectTrigger aria-label="Sıralama ölçütü seçin" className="bg-gray-50/50 border-gray-200/60 flex-1">
-                    <SelectValue placeholder="Sıralama" />
+                  <SelectTrigger aria-label={t('patients:search.sort_aria', 'Sıralama ölçütü seçin')} className="bg-gray-50/50 border-gray-200/60 flex-1">
+                    <SelectValue placeholder={t('patients:search.sort_placeholder', 'Sıralama')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="created_at">Kayıt Tarihi</SelectItem>
-                    <SelectItem value="first_name">İsim Soyisim</SelectItem>
-                    <SelectItem value="appointments_count">Randevu Sayısı</SelectItem>
-                    <SelectItem value="last_visit_date">Ziyaret Tarihi</SelectItem>
-                    <SelectItem value="total_debt">Toplam Borç</SelectItem>
-                    <SelectItem value="total_payments">Toplam Ödeme</SelectItem>
-                    <SelectItem value="birth_date">Doğum Tarihi / Yaş</SelectItem>
+                    <SelectItem value="created_at">{t('patients:search.sort_created_at', 'Kayıt Tarihi')}</SelectItem>
+                    <SelectItem value="first_name">{t('patients:search.sort_name', 'İsim Soyisim')}</SelectItem>
+                    <SelectItem value="appointments_count">{t('patients:search.sort_appointment_count', 'Randevu Sayısı')}</SelectItem>
+                    <SelectItem value="last_visit_date">{t('patients:search.sort_last_visit', 'Ziyaret Tarihi')}</SelectItem>
+                    <SelectItem value="total_debt">{t('patients:search.sort_total_debt', 'Toplam Borç')}</SelectItem>
+                    <SelectItem value="total_payments">{t('patients:search.sort_total_payments', 'Toplam Ödeme')}</SelectItem>
+                    <SelectItem value="birth_date">{t('patients:search.sort_birth_date', 'Doğum Tarihi / Yaş')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
+                  aria-label={sortDirection === 'asc' ? t('patients:search.sort_asc', 'Artan sıralama') : t('patients:search.sort_desc', 'Azalan sıralama')}
                   onClick={() => {
                     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
                     setCurrentPage(1);
@@ -188,11 +188,11 @@ export default function PatientSearch() {
                 <TableHead>{t('patients:search.columns.last_visit')}</TableHead>
                 
                 {/* Dynamic Column Header based on Ordering */}
-                {sortField === 'appointments_count' && <TableHead>Randevu Sayısı</TableHead>}
-                {sortField === 'total_debt' && <TableHead>Toplam Borç ({selectedCurrency})</TableHead>}
-                {sortField === 'total_payments' && <TableHead>Toplam Ödeme ({selectedCurrency})</TableHead>}
-                {sortField === 'birth_date' && <TableHead>Doğum Tarihi</TableHead>}
-                {sortField === 'created_at' && <TableHead>Kayıt Tarihi</TableHead>}
+                {sortField === 'appointments_count' && <TableHead>{t('patients:search.columns.appointment_count', 'Randevu Sayısı')}</TableHead>}
+                {sortField === 'total_debt' && <TableHead>{t('patients:search.columns.total_debt', { currency: selectedCurrency, defaultValue: `Toplam Borç (${selectedCurrency})` })}</TableHead>}
+                {sortField === 'total_payments' && <TableHead>{t('patients:search.columns.total_payments', { currency: selectedCurrency, defaultValue: `Toplam Ödeme (${selectedCurrency})` })}</TableHead>}
+                {sortField === 'birth_date' && <TableHead>{t('patients:search.columns.birth_date', 'Doğum Tarihi')}</TableHead>}
+                {sortField === 'created_at' && <TableHead>{t('patients:search.columns.created_at', 'Kayıt Tarihi')}</TableHead>}
                 {!['appointments_count', 'total_debt', 'total_payments', 'birth_date', 'created_at'].includes(sortField) && (
                   <TableHead>{t('patients:search.columns.tckn')}</TableHead>
                 )}

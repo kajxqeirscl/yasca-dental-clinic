@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
     }
 
     if (!uid || !token) {
-      setError('Geçersiz bağlantı.');
+      setError(t('invalid_reset_link'));
       return;
     }
 

@@ -91,7 +91,7 @@ export default function AppointmentDialog({
   defaultPatient,
   onSuccess,
 }: AppointmentDialogProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['appointments', 'common', 'patients']);
   const { user } = useAuth();
 
   // --- Patient search state ---
@@ -493,7 +493,7 @@ return (
                   className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border-t border-emerald-100 transition-colors"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>Yeni Hasta Oluştur</span>
+                  <span>{t('appointments:dialog.create_new_patient', 'Yeni Hasta Oluştur')}</span>
                 </button>
               </div>
             )}
@@ -546,7 +546,7 @@ return (
             <option value="">{t('appointments:dialog.fields.select_treatment', 'Tedavi Seçin (İsteğe Bağlı)')}</option>
             {patientTreatments.map((tr) => (
               <option key={tr.id} value={tr.id} disabled={tr.status === 'completed'}>
-                {tr.treatment_type_name || tr.treatment_name} {tr.tooth_number ? `(Diş: ${tr.tooth_number})` : ''}
+                {tr.treatment_type_name || tr.treatment_name} {tr.tooth_number ? `(${t('patients:profile.treatments.tooth', 'Diş')}: ${tr.tooth_number})` : ''}
                 {tr.status === 'completed' ? ` - ${t('patients:profile.treatments.status.completed', 'Tamamlandı')}` : ''}
               </option>
             ))}
@@ -568,7 +568,7 @@ return (
               className="w-full flex items-center gap-2 px-3 py-2.5 mt-2 text-left bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-sm border border-emerald-100 rounded-md transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span>Yeni Tedavi Ekle</span>
+              <span>{t('appointments:dialog.create_new_treatment', 'Yeni Tedavi Ekle')}</span>
             </button>
           )}
         </div>

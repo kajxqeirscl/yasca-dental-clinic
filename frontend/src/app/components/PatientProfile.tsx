@@ -142,7 +142,21 @@ const defaultAnamnesis: Anamnesis = {
 };
 
 export default function PatientProfile() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['patients', 'common', 'dental', 'treatments']);
+
+  const getRegionName = (code: string) => {
+    switch (code) {
+      case 'tum_agiz': return t('dental:regions.full_mouth', 'Tüm Ağız');
+      case 'ust_cene': return t('dental:regions.upper_jaw', 'Üst Çene');
+      case 'alt_cene': return t('dental:regions.lower_jaw', 'Alt Çene');
+      case 'sag_ust': return t('dental:regions.upper_right', 'Sağ Üst');
+      case 'sol_ust': return t('dental:regions.upper_left', 'Sol Üst');
+      case 'sag_alt': return t('dental:regions.lower_right', 'Sağ Alt');
+      case 'sol_alt': return t('dental:regions.lower_left', 'Sol Alt');
+      default: return code;
+    }
+  };
+
   const { id } = useParams<{ id: string }>();
   const navigate = useClinicNavigate();
   const [activeTab, setActiveTab] = useState(() => {
@@ -226,7 +240,7 @@ export default function PatientProfile() {
       await uploadDocument(Number(id), file.name, file);
       loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Dosya yüklenemedi');
+      alert(err instanceof Error ? err.message : t('patients:profile.errors.file_upload_failed', 'Dosya yüklenemedi'));
     } finally {
       setUploadingDoc(false);
       // Input'u sıfırlamak için
@@ -246,7 +260,7 @@ export default function PatientProfile() {
       await deleteDocument(isDeletingDoc);
       loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Doküman silinemedi');
+      toast.error(err instanceof Error ? err.message : t('patients:profile.errors.document_delete_failed', 'Doküman silinemedi'));
     } finally {
       setIsDeletingDoc(null);
     }
@@ -273,7 +287,7 @@ export default function PatientProfile() {
         await uploadDocument(Number(id), file.name, file);
         loadData();
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Dosya yüklenemedi');
+        alert(err instanceof Error ? err.message : t('patients:profile.errors.file_upload_failed', 'Dosya yüklenemedi'));
       } finally {
         setUploadingDoc(false);
       }
@@ -284,13 +298,18 @@ export default function PatientProfile() {
     if (!editedPatient) return;
     const newData = JSON.parse(JSON.stringify(editedPatient));
     if (isAnamnesis) {
-      if (!newData.anamnesis) newData.anamnesis = { ...defaultAnamnesis };
+      if (!newData.anamnesis) newData.anamnesis = {};
       newData.anamnesis[field] = value;
     } else {
       newData[field] = value;
     }
     setEditedPatient(newData);
     setIsDirty(true);
+    
+    // Clear validation error when field is edited
+    if (validationErrors.includes(field)) {
+      setValidationErrors(validationErrors.filter(f => f !== field));
+    }
   };
 
   const validateData = () => {
@@ -302,23 +321,23 @@ export default function PatientProfile() {
     // TCKN Validation (11 digits, numeric)
     if (editedPatient.tckn && !/^[0-9]{11}$/.test(editedPatient.tckn)) {
       errors.push('tckn');
-      setSaveError('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.');
+      setSaveError(t('patients:profile.errors.tckn_invalid', 'TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.'));
     }
 
     // Phone Validation
     const phoneClean = editedPatient.phone || '';
     if (!phoneClean) {
       errors.push('phone');
-      if (!saveError) setSaveError('Telefon numarası zorunludur.');
+      if (!saveError) setSaveError(t('patients:profile.errors.phone_required', 'Telefon numarası zorunludur.'));
     } else if (!isValidPhoneNumber(phoneClean)) {
       errors.push('phone');
-      if (!saveError) setSaveError('Lütfen geçerli bir telefon numarası giriniz.');
+      if (!saveError) setSaveError(t('patients:profile.errors.phone_invalid', 'Lütfen geçerli bir telefon numarası giriniz.'));
     }
 
     if (!editedPatient.first_name || !editedPatient.last_name) {
       if (!editedPatient.first_name) errors.push('first_name');
       if (!editedPatient.last_name) errors.push('last_name');
-      if (!saveError) setSaveError('Ad ve soyad alanları boş bırakılamaz.');
+      if (!saveError) setSaveError(t('patients:profile.errors.names_required', 'Ad ve soyad alanları boş bırakılamaz.'));
     }
 
     setValidationErrors(errors);
@@ -480,25 +499,25 @@ export default function PatientProfile() {
         
         <div className="flex-1 grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold ml-1">Hasta Adı</Label>
+            <Label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold ml-1">{t('patients:profile.first_name', 'Hasta Adı')}</Label>
             <Input 
               value={editedPatient?.first_name || ''} 
               onChange={(e) => handleFieldChange('first_name', e.target.value)}
               className={`text-xl font-semibold h-11 bg-gray-50/50 border-gray-200 focus:bg-white transition-all ${
                 validationErrors.includes('first_name') ? 'border-red-500 ring-red-100' : ''
               }`}
-              placeholder="Adı girin"
+              placeholder={t('patients:profile.placeholders.first_name', 'Adı girin')}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold ml-1">Hasta Soyadı</Label>
+            <Label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold ml-1">{t('patients:profile.last_name', 'Hasta Soyadı')}</Label>
             <Input 
               value={editedPatient?.last_name || ''} 
               onChange={(e) => handleFieldChange('last_name', e.target.value)}
               className={`text-xl font-semibold h-11 bg-gray-50/50 border-gray-200 focus:bg-white transition-all ${
                 validationErrors.includes('last_name') ? 'border-red-500 ring-red-100' : ''
               }`}
-              placeholder="Soyadı girin"
+              placeholder={t('patients:profile.placeholders.last_name', 'Soyadı girin')}
             />
           </div>
         </div>
@@ -554,7 +573,7 @@ export default function PatientProfile() {
                     <Input 
                       value={editedPatient?.tckn || ''} 
                       onChange={(e) => handleFieldChange('tckn', e.target.value)}
-                      placeholder="11 Haneli TC No"
+                      placeholder={t('patients:profile.placeholders.tckn', '11 Haneli TC No')}
                       className={validationErrors.includes('tckn') ? 'border-red-500 ring-red-500' : ''}
                     />
                   </div>
@@ -593,7 +612,7 @@ export default function PatientProfile() {
               <Textarea 
                 value={editedPatient?.notes || ''} 
                 onChange={(e) => handleFieldChange('notes', e.target.value)}
-                placeholder="Hasta hakkında genel notlar..."
+                placeholder={t('patients:profile.placeholders.general_notes', 'Hasta hakkında genel notlar...')}
                 className="bg-yellow-50 border-yellow-200 text-yellow-900"
                 rows={3}
               />
@@ -617,7 +636,7 @@ export default function PatientProfile() {
                     <Textarea 
                       value={editedPatient?.anamnesis?.medical_history || ''} 
                       onChange={(e) => handleFieldChange('medical_history', e.target.value, true)}
-                      placeholder="Kronik hastalıklar, operasyonlar..."
+                      placeholder={t('patients:profile.placeholders.chronic_diseases', 'Kronik hastalıklar, operasyonlar...')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -627,7 +646,7 @@ export default function PatientProfile() {
                     <Textarea 
                       value={editedPatient?.anamnesis?.allergies || ''} 
                       onChange={(e) => handleFieldChange('allergies', e.target.value, true)}
-                      placeholder="İlaç, gıda vb. alerjiler..."
+                      placeholder={t('patients:profile.placeholders.allergies', 'İlaç, gıda vb. alerjiler...')}
                       className="bg-red-50 border-red-200"
                     />
                   </div>
@@ -703,10 +722,10 @@ export default function PatientProfile() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{t('patients:profile.treatments.title', 'Tedavi Bazlı Geçmiş')}</CardTitle>
+                <CardTitle>{t('patients:profile.treatments.history_title', 'Tedavi Bazlı Geçmiş')}</CardTitle>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={handleNewAppointment}>
-                    <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                    <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.new_appointment', 'Yeni Randevu Ekle')}
                   </Button>
                   <Button size="sm" onClick={() => setIsTreatmentAddOpen(true)}>
                     <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.treatments.new', 'Yeni Tedavi Ekle')}
@@ -743,12 +762,12 @@ export default function PatientProfile() {
                     <div className="flex gap-2">
                       <Select value={treatmentFilter} onValueChange={(val: any) => setTreatmentFilter(val)}>
                         <SelectTrigger className="w-[200px] bg-gray-50/50">
-                          <SelectValue placeholder="Durum Filtresi" />
+                          <SelectValue placeholder={t('patients:profile.filters.status', 'Durum Filtresi')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Tümü (Durum)</SelectItem>
-                          <SelectItem value="completed">Sadece Tamamlananlar</SelectItem>
-                          <SelectItem value="scheduled">Sadece Planlananlar</SelectItem>
+                          <SelectItem value="all">{t('patients:profile.filters.all_status', 'Tümü (Durum)')}</SelectItem>
+                          <SelectItem value="completed">{t('patients:profile.filters.completed_only', 'Sadece Tamamlananlar')}</SelectItem>
+                          <SelectItem value="scheduled">{t('patients:profile.filters.planned_only', 'Sadece Planlananlar')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
@@ -756,7 +775,7 @@ export default function PatientProfile() {
                         size="icon"
                         onClick={() => setTreatmentSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
                         className="bg-gray-50/50 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
-                        title={treatmentSortDirection === 'asc' ? 'Eskiden Yeniye' : 'Yeniden Eskiye'}
+                        title={treatmentSortDirection === 'asc' ? t('patients:profile.sort_oldest', 'Eskiden Yeniye') : t('patients:profile.sort_newest', 'Yeniden Eskiye')}
                       >
                         {treatmentSortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                       </Button>
@@ -786,15 +805,7 @@ export default function PatientProfile() {
                                       </h4>
                                       {tr.teeth && tr.teeth.length > 0 && (
                                         <Badge variant="outline" className="text-[10px]">
-                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => 
-                                            t === 'tum_agiz' ? 'Tüm Ağız' : 
-                                            t === 'ust_cene' ? 'Üst Çene' : 
-                                            t === 'alt_cene' ? 'Alt Çene' : 
-                                            t === 'sag_ust' ? 'Sağ Üst' : 
-                                            t === 'sol_ust' ? 'Sol Üst' : 
-                                            t === 'sag_alt' ? 'Sağ Alt' : 
-                                            t === 'sol_alt' ? 'Sol Alt' : t
-                                          ).join(', ')}
+                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => getRegionName(t)).join(', ')}
                                         </Badge>
                                       )}
                                       <Badge className={`${tr.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'} border-none`}>
@@ -815,9 +826,9 @@ export default function PatientProfile() {
                                 <h5 className="text-sm font-semibold text-gray-700 mb-3 ml-1">{t('patients:profile.tabs.appointments', 'Randevular')}</h5>
                                 {trAppointments.length === 0 ? (
                                   <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
-                                    <span className="text-sm text-gray-500 italic ml-2">Bu tedavi için randevu bulunmuyor.</span>
+                                    <span className="text-sm text-gray-500 italic ml-2">{t('patients:profile.appointments.no_treatment_appointment', 'Bu tedavi için randevu bulunmuyor.')}</span>
                                     <Button size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)} className="bg-blue-600 hover:bg-blue-700">
-                                      <Plus className="w-4 h-4 mr-1" /> Randevu Ekle
+                                      <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.add_appointment', 'Randevu Ekle')}
                                     </Button>
                                   </div>
                                 ) : (
@@ -852,7 +863,7 @@ export default function PatientProfile() {
                                     ))}
                                     <div className="mt-2 flex justify-end">
                                       <Button variant="outline" size="sm" onClick={() => handleNewAppointmentWithTreatment(tr.id)}>
-                                        <Plus className="w-4 h-4 mr-1" /> Yeni Randevu Ekle
+                                        <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.new_appointment', 'Yeni Randevu Ekle')}
                                       </Button>
                                     </div>
                                   </div>
@@ -870,7 +881,7 @@ export default function PatientProfile() {
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-semibold text-gray-800 text-lg">{t('patients:profile.appointments.standalone', 'Bağımsız Randevular')}</h3>
                           <Button size="sm" variant="outline" onClick={handleNewAppointment}>
-                            <Plus className="w-4 h-4 mr-1" /> Yeni Bağımsız Randevu
+                            <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.appointments.new_standalone', 'Yeni Bağımsız Randevu')}
                           </Button>
                         </div>
                         <div className="space-y-3">
@@ -1042,12 +1053,12 @@ export default function PatientProfile() {
                     <div className="flex gap-2">
                       <Select value={paymentFilter} onValueChange={(val: any) => setPaymentFilter(val)}>
                         <SelectTrigger className="w-[200px] bg-gray-50/50">
-                          <SelectValue placeholder="Durum Filtresi" />
+                          <SelectValue placeholder={t('patients:profile.filters.status', 'Durum Filtresi')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Tümü (Ödeme Durumu)</SelectItem>
-                          <SelectItem value="paid">Sadece Ödenenler</SelectItem>
-                          <SelectItem value="pending">Sadece Bekleyenler</SelectItem>
+                          <SelectItem value="all">{t('patients:profile.filters.all_payment_status', 'Tümü (Ödeme Durumu)')}</SelectItem>
+                          <SelectItem value="paid">{t('patients:profile.filters.paid_only', 'Sadece Ödenenler')}</SelectItem>
+                          <SelectItem value="pending">{t('patients:profile.filters.pending_only', 'Sadece Bekleyenler')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
@@ -1055,7 +1066,7 @@ export default function PatientProfile() {
                         size="icon"
                         onClick={() => setPaymentSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
                         className="bg-gray-50/50 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
-                        title={paymentSortDirection === 'asc' ? 'Eskiden Yeniye' : 'Yeniden Eskiye'}
+                        title={paymentSortDirection === 'asc' ? t('patients:profile.sort_oldest', 'Eskiden Yeniye') : t('patients:profile.sort_newest', 'Yeniden Eskiye')}
                       >
                         {paymentSortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                       </Button>
@@ -1084,21 +1095,13 @@ export default function PatientProfile() {
                                       <h4 className="font-semibold text-gray-900">{tr.treatment_type_name || tr.treatment_name}</h4>
                                       {tr.teeth && tr.teeth.length > 0 && (
                                         <Badge variant="outline" className="text-[10px]">
-                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => 
-                                            t === 'tum_agiz' ? 'Tüm Ağız' : 
-                                            t === 'ust_cene' ? 'Üst Çene' : 
-                                            t === 'alt_cene' ? 'Alt Çene' : 
-                                            t === 'sag_ust' ? 'Sağ Üst' : 
-                                            t === 'sol_ust' ? 'Sol Üst' : 
-                                            t === 'sag_alt' ? 'Sağ Alt' : 
-                                            t === 'sol_alt' ? 'Sol Alt' : t
-                                          ).join(', ')}
+                                          {t('patients:profile.treatments.tooth', 'Diş/Bölge')}: {tr.teeth.map(t => getRegionName(t)).join(', ')}
                                         </Badge>
                                       )}
                                       {isPaid ? (
-                                        <Badge className="bg-green-100 text-green-800 border-none">Ödendi</Badge>
+                                        <Badge className="bg-green-100 text-green-800 border-none">{t('patients:profile.payments.status_paid', 'Ödendi')}</Badge>
                                       ) : (
-                                        <Badge className="bg-yellow-100 text-yellow-800 border-none">Bekliyor</Badge>
+                                        <Badge className="bg-yellow-100 text-yellow-800 border-none">{t('patients:profile.payments.status_pending', 'Bekliyor')}</Badge>
                                       )}
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
@@ -1110,17 +1113,17 @@ export default function PatientProfile() {
                                 </div>
                                 <div className="text-right">
                                   <div className="text-lg font-bold text-gray-900">{formatCurrency(trPrice, (tr as any).currency || 'TRY')}</div>
-                                  <div className="text-sm text-gray-500">Toplam Tutar</div>
+                                  <div className="text-sm text-gray-500">{t('patients:profile.payments.total_amount', 'Toplam Tutar')}</div>
                                 </div>
                               </div>
                               <div className="p-4 flex items-center justify-between">
                                 <div className="flex gap-6">
                                   <div>
-                                    <div className="text-sm font-medium text-green-700">Ödenen</div>
+                                    <div className="text-sm font-medium text-green-700">{t('patients:profile.payments.paid', 'Ödenen')}</div>
                                     <div className="font-semibold text-gray-900">{formatCurrency(totalPaidForTr, (tr as any).currency || 'TRY')}</div>
                                   </div>
                                   <div>
-                                    <div className="text-sm font-medium text-red-600">Kalan Borç</div>
+                                    <div className="text-sm font-medium text-red-600">{t('patients:profile.payments.remaining_debt', 'Kalan Borç')}</div>
                                     <div className="font-semibold text-gray-900">{formatCurrency(remaining > 0 ? remaining : 0, (tr as any).currency || 'TRY')}</div>
                                   </div>
                                 </div>
@@ -1132,14 +1135,14 @@ export default function PatientProfile() {
                                       handleNewPaymentWithDefaults(tr.id, remaining);
                                     }}
                                   >
-                                    <Plus className="w-4 h-4 mr-1" /> Tahsilat Ekle
+                                    <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.payments.add_payment', 'Tahsilat Ekle')}
                                   </Button>
                                 )}
                               </div>
                               {/* Bu tedaviye ait alt ödemeler */}
                               {trPayments.length > 0 && (
                                 <div className="bg-gray-50/50 p-4 border-t space-y-2">
-                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Yapılan Ödemeler</p>
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t('patients:profile.payments.made_payments', 'Yapılan Ödemeler')}</p>
                                   {trPayments.map(pay => (
                                     <div key={pay.id} className="flex items-center justify-between bg-white p-2 px-3 rounded border text-sm hover:shadow-sm transition-shadow cursor-pointer" onClick={() => handlePaymentEdit(pay)}>
                                       <div className="flex items-center gap-2">
@@ -1162,9 +1165,9 @@ export default function PatientProfile() {
                     {filteredStandalonePayments.length > 0 && (
                       <div className="space-y-3 pt-6 border-t">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-gray-800 text-lg">Genel / Bağımsız Ödemeler</h3>
+                          <h3 className="font-semibold text-gray-800 text-lg">{t('patients:profile.payments.general_payments', 'Genel / Bağımsız Ödemeler')}</h3>
                           <Button size="sm" variant="outline" onClick={() => setIsPaymentAddOpen(true)}>
-                            <Plus className="w-4 h-4 mr-1" /> Yeni Bağımsız Ödeme
+                            <Plus className="w-4 h-4 mr-1" /> {t('patients:profile.payments.new_general_payment', 'Yeni Bağımsız Ödeme')}
                           </Button>
                         </div>
                         {filteredStandalonePayments.map((pay) => (
@@ -1241,7 +1244,7 @@ export default function PatientProfile() {
                 <div>
                   <div className="flex flex-col items-end gap-1.5">
                     <div className="text-[11px] bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200">
-                      Bulut depolama bekleniyor
+                      {t('patients:profile.documents.cloud_pending', 'Bulut depolama bekleniyor')}
                     </div>
                     <button 
                       disabled
@@ -1283,7 +1286,7 @@ export default function PatientProfile() {
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragging(false);
-                  toast.error('Bulut depolama entegrasyonu tamamlanana kadar dosya yükleme devre dışıdır.');
+                  toast.error(t('patients:profile.documents.cloud_disabled_toast', 'Bulut depolama entegrasyonu tamamlanana kadar dosya yükleme devre dışıdır.'));
                 }}
                 className={`transition-all duration-200 rounded-xl ${isDragging ? 'bg-amber-50/50 ring-2 ring-amber-400 ring-dashed' : ''}`}
               >
