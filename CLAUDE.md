@@ -1,4 +1,4 @@
-﻿# Yaşca — Project Standards & Agent Context
+# Yaşca — Project Standards & Agent Context
 
 > This file is read automatically by AI coding agents (Claude, Antigravity, Cursor, etc.).
 > Keep it up-to-date as the project evolves.
@@ -25,13 +25,7 @@ The backend is **deployed on Render**. Do not run `python manage.py runserver`, 
 - **Backend URL (production/staging):** managed by Render, auto-deployed on push.
 - If you need to test backend changes, push to `rimahalloum` and check Render logs.
 
-### 2. Always use `--no-verify` when committing
-Local git hooks are extremely slow (70+ seconds). Always bypass them:
-```bash
-git commit --no-verify -m "your message"
-```
-
-### 3. Never force-push or touch `main` directly
+### 2. Never force-push or touch `main` directly
 All work goes to `rimahalloum`. Open a PR when merging to `main`.
 
 ---
